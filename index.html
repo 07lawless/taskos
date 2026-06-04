@@ -1123,26 +1123,160 @@ function SearchBar({ tasks, onSelect, onClose }) {
 // ── Calendar View ──────────────────────────────────────────────────────────────
 function CalendarView({ tasks, onEdit }) {
   const [weekOffset, setWeekOffset] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0); // for mobile day view
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
+  useEffect(() => {
+    function handleResize() { setIsMobile(window.innerWidth <= 768); }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const todayStr = today();
+
+  function dateStr(d) { return d.toISOString().split("T")[0]; }
+
+  // Week view helpers (desktop)
   const weekStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() - d.getDay() + 1 + weekOffset * 7);
     d.setHours(0,0,0,0);
     return d;
   })();
-
-  const days = Array.from({ length: 7 }, (_, i) => {
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
     return d;
   });
 
-  const todayStr = today();
+  // Day view helpers (mobile) - shows 3 days centred on selected day
+  const centreDay = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + dayOffset);
+    d.setHours(0,0,0,0);
+    return d;
+  })();
+  const mobileDays = Array.from({ length: 3 }, (_, i) => {
+    const d = new Date(centreDay);
+    d.setDate(centreDay.getDate() - 1 + i);
+    return d;
+  });
 
-  function dateStr(d) { return d.toISOString().split("T")[0]; }
+  // Selected day detail (mobile taps on a day to see full list)
+  const [selectedDay, setSelectedDay] = useState(todayStr);
+  const selectedTasks = tasks.filter(t => t.due === selectedDay);
 
   const unscheduled = tasks.filter(t => !t.due && t.status !== "Done");
 
+  function DayCard({ day, fullWidth }) {
+    const ds = dateStr(day);
+    const isToday = ds === todayStr;
+    const isSelected = ds === selectedDay;
+    const dayTasks = tasks.filter(t => t.due === ds);
+    return (
+      <div onClick={() => setSelectedDay(ds)}
+        style={{
+          background: isSelected ? COLORS.accentDim : isToday ? COLORS.surface2 : COLORS.surface,
+          border: `1px solid ${isSelected ? COLORS.accent+"80" : isToday ? COLORS.accent+"30" : COLORS.border}`,
+          borderRadius: 12, padding: fullWidth ? "14px 14px" : "10px 8px",
+          minHeight: fullWidth ? "auto" : 80, cursor: "pointer", transition: "all 0.15s"
+        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: fullWidth ? 12 : 0, flexDirection: fullWidth ? "row" : "column", marginBottom: fullWidth ? 0 : 6, textAlign: fullWidth ? "left" : "center" }}>
+          <div>
+            <div style={{ fontSize: fullWidth ? 11 : 10, color: isSelected ? COLORS.accent : COLORS.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              {day.toLocaleDateString("en-GB", { weekday: fullWidth ? "long" : "short" })}
+            </div>
+            <div style={{ fontSize: fullWidth ? 24 : 20, fontWeight: 800, color: isSelected ? COLORS.accent : isToday ? COLORS.accent : COLORS.text, lineHeight: 1.1 }}>
+              {day.getDate()}
+            </div>
+            {fullWidth && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>{day.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>}
+          </div>
+          {fullWidth && dayTasks.length > 0 && (
+            <div style={{ marginLeft: "auto", display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "60%" }}>
+              {dayTasks.slice(0, 3).map(t => (
+                <span key={t.id} style={{ background: PRIORITY_CONFIG[t.priority].dim, color: PRIORITY_CONFIG[t.priority].color, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4 }}>
+                  {t.isFrog ? "🐸 " : ""}{t.title.slice(0, 16)}{t.title.length > 16 ? "…" : ""}
+                </span>
+              ))}
+              {dayTasks.length > 3 && <span style={{ fontSize: 10, color: COLORS.textMuted }}>+{dayTasks.length - 3}</span>}
+            </div>
+          )}
+          {!fullWidth && (
+            <div style={{ fontSize: 11, fontWeight: 700, color: dayTasks.length > 0 ? COLORS.accent : COLORS.border }}>
+              {dayTasks.length > 0 ? dayTasks.length : "·"}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div style={{ paddingBottom: 20 }}>
+        {/* Mobile header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700 }}>Calendar</h2>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button onClick={() => { setDayOffset(0); setSelectedDay(todayStr); }} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 10px", fontSize: 12, fontWeight: 600 }}>Today</button>
+            <button onClick={() => setDayOffset(d => d - 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>←</button>
+            <button onClick={() => setDayOffset(d => d + 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>→</button>
+          </div>
+        </div>
+
+        {/* 3-day strip */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
+          {mobileDays.map(day => <DayCard key={dateStr(day)} day={day} fullWidth={false} />)}
+        </div>
+
+        {/* Selected day full view */}
+        <div style={{ marginBottom: 16 }}>
+          <DayCard day={new Date(selectedDay + "T00:00:00")} fullWidth={true} />
+        </div>
+
+        {/* Tasks for selected day */}
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
+          <div style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ fontSize: 13, fontWeight: 700 }}>
+              {new Date(selectedDay + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+            </div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted }}>{selectedTasks.length} task{selectedTasks.length !== 1 ? "s" : ""}</div>
+          </div>
+          {selectedTasks.length === 0 ? (
+            <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>Nothing due this day.</div>
+          ) : (
+            selectedTasks.map(t => (
+              <div key={t.id} onClick={() => onEdit(t)}
+                style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
+                  {t.description && <div style={{ fontSize: 12, color: COLORS.textMuted }}>{t.description.slice(0, 60)}{t.description.length > 60 ? "…" : ""}</div>}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
+                  <span style={{ background: PRIORITY_CONFIG[t.priority].dim, color: PRIORITY_CONFIG[t.priority].color, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4 }}>{t.priority.toUpperCase()}</span>
+                  {t.status === "Done" && <span style={{ fontSize: 11, color: COLORS.frog }}>✓ Done</span>}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {unscheduled.length > 0 && (
+          <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14, marginTop: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 10 }}>Unscheduled ({unscheduled.length})</div>
+            {unscheduled.map(t => (
+              <div key={t.id} onClick={() => onEdit(t)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer" }}>
+                <span style={{ background: PRIORITY_CONFIG[t.priority].dim, color: PRIORITY_CONFIG[t.priority].color, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4, flexShrink: 0 }}>{t.priority.slice(0,1)}</span>
+                <span style={{ fontSize: 13, fontWeight: 500 }}>{t.isFrog ? "🐸 " : ""}{t.title}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop 7-day view
   return (
     <div style={{ paddingBottom: 40 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
@@ -1151,14 +1285,14 @@ function CalendarView({ tasks, onEdit }) {
           <button onClick={() => setWeekOffset(0)} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.accent}30` }}>Today</button>
           <button onClick={() => setWeekOffset(w => w-1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>←</button>
           <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, minWidth: 160, textAlign: "center" }}>
-            {weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – {days[6].toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            {weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – {weekDays[6].toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
           </span>
           <button onClick={() => setWeekOffset(w => w+1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>→</button>
         </div>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginBottom: 24 }}>
-        {days.map(day => {
+        {weekDays.map(day => {
           const ds = dateStr(day);
           const isToday = ds === todayStr;
           const dayTasks = tasks.filter(t => t.due === ds);
@@ -1979,24 +2113,22 @@ function GreetingBanner({ user, tasks }) {
   const phrase = happyPhrases[new Date().getDate() % happyPhrases.length];
 
   return (
-    <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "18px 22px", marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-            {timeGreeting}, {user.firstName}! {phrase}
-          </div>
-          <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>
-            {dateStr} — Here are your tasks for today.
-            {dueTodayCount > 0
-              ? <span style={{ color: COLORS.medium, fontWeight: 600 }}> {dueTodayCount} task{dueTodayCount !== 1 ? "s" : ""} due today.</span>
-              : <span style={{ color: COLORS.frog, fontWeight: 600 }}> Nothing overdue — great work!</span>
-            }
-            {" "}{totalActive > 0 && <span>{totalActive} active task{totalActive !== 1 ? "s" : ""} in progress.</span>}
-          </div>
+    <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.3 }}>
+          {timeGreeting}, {user.firstName}! {phrase}
         </div>
-        <div style={{ textAlign: "right", flexShrink: 0 }}>
+        <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>
+          {dateStr} — Here are your tasks for today.
+          {dueTodayCount > 0
+            ? <span style={{ color: COLORS.medium, fontWeight: 600 }}> {dueTodayCount} task{dueTodayCount !== 1 ? "s" : ""} due today.</span>
+            : <span style={{ color: COLORS.frog, fontWeight: 600 }}> Nothing overdue — great work!</span>
+          }
+          {" "}{totalActive > 0 && <span>{totalActive} active task{totalActive !== 1 ? "s" : ""} in progress.</span>}
+        </div>
+        <div style={{ paddingTop: 8, borderTop: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5 }}>LOGGED IN AS</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text }}>{user.firstName} {user.lastName}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{user.firstName} {user.lastName}</div>
         </div>
       </div>
     </div>
@@ -2191,8 +2323,8 @@ function App() {
       <div className="bottom-nav">
         {[
           { v: "board",     icon: "⊞", label: "Board"     },
-          { v: "calendar",  icon: "📅", label: "Calendar"  },
-          { v: "wellbeing", icon: "💆", label: "Wellbeing" },
+          { v: "calendar",  icon: "◧", label: "Calendar"  },
+          { v: "wellbeing", icon: "☼", label: "Wellbeing" },
           { v: "analytics", icon: "◎",  label: "Analytics" },
         ].map(({ v, icon, label }) => (
           <button key={v} className="bottom-nav-item" onClick={() => setView(v)}
@@ -2203,12 +2335,12 @@ function App() {
         ))}
         <button className="bottom-nav-item" onClick={() => setShowDaily(true)}
           style={{ color: COLORS.textMuted }}>
-          <span className="icon">📋</span>
+          <span className="icon">≡</span>
           <span className="label">Daily</span>
         </button>
         <button className="bottom-nav-item" onClick={() => setShowDailyPlan(true)}
           style={{ color: COLORS.textMuted }}>
-          <span className="icon">🤖</span>
+          <span className="icon">◇</span>
           <span className="label">Plan</span>
         </button>
       </div>
