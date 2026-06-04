@@ -549,7 +549,7 @@ function ProgressBar({ subtasks }) {
 }
 
 // ── TaskCard ───────────────────────────────────────────────────────────────────
-function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart, onDragOver, onDrop, isDragging, onSaveBreakdown, onTimeUpdate, projects }) {
+function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart, onDragOver, onDrop, isDragging, onSaveBreakdown, projects }) {
   const isOverdue = task.due && task.due < today() && task.status !== "Done";
   const isDueToday = task.due === today();
   const project = projects?.find(p => p.id === task.projectId);
@@ -566,7 +566,6 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
       <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4, lineHeight: 1.4, paddingRight: task.isFrog ? 56 : 0 }}>{task.title}</div>
       {task.description && <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.5, marginBottom: 8 }}>{task.description.slice(0, 120)}{task.description.length > 120 ? "…" : ""}</div>}
       <ProgressBar subtasks={task.subtasks} />
-      <TimeTracker task={task} onUpdate={onTimeUpdate} />
       <div style={{ display: "flex", gap: 5, marginTop: 12, alignItems: "center" }}>
         <button onClick={() => onEdit(task)} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 6, padding: "5px 10px", fontSize: 12, fontWeight: 600 }}>Edit</button>
         <button onClick={() => onFrog(task.id)} style={{ background: task.isFrog ? COLORS.frogDim : COLORS.surface3, color: task.isFrog ? COLORS.frog : COLORS.textMuted, borderRadius: 6, padding: "5px 10px", fontSize: 12, fontWeight: 600, border: `1px solid ${task.isFrog ? COLORS.frogBorder : COLORS.border}` }}>{task.isFrog ? "🐸 Unfrog" : "🐸"}</button>
@@ -772,6 +771,147 @@ function SummarySection({ title, children }) {
 }
 
 // ── AnalyticsView ──────────────────────────────────────────────────────────────
+// ── Weekly Summary ─────────────────────────────────────────────────────────────
+function WeeklySummary({ tasks }) {
+  const [copied, setCopied] = useState(false);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = last week, -1 = two weeks ago etc
+
+  // Calculate the Monday-Sunday of the target week
+  function getWeekRange(offset) {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) + (offset * 7));
+    monday.setHours(0,0,0,0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23,59,59,999);
+    return { monday, sunday };
+  }
+
+  const { monday, sunday } = getWeekRange(weekOffset === 0 ? -1 : weekOffset);
+  const mondayStr = monday.toISOString().split("T")[0];
+  const sundayStr = sunday.toISOString().split("T")[0];
+
+  const weekLabel = weekOffset === -1
+    ? "Last Week"
+    : weekOffset === -2
+    ? "Two Weeks Ago"
+    : monday.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + " – " + sunday.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+
+  const completed = tasks.filter(t =>
+    t.completedAt &&
+    t.completedAt.split("T")[0] >= mondayStr &&
+    t.completedAt.split("T")[0] <= sundayStr
+  );
+
+  const inProgress = tasks.filter(t => t.status === "In Progress");
+  const overdue = tasks.filter(t => t.due && t.due < new Date().toISOString().split("T")[0] && t.status !== "Done");
+  const frogsCompleted = completed.filter(t => t.isFrog);
+
+  function formatDate(iso) {
+    return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  }
+
+  function buildBulletList() {
+    const lines = [];
+    const weekRange = `${monday.toLocaleDateString("en-GB", { day: "numeric", month: "long" })} – ${sunday.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`;
+    lines.push(`Weekly Summary — ${weekRange}`);
+    lines.push("");
+
+    if (completed.length === 0) {
+      lines.push("Completed Tasks: None recorded this week.");
+    } else {
+      lines.push(`Completed Tasks (${completed.length}):`);
+      completed.forEach(t => {
+        const dateStr = t.completedAt ? formatDate(t.completedAt.split("T")[0]) : "";
+        const rating = t.happiness ? ` (rated ${t.happiness}/5)` : "";
+        const priority = t.priority === "High" ? " [HIGH]" : "";
+        lines.push(`  • ${t.title}${priority}${rating} — completed ${dateStr}`);
+        if (t.subtasks.length > 0) {
+          const done = t.subtasks.filter(s => s.done).length;
+          lines.push(`    └ ${done}/${t.subtasks.length} subtasks completed`);
+        }
+      });
+    }
+
+    lines.push("");
+
+    if (inProgress.length > 0) {
+      lines.push(`In Progress (${inProgress.length}):`);
+      inProgress.forEach(t => {
+        const due = t.due ? ` (due ${formatDate(t.due)})` : "";
+        lines.push(`  • ${t.title}${due}`);
+      });
+      lines.push("");
+    }
+
+    if (overdue.length > 0) {
+      lines.push(`Overdue / Needs Attention (${overdue.length}):`);
+      overdue.forEach(t => {
+        lines.push(`  • ${t.title} — was due ${formatDate(t.due)}`);
+      });
+      lines.push("");
+    }
+
+    const upcoming = tasks.filter(t => {
+      const nextMonday = new Date(monday);
+      nextMonday.setDate(monday.getDate() + 7);
+      const nextSunday = new Date(nextMonday);
+      nextSunday.setDate(nextMonday.getDate() + 6);
+      return t.due && t.due >= nextMonday.toISOString().split("T")[0] && t.due <= nextSunday.toISOString().split("T")[0] && t.status !== "Done";
+    });
+
+    if (upcoming.length > 0) {
+      lines.push(`Due Next Week (${upcoming.length}):`);
+      upcoming.forEach(t => {
+        lines.push(`  • ${t.title} — due ${formatDate(t.due)}`);
+      });
+      lines.push("");
+    }
+
+    lines.push(`Stats: ${completed.length} tasks completed, ${frogsCompleted.length} priority frog${frogsCompleted.length !== 1 ? "s" : ""} tackled, ${overdue.length} overdue.`);
+    return lines.join("
+");
+  }
+
+  function copyToClipboard() {
+    navigator.clipboard.writeText(buildBulletList()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  const bulletText = buildBulletList();
+
+  return (
+    <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700 }}>📋 Weekly Summary</div>
+          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>Ready to paste into your Monday report</div>
+        </div>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <button onClick={() => setWeekOffset(w => w - 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 6, padding: "5px 10px", fontSize: 12, border: `1px solid ${COLORS.border}` }}>←</button>
+          <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.text, minWidth: 100, textAlign: "center" }}>{weekLabel}</span>
+          <button onClick={() => setWeekOffset(w => Math.min(w + 1, -1))} disabled={weekOffset >= -1} style={{ background: COLORS.surface3, color: weekOffset >= -1 ? COLORS.textMuted : COLORS.text, borderRadius: 6, padding: "5px 10px", fontSize: 12, border: `1px solid ${COLORS.border}`, opacity: weekOffset >= -1 ? 0.4 : 1 }}>→</button>
+          <button onClick={copyToClipboard} style={{ background: copied ? COLORS.frogDim : COLORS.accentDim, color: copied ? COLORS.frog : COLORS.accent, borderRadius: 7, padding: "6px 14px", fontSize: 12, fontWeight: 700, border: `1px solid ${copied ? COLORS.frogBorder : COLORS.accent+"30"}`, transition: "all 0.2s" }}>
+            {copied ? "✓ Copied!" : "Copy"}
+          </button>
+        </div>
+      </div>
+
+      <pre style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 14, fontSize: 12, color: COLORS.text, lineHeight: 1.8, fontFamily: "'DM Sans', system-ui, sans-serif", whiteSpace: "pre-wrap", wordBreak: "break-word", maxHeight: 360, overflow: "auto" }}>
+        {bulletText}
+      </pre>
+
+      <div style={{ marginTop: 10, fontSize: 11, color: COLORS.textMuted }}>
+        {completed.length} completed · {inProgress.length} in progress · {overdue.length} overdue this week
+      </div>
+    </div>
+  );
+}
+
 function AnalyticsView({ tasks }) {
   const todayStr = today();
   const completedLast7 = Array.from({ length: 7 }, (_, i) => { const d = daysAgo(6-i); return { date: d, count: tasks.filter(t => t.completedAt && t.completedAt.startsWith(d)).length }; });
@@ -790,6 +930,7 @@ function AnalyticsView({ tasks }) {
   return (
     <div style={{ padding: "0 0 40px" }}>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Analytics</h2>
+      <WeeklySummary tasks={tasks} />
       <div className="stats-grid-4">
         {[
           { label: "Avg Completion", value: `${(avgMs/86400000).toFixed(1)}d`, sub: "create to done" },
@@ -1892,20 +2033,23 @@ function App() {
 
   // Auto show end-of-day journal prompt
   useEffect(() => {
-    const lastJournal = localStorage.getItem("vtm_journal_shown");
-    if (lastJournal === today()) return;
     function checkTime() {
-      if (!workHours) return;
+      const lastJournal = localStorage.getItem("vtm_journal_shown");
+      if (lastJournal === today()) return; // already shown today
+      if (!workHours?.end) return;
       const now = new Date();
       const [eh, em] = workHours.end.split(":").map(Number);
-      if (now.getHours() > eh || (now.getHours() === eh && now.getMinutes() >= em)) {
+      const endMinutes = eh * 60 + em;
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      if (nowMinutes >= endMinutes) {
         setShowJournal(true);
         localStorage.setItem("vtm_journal_shown", today());
       }
     }
-    checkTime();
-    const interval = setInterval(checkTime, 60000);
-    return () => clearInterval(interval);
+    // Check immediately on mount and whenever workHours change
+    const t = setTimeout(checkTime, 500);
+    const interval = setInterval(checkTime, 30000);
+    return () => { clearTimeout(t); clearInterval(interval); };
   }, [workHours]);
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }, [tasks]);
@@ -2082,7 +2226,7 @@ function App() {
                     <span style={{ background: COLORS.surface3, color: COLORS.textMuted, fontSize: 11, padding: "1px 7px", borderRadius: 10, border: `1px solid ${COLORS.border}`, fontWeight: 500 }}>{colTasks.length}</span>
                   </div>
                   {colTasks.map(t => (
-                    <TaskCard key={t.id} task={t} projects={projects} onEdit={setEditingTask} onDelete={deleteTask} onFrog={toggleFrog} onStatusChange={setStatus} onSaveBreakdown={saveBreakdown} onTimeUpdate={updateTimeSpent}
+                    <TaskCard key={t.id} task={t} projects={projects} onEdit={setEditingTask} onDelete={deleteTask} onFrog={toggleFrog} onStatusChange={setStatus} onSaveBreakdown={saveBreakdown}
                       isDragging={dragging===t.id} onDragStart={() => setDragging(t.id)}
                       onDragOver={e => { e.preventDefault(); setDragOver(t.id); }}
                       onDrop={e => { e.preventDefault(); handleDrop(t.id, col); }} />
