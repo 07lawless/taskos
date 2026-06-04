@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TaskOS</title>
+  <title>Lawless OS</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -15,6 +15,7 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const STORAGE_KEY = "vtm_tasks_v1";
 const WELLBEING_KEY = "vtm_wellbeing_v1";
+const USER_KEY = "vtm_user_v1";
 const COLORS = {
   bg: "#f4f4f6", surface: "#ffffff", surface2: "#f9f9fb", surface3: "#efeff2",
   border: "#e0e0e6", borderHover: "#c8c8d4", text: "#1a1a24", textMuted: "#9090a0",
@@ -53,11 +54,11 @@ const SAMPLE_TASKS = [
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'DM Sans', system-ui, sans-serif; }
+  body { background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'DM Sans', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: ${COLORS.surface2}; }
   ::-webkit-scrollbar-thumb { background: ${COLORS.border}; border-radius: 3px; }
-  input, textarea, select { background: ${COLORS.surface}; border: 1px solid ${COLORS.border}; color: ${COLORS.text}; border-radius: 8px; padding: 10px 14px; font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
+  input, textarea, select { background: ${COLORS.surface}; border: 1px solid ${COLORS.border}; color: ${COLORS.text}; border-radius: 8px; padding: 10px 14px; font-family: 'DM Sans', system-ui, sans-serif; font-size: 16px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
   input:focus, textarea:focus, select:focus { border-color: ${COLORS.accent}; box-shadow: 0 0 0 3px ${COLORS.accentDim}; }
   input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; }
   input[type="range"] { padding: 0; height: 6px; cursor: pointer; accent-color: ${COLORS.accent}; }
@@ -69,6 +70,30 @@ const css = `
   .ai-thinking span { display:inline-block; animation: pulse 1.2s ease infinite; }
   .ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
   .ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
+  .board-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .stats-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stats-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+  .stats-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .wellbeing-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 12px; height: 58px; }
+  .view-toggle { display: flex; gap: 2px; background: ${COLORS.surface3}; border-radius: 9px; padding: 3px; border: 1px solid ${COLORS.border}; }
+  .page-pad { max-width: 1200px; margin: 0 auto; padding: 20px 24px 0; }
+  @media (max-width: 768px) {
+    .board-grid { grid-template-columns: 1fr; gap: 24px; }
+    .stats-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .stats-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .stats-grid-2 { grid-template-columns: 1fr; }
+    .wellbeing-metrics { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .form-grid-3 { grid-template-columns: 1fr; }
+    .header-inner { height: auto; flex-wrap: wrap; padding: 10px 16px; gap: 8px; }
+    .page-pad { padding: 14px 14px 0; }
+    input, textarea, select { font-size: 16px; }
+  }
+  @media (max-width: 480px) {
+    .wellbeing-metrics { grid-template-columns: repeat(2, 1fr); }
+    .stats-grid-3 { grid-template-columns: 1fr; }
+  }
 `;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -150,11 +175,11 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
   const hasBreakdown = breakdown && (breakdown.summary || breakdown.steps?.length);
 
   return (
-    <div style={{ marginTop: 12, borderTop: `1px solid ${COLORS.frogBorder}`, paddingTop: 12 }}>
+    <div style={{ marginTop: 12, borderTop: `1px solid ${COLORS.border}`, paddingTop: 12 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 14 }}>✨</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.frogDark, letterSpacing: 0.3 }}>AI Breakdown</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.accent, letterSpacing: 0.3 }}>AI Breakdown</span>
         </div>
         <button onClick={generate} disabled={state === "loading"} style={{ background: state === "loading" ? COLORS.surface3 : COLORS.frog, color: state === "loading" ? COLORS.textMuted : "#fff", borderRadius: 6, padding: "4px 12px", fontSize: 11, fontWeight: 600, opacity: state === "loading" ? 0.7 : 1 }}>
           {state === "loading" ? "Thinking..." : hasBreakdown ? "Regenerate" : "Break it down"}
@@ -355,7 +380,7 @@ function WellbeingView({ checkins, tasks, onOpenCheckin }) {
       {todayEntry ? (
         <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>Today's Check-in</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
+          <div className="wellbeing-metrics">
             {metrics.map(([key, cfg]) => (
               <div key={key} style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 22, marginBottom: 4 }}>{MOOD_EMOJIS[todayEntry[key] - 1]}</div>
@@ -377,7 +402,7 @@ function WellbeingView({ checkins, tasks, onOpenCheckin }) {
       )}
 
       {/* Week comparison */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 16 }}>
+      <div className="stats-grid-3">
         <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 8 }}>Avg Mood This Week</div>
           <div style={{ fontSize: 26, fontWeight: 700, color: thisWeek.length ? moodColor(Math.round(avg(thisWeek, "mood"))) : COLORS.textMuted }}>{avg(thisWeek, "mood") || "—"}</div>
@@ -441,7 +466,7 @@ function WellbeingView({ checkins, tasks, onOpenCheckin }) {
       </div>
 
       {/* Stress & Sleep */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+      <div className="stats-grid-2">
         {["stress","sleep"].map(key => {
           const cfg = METRIC_CONFIG[key];
           const vals = last14.filter(d => d.entry).map(d => d.entry[key]);
@@ -530,7 +555,7 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
         </select>
         <button onClick={() => onDelete(task.id)} style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 6, padding: "5px 8px", fontSize: 12 }}>✕</button>
       </div>
-      {task.isFrog && <AIBreakdownPanel task={task} onSaveBreakdown={onSaveBreakdown} />}
+      <AIBreakdownPanel task={task} onSaveBreakdown={onSaveBreakdown} />
     </div>
   );
 }
@@ -557,7 +582,7 @@ function TaskModal({ task, onSave, onClose }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div><label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>TITLE *</label><input value={form.title} onChange={e => setF("title", e.target.value)} placeholder="What needs to be done?" /></div>
           <div><label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>DESCRIPTION</label><textarea value={form.description} onChange={e => setF("description", e.target.value)} placeholder="Add context or notes…" /></div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          <div className="form-grid-3">
             <div><label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>PRIORITY</label><select value={form.priority} onChange={e => setF("priority", e.target.value)}>{Object.keys(PRIORITY_CONFIG).map(p => <option key={p}>{p}</option>)}</select></div>
             <div><label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>STATUS</label><select value={form.status} onChange={e => setF("status", e.target.value)}>{STATUS_COLS.map(s => <option key={s}>{s}</option>)}</select></div>
             <div><label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>DUE DATE</label><input type="date" value={form.due} onChange={e => setF("due", e.target.value)} /></div>
@@ -702,7 +727,7 @@ function AnalyticsView({ tasks }) {
   return (
     <div style={{ padding: "0 0 40px" }}>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Analytics</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
+      <div className="stats-grid-4">
         {[
           { label: "Avg Completion", value: `${(avgMs/86400000).toFixed(1)}d`, sub: "create to done" },
           { label: "Subtask Rate", value: `${subRate}%`, sub: `${allSubs.filter(s=>s.done).length}/${allSubs.length} done`, color: COLORS.frog },
@@ -780,10 +805,97 @@ function ImportExportModal({ tasks, onImport, onClose }) {
   );
 }
 
+
+// ── Onboarding Modal ───────────────────────────────────────────────────────────
+function OnboardingModal({ onComplete }) {
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [error, setError] = React.useState("");
+
+  function handleSubmit() {
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("Please enter both your first and last name.");
+      return;
+    }
+    onComplete({ firstName: firstName.trim(), lastName: lastName.trim() });
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: COLORS.surface, borderRadius: 16, padding: 36, maxWidth: 440, width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.18)", border: `1px solid ${COLORS.border}`, textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>👋</div>
+        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Welcome to Lawless OS</h2>
+        <p style={{ fontSize: 14, color: COLORS.textDim, marginBottom: 28, lineHeight: 1.6 }}>Your personal operating system for tasks and wellbeing. Let's start by getting your name.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>FIRST NAME</label>
+            <input value={firstName} onChange={e => setFirstName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="e.g. Danny" autoFocus />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>LAST NAME</label>
+            <input value={lastName} onChange={e => setLastName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="e.g. Lawless" />
+          </div>
+          {error && <div style={{ fontSize: 13, color: COLORS.high, background: COLORS.highDim, borderRadius: 8, padding: "8px 12px" }}>{error}</div>}
+          <button onClick={handleSubmit} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "13px", fontSize: 14, fontWeight: 700, marginTop: 4 }}>
+            Get Started
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Greeting Banner ────────────────────────────────────────────────────────────
+function GreetingBanner({ user, tasks }) {
+  const todayStr = today();
+  const dueTodayCount = tasks.filter(t => t.due === todayStr && t.status !== "Done").length;
+  const totalActive = tasks.filter(t => t.status !== "Done").length;
+
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+
+  const dayName = new Date().toLocaleDateString("en-GB", { weekday: "long" });
+  const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+
+  const happyPhrases = [
+    `Happy ${dayName}!`,
+    "Hope you're having a great day!",
+    "Let's make today count!",
+    "You've got this!",
+    "Ready to be productive?",
+  ];
+  const phrase = happyPhrases[new Date().getDate() % happyPhrases.length];
+
+  return (
+    <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "18px 22px", marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
+            {timeGreeting}, {user.firstName}! {phrase}
+          </div>
+          <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>
+            {dateStr} — Here are your tasks for today.
+            {dueTodayCount > 0
+              ? <span style={{ color: COLORS.medium, fontWeight: 600 }}> {dueTodayCount} task{dueTodayCount !== 1 ? "s" : ""} due today.</span>
+              : <span style={{ color: COLORS.frog, fontWeight: 600 }}> Nothing overdue — great work!</span>
+            }
+            {" "}{totalActive > 0 && <span>{totalActive} active task{totalActive !== 1 ? "s" : ""} in progress.</span>}
+          </div>
+        </div>
+        <div style={{ textAlign: "right", flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5 }}>LOGGED IN AS</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text }}>{user.firstName} {user.lastName}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── App ────────────────────────────────────────────────────────────────────────
 function App() {
   const [tasks, setTasks] = useState(() => { try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : SAMPLE_TASKS; } catch { return SAMPLE_TASKS; } });
   const [checkins, setCheckins] = useState(() => { try { const s = localStorage.getItem(WELLBEING_KEY); return s ? JSON.parse(s) : []; } catch { return []; } });
+  const [user, setUser] = useState(() => { try { const s = localStorage.getItem(USER_KEY); return s ? JSON.parse(s) : null; } catch { return null; } });
   const [history, setHistory] = useState([]);
   const [future, setFuture] = useState([]);
   const [view, setView] = useState("board");
@@ -848,6 +960,11 @@ function App() {
 
   function saveHappiness(taskId, rating) { setTasks(ts => ts.map(t => t.id === taskId ? { ...t, happiness: rating } : t)); }
 
+  function saveUser(userData) {
+    setUser(userData);
+    localStorage.setItem(USER_KEY, JSON.stringify(userData));
+  }
+
   function saveCheckin(entry) {
     setCheckins(prev => { const filtered = prev.filter(c => c.date !== entry.date); return [...filtered, entry]; });
   }
@@ -875,9 +992,12 @@ function App() {
       <style>{css}</style>
 
       {/* Header */}
-      <div style={{ background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`, padding: "0 24px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: 12, height: 58 }}>
-          <div style={{ fontWeight: 700, fontSize: 17, letterSpacing: -0.3, flex: 1 }}>TaskOS</div>
+      <div style={{ background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`, padding: "0 16px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+        <div className="header-inner">
+          <div style={{ flex: 1, minWidth: 80 }}>
+          <div style={{ fontWeight: 800, fontSize: 17, letterSpacing: -0.3, lineHeight: 1.1 }}>Lawless OS</div>
+          <div style={{ fontSize: 10, color: COLORS.textMuted, fontWeight: 500, letterSpacing: 0.5 }}>LAWLESS OPERATING SYSTEM</div>
+        </div>
 
           {/* Undo / Redo */}
           <div style={{ display: "flex", gap: 2 }}>
@@ -886,7 +1006,7 @@ function App() {
           </div>
 
           {/* View toggle */}
-          <div style={{ display: "flex", gap: 2, background: COLORS.surface3, borderRadius: 9, padding: 3, border: `1px solid ${COLORS.border}` }}>
+          <div className="view-toggle">
             {[["board","Board"],["wellbeing","Wellbeing"],["analytics","Analytics"]].map(([v, label]) => (
               <button key={v} onClick={() => setView(v)} style={{ background: view===v ? COLORS.surface : "transparent", color: view===v ? COLORS.text : COLORS.textMuted, borderRadius: 7, padding: "5px 14px", fontSize: 13, fontWeight: 500, boxShadow: view===v ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>{label}</button>
             ))}
@@ -898,10 +1018,13 @@ function App() {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "20px 24px 0" }}>
+      <div className="page-pad">
+        {/* Greeting Banner */}
+        {user && view === "board" && <GreetingBanner user={user} tasks={tasks} />}
+
         {/* Frog Banner */}
         {frogTask && view === "board" && (
-          <div style={{ background: COLORS.frogDim, border: `1px solid ${COLORS.frogBorder}`, borderRadius: 10, padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+          <div style={{ background: COLORS.frogDim, border: `1px solid ${COLORS.frogBorder}`, borderRadius: 10, padding: "12px 18px", display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
             <span style={{ fontSize: 22 }}>🐸</span>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: COLORS.frog, fontWeight: 700, letterSpacing: 0.6, marginBottom: 2, textTransform: "uppercase" }}>Eat the Frog — Do this first</div>
@@ -914,7 +1037,7 @@ function App() {
 
         {/* Board */}
         {view === "board" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18 }}>
+          <div className="board-grid">
             {STATUS_COLS.map(col => {
               const colTasks = tasks.filter(t => t.status === col);
               return (
@@ -943,6 +1066,9 @@ function App() {
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
       </div>
+
+      {/* Onboarding */}
+      {!user && <OnboardingModal onComplete={saveUser} />}
 
       {/* Modals */}
       {(showNew || editingTask) && <TaskModal task={editingTask} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
