@@ -161,9 +161,11 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
   const [state, setState] = useState("idle");
   const [breakdown, setBreakdown] = useState(task.aiBreakdown || null);
   const [stepsDone, setStepsDone] = useState({});
+  const [open, setOpen] = useState(!!task.aiBreakdown);
 
   async function generate() {
     setState("loading");
+    setOpen(true);
     try {
       const result = await fetchAIBreakdown(task);
       setBreakdown(result);
@@ -176,15 +178,22 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
 
   return (
     <div style={{ marginTop: 12, borderTop: `1px solid ${COLORS.border}`, paddingTop: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={() => setOpen(o => !o)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", padding: "4px 0" }}>
           <span style={{ fontSize: 14 }}>✨</span>
           <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.accent, letterSpacing: 0.3 }}>AI Breakdown</span>
-        </div>
+          {hasBreakdown && <span style={{ fontSize: 10, color: COLORS.textMuted, marginLeft: 2 }}>{open ? "▲" : "▼"}</span>}
+        </button>
         <button onClick={generate} disabled={state === "loading"} style={{ background: state === "loading" ? COLORS.surface3 : COLORS.frog, color: state === "loading" ? COLORS.textMuted : "#fff", borderRadius: 6, padding: "4px 12px", fontSize: 11, fontWeight: 600, opacity: state === "loading" ? 0.7 : 1 }}>
           {state === "loading" ? "Thinking..." : hasBreakdown ? "Regenerate" : "Break it down"}
         </button>
       </div>
+      {!open && hasBreakdown && (
+        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 6, fontStyle: "italic" }}>
+          {breakdown.steps?.length} steps · tap to expand
+        </div>
+      )}
+      {open && <div style={{ marginTop: 10 }}>
       {state === "loading" && (
         <div className="ai-thinking" style={{ background: COLORS.surface, borderRadius: 8, padding: "12px 14px", fontSize: 13, color: COLORS.textMuted, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
           <span>●</span><span>●</span><span>●</span><span style={{ marginLeft: 4 }}>Analysing your task...</span>
@@ -227,6 +236,7 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
           )}
         </div>
       )}
+      </div>}
     </div>
   );
 }
