@@ -95,7 +95,7 @@ const css = `
     .header-inner { height: 54px; padding: 0 12px; }
     .bottom-nav { display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e0e0e6; z-index: 200; padding: 6px 0 env(safe-area-inset-bottom, 6px); box-shadow: 0 -2px 12px rgba(0,0,0,0.06); }
     .bottom-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px 0; background: none; border: none; cursor: pointer; font-family: inherit; }
-    .bottom-nav-item span.icon { font-size: 20px; line-height: 1; }
+    .bottom-nav-item span.icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
     .bottom-nav-item span.label { font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
     .bottom-nav-item span.icon { position: relative; }
     .bottom-nav-item.active span.icon::after { content: ""; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
@@ -932,18 +932,51 @@ function AnalyticsView({ tasks }) {
   const allSubs = tasks.flatMap(t => t.subtasks);
   const subRate = allSubs.length ? Math.round((allSubs.filter(s => s.done).length / allSubs.length) * 100) : 0;
   const aiBreakdownsGenerated = tasks.filter(t => t.aiBreakdown?.steps?.length > 0).length;
+
+  // On-time rate: completed tasks where completedAt <= due
+  const tasksWithDue = completedTasks.filter(t => t.due);
+  const onTime = tasksWithDue.filter(t => t.completedAt.split("T")[0] <= t.due).length;
+  const onTimeRate = tasksWithDue.length ? Math.round((onTime / tasksWithDue.length) * 100) : null;
+
+  // Current streak: consecutive days with at least 1 completion ending today or yesterday
+  let streak = 0;
+  for (let i = 0; i < 60; i++) {
+    const d = daysAgo(i);
+    if (tasks.some(t => t.completedAt && t.completedAt.startsWith(d))) streak++;
+    else if (i > 0) break;
+  }
+
+  // Busiest day of week
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const byDay = Array(7).fill(0);
+  completedTasks.forEach(t => { byDay[new Date(t.completedAt).getDay()]++; });
+  const busiestDay = byDay.indexOf(Math.max(...byDay));
+
+  // Priority completion rate
+  const byPriorityCompletion = Object.keys(PRIORITY_CONFIG).map(p => {
+    const total = tasks.filter(t => t.priority === p).length;
+    const done = tasks.filter(t => t.priority === p && t.status === "Done").length;
+    return { priority: p, total, done, rate: total ? Math.round((done/total)*100) : 0 };
+  });
+
+  // Task completion by status
+  const statusCounts = STATUS_COLS.map(s => ({ status: s, count: tasks.filter(t => t.status === s).length }));
+  const totalTasks = tasks.length;
+
   const svgH = 120, svgW = 380;
 
   return (
     <div style={{ padding: "0 0 40px" }}>
       <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>Analytics</h2>
       <WeeklySummary tasks={tasks} />
+
+      {/* Key stats */}
       <div className="stats-grid-4">
         {[
-          { label: "Avg Completion", value: `${(avgMs/86400000).toFixed(1)}d`, sub: "create to done" },
-          { label: "Subtask Rate", value: `${subRate}%`, sub: `${allSubs.filter(s=>s.done).length}/${allSubs.length} done`, color: COLORS.frog },
-          { label: "Frogs Done", value: `${frogsCompleted}`, sub: `of ${tasks.filter(t=>t.isFrog).length} active`, color: COLORS.frog },
-          { label: "AI Breakdowns", value: `${aiBreakdownsGenerated}`, sub: "tasks analysed", color: COLORS.accent },
+          { label: "Avg Completion", value: completedTasks.length ? `${(avgMs/86400000).toFixed(1)}d` : "—", sub: "create to done" },
+          { label: "On-time Rate", value: onTimeRate !== null ? `${onTimeRate}%` : "—", sub: `${onTime} of ${tasksWithDue.length} on time`, color: onTimeRate >= 80 ? COLORS.frog : onTimeRate >= 50 ? COLORS.medium : COLORS.high },
+          { label: "Current Streak", value: `${streak}d`, sub: streak > 0 ? "days with completions" : "no completions yet", color: streak >= 5 ? COLORS.frog : COLORS.accent },
+          { label: "Busiest Day", value: byDay[busiestDay] > 0 ? dayNames[busiestDay] : "—", sub: byDay[busiestDay] > 0 ? `${byDay[busiestDay]} completions` : "not enough data" },
         ].map(c => (
           <div key={c.label} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
             <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" }}>{c.label}</div>
@@ -952,22 +985,101 @@ function AnalyticsView({ tasks }) {
           </div>
         ))}
       </div>
+
+      {/* Secondary stats */}
+      <div className="stats-grid-4" style={{ marginBottom: 20 }}>
+        {[
+          { label: "Subtask Rate", value: `${subRate}%`, sub: `${allSubs.filter(s=>s.done).length}/${allSubs.length} done`, color: COLORS.frog },
+          { label: "Frogs Done", value: `${frogsCompleted}`, sub: `of ${tasks.filter(t=>t.isFrog).length} flagged`, color: COLORS.frog },
+          { label: "AI Breakdowns", value: `${aiBreakdownsGenerated}`, sub: "tasks analysed", color: COLORS.accent },
+          { label: "Total Tasks", value: `${totalTasks}`, sub: `${statusCounts.find(s=>s.status==="Done")?.count||0} completed` },
+        ].map(c => (
+          <div key={c.label} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+            <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" }}>{c.label}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: c.color || COLORS.accent }}>{c.value}</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>{c.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Task pipeline */}
+      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>Task Pipeline</div>
+        <div style={{ display: "flex", gap: 0, borderRadius: 8, overflow: "hidden", height: 28, marginBottom: 12 }}>
+          {statusCounts.filter(s => s.count > 0).map(({ status, count }) => {
+            const pct = Math.round((count / totalTasks) * 100);
+            const colors = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
+            return <div key={status} style={{ width: `${pct}%`, background: colors[status], display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {pct > 12 && <span style={{ fontSize: 11, fontWeight: 700, color: "#fff" }}>{pct}%</span>}
+            </div>;
+          })}
+        </div>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          {statusCounts.map(({ status, count }) => {
+            const colors = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
+            return <div key={status} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: colors[status] }} />
+              <span style={{ color: COLORS.textMuted }}>{status}</span>
+              <span style={{ fontWeight: 700, color: COLORS.text }}>{count}</span>
+            </div>;
+          })}
+        </div>
+      </div>
+
+      {/* Completions last 7 days */}
       <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>Completions — Last 7 Days</div>
         <svg viewBox={`0 0 ${svgW} ${svgH+24}`} style={{ width: "100%", maxWidth: svgW }}>
           {completedLast7.map((d, i) => { const barH = (d.count/maxBar)*svgH; const x = (i/7)*svgW+8; const w = svgW/7-16; return (<g key={d.date}><rect x={x} y={svgH-barH} width={w} height={barH||2} rx={4} fill={d.date===todayStr?COLORS.accent:COLORS.accentDim} />{d.count>0&&<text x={x+w/2} y={svgH-barH-6} textAnchor="middle" fill={COLORS.textMuted} fontSize={11}>{d.count}</text>}<text x={x+w/2} y={svgH+17} textAnchor="middle" fill={COLORS.textMuted} fontSize={10}>{new Date(d.date+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short"}).slice(0,2)}</text></g>); })}
         </svg>
       </div>
+
+      {/* 30-day trend */}
       <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>Completions — Last 30 Days</div>
         <svg viewBox={`0 0 ${svgW} 80`} style={{ width: "100%", maxWidth: svgW }}>
-          <polyline points={completedLast30.map((c,i) => { const x=(i/29)*(svgW-8)+4; const y=70-(c/max30)*60; return `${x},${y}`; }).join(" ")} fill="none" stroke={COLORS.accent} strokeWidth={2} strokeLinejoin="round" />
+          <polyline points={completedLast30.map((c,i) => { const x=(i/29)*(svgW-8)+4; const y=70-(c/max30)*60; return x+","+y; }).join(" ")} fill="none" stroke={COLORS.accent} strokeWidth={2} strokeLinejoin="round" />
           {completedLast30.map((c,i) => { if(!c) return null; const x=(i/29)*(svgW-8)+4; const y=70-(c/max30)*60; return <circle key={i} cx={x} cy={y} r={3} fill={COLORS.accent} />; })}
         </svg>
       </div>
-      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>By Priority</div>
-        {byPriority.map(({ priority, count }) => { const cfg = PRIORITY_CONFIG[priority]; const max = Math.max(...byPriority.map(b=>b.count),1); return (<div key={priority} style={{ marginBottom: 14 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}><span style={{ color: cfg.color, fontWeight: 600 }}>{priority}</span><span style={{ color: COLORS.textMuted }}>{count}</span></div><div style={{ height: 6, background: COLORS.surface3, borderRadius: 4, overflow: "hidden" }}><div style={{ height: "100%", width: `${(count/max)*100}%`, background: cfg.color, borderRadius: 4, transition: "width 0.5s" }} /></div></div>); })}
+
+      {/* Day of week heatmap */}
+      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>Productivity by Day of Week</div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {dayNames.map((day, i) => {
+            const count = byDay[i];
+            const maxD = Math.max(...byDay, 1);
+            const intensity = count / maxD;
+            return (
+              <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                <div style={{ width: "100%", height: 44, borderRadius: 6, background: count > 0 ? `rgba(79,70,229,${0.15 + intensity * 0.85})` : COLORS.surface3, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {count > 0 && <span style={{ fontSize: 12, fontWeight: 700, color: intensity > 0.5 ? "#fff" : COLORS.accent }}>{count}</span>}
+                </div>
+                <span style={{ fontSize: 10, color: i === busiestDay ? COLORS.accent : COLORS.textMuted, fontWeight: i === busiestDay ? 700 : 400 }}>{day}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Priority completion rates */}
+      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>Completion Rate by Priority</div>
+        {byPriorityCompletion.map(({ priority, total, done, rate }) => {
+          const cfg = PRIORITY_CONFIG[priority];
+          return (
+            <div key={priority} style={{ marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 5 }}>
+                <span style={{ color: cfg.color, fontWeight: 600 }}>{priority}</span>
+                <span style={{ color: COLORS.textMuted }}>{done}/{total} done — <strong style={{ color: COLORS.text }}>{rate}%</strong></span>
+              </div>
+              <div style={{ height: 6, background: COLORS.surface3, borderRadius: 4, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${rate}%`, background: cfg.color, borderRadius: 4, transition: "width 0.5s" }} />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -2052,6 +2164,145 @@ function CorrelationAnalysis({ tasks, checkins }) {
 }
 
 
+// ── Settings View ─────────────────────────────────────────────────────────────
+function SettingsView({ user, workHours, projects, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData }) {
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [wStart, setWStart] = useState(workHours?.start || "09:00");
+  const [wEnd, setWEnd] = useState(workHours?.end || "17:30");
+  const [saved, setSaved] = useState("");
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [newProjName, setNewProjName] = useState("");
+  const [newProjColor, setNewProjColor] = useState("violet");
+  const [editingProj, setEditingProj] = useState(null);
+
+  function saveProfile() {
+    if (!firstName.trim() || !lastName.trim()) return;
+    onSaveUser({ firstName: firstName.trim(), lastName: lastName.trim() });
+    setSaved("profile"); setTimeout(() => setSaved(""), 2000);
+  }
+
+  function saveHours() {
+    onSaveWorkHours({ start: wStart, end: wEnd });
+    setSaved("hours"); setTimeout(() => setSaved(""), 2000);
+  }
+
+  function handleAddProject() {
+    if (!newProjName.trim()) return;
+    if (editingProj) {
+      onSaveProject({ ...editingProj, name: newProjName.trim(), colorId: newProjColor });
+      setEditingProj(null);
+    } else {
+      onSaveProject({ id: generateId(), name: newProjName.trim(), colorId: newProjColor });
+    }
+    setNewProjName(""); setNewProjColor("violet");
+    setSaved("projects"); setTimeout(() => setSaved(""), 2000);
+  }
+
+  function startEditProj(p) { setEditingProj(p); setNewProjName(p.name); setNewProjColor(p.colorId); }
+
+  return (
+    <div style={{ paddingBottom: 40 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>Settings</h2>
+
+      {/* Profile */}
+      <Section title="Profile">
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>FIRST NAME</label>
+            <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="First name" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>LAST NAME</label>
+            <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Last name" />
+          </div>
+        </div>
+        <SaveButton onClick={saveProfile} saved={saved === "profile"} />
+      </Section>
+
+      {/* Work Hours */}
+      <Section title="Work Hours">
+        <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>The end-of-day journal will appear automatically at your work end time.</p>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>START TIME</label>
+            <input type="time" value={wStart} onChange={e => setWStart(e.target.value)} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>END TIME</label>
+            <input type="time" value={wEnd} onChange={e => setWEnd(e.target.value)} />
+          </div>
+        </div>
+        <SaveButton onClick={saveHours} saved={saved === "hours"} />
+      </Section>
+
+      {/* Projects */}
+      <Section title="Projects">
+        <div style={{ marginBottom: 16 }}>
+          <input value={newProjName} onChange={e => setNewProjName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAddProject()} placeholder={editingProj ? "Edit project name…" : "New project name…"} style={{ marginBottom: 10 }} />
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+            {PROJECT_COLORS.map(c => (
+              <button key={c.id} onClick={() => setNewProjColor(c.id)} style={{ width: 26, height: 26, borderRadius: "50%", background: c.bg, border: `3px solid ${newProjColor === c.id ? c.text : c.border}`, transition: "border 0.15s" }} />
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleAddProject} disabled={!newProjName.trim()} style={{ background: COLORS.accent, color: "#fff", borderRadius: 7, padding: "8px 16px", fontSize: 13, fontWeight: 600, opacity: newProjName.trim() ? 1 : 0.4 }}>
+              {editingProj ? "Save" : "Add Project"}
+            </button>
+            {editingProj && <button onClick={() => { setEditingProj(null); setNewProjName(""); setNewProjColor("violet"); }} style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 7, padding: "8px 14px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>Cancel</button>}
+          </div>
+        </div>
+        {projects.length === 0 ? (
+          <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: "16px 0" }}>No projects yet.</div>
+        ) : projects.map(p => {
+          const c = getProjectColor(p.colorId);
+          return (
+            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: COLORS.surface2, borderRadius: 9, marginBottom: 8, border: `1px solid ${COLORS.border}` }}>
+              <div style={{ width: 10, height: 10, borderRadius: "50%", background: c.text, flexShrink: 0 }} />
+              <span style={{ flex: 1, fontWeight: 600, fontSize: 14 }}>{p.name}</span>
+              <button onClick={() => startEditProj(p)} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 600 }}>Edit</button>
+              <button onClick={() => onDeleteProject(p.id)} style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 6, padding: "4px 8px", fontSize: 12 }}>✕</button>
+            </div>
+          );
+        })}
+      </Section>
+
+      {/* Danger zone */}
+      <Section title="Data">
+        <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>Use Import / Export on the board to back up your tasks before clearing.</p>
+        {!showClearConfirm ? (
+          <button onClick={() => setShowClearConfirm(true)} style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.high}30` }}>Clear all task data</button>
+        ) : (
+          <div style={{ background: COLORS.highDim, borderRadius: 10, padding: 14, border: `1px solid ${COLORS.high}40` }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.high, marginBottom: 10 }}>Are you sure? This cannot be undone.</div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { onClearData(); setShowClearConfirm(false); }} style={{ background: COLORS.high, color: "#fff", borderRadius: 7, padding: "7px 14px", fontSize: 13, fontWeight: 600 }}>Yes, clear everything</button>
+              <button onClick={() => setShowClearConfirm(false)} style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 7, padding: "7px 14px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>Cancel</button>
+            </div>
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, paddingBottom: 12, borderBottom: `1px solid ${COLORS.border}` }}>{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function SaveButton({ onClick, saved }) {
+  return (
+    <button onClick={onClick} style={{ background: saved ? COLORS.frogDim : COLORS.accent, color: saved ? COLORS.frog : "#fff", borderRadius: 7, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: saved ? `1px solid ${COLORS.frogBorder}` : "none", transition: "all 0.2s" }}>
+      {saved ? "✓ Saved" : "Save Changes"}
+    </button>
+  );
+}
+
 // ── Onboarding Modal ───────────────────────────────────────────────────────────
 function OnboardingModal({ onComplete }) {
   const [firstName, setFirstName] = React.useState("");
@@ -2155,7 +2406,9 @@ function App() {
   const [showDailyPlan, setShowDailyPlan] = useState(false);
   const [showJournal, setShowJournal] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [projectFilter, setProjectFilter] = useState(null);
+  const [dueDateFilter, setDueDateFilter] = useState(null);
   const [happinessTask, setHappinessTask] = useState(null);
   const [confetti, setConfetti] = useState(false);
   const [dragging, setDragging] = useState(null);
@@ -2256,6 +2509,11 @@ function App() {
     if (projectFilter === id) setProjectFilter(null);
   }
 
+  function clearData() {
+    setTasks([]);
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
   function handleDrop(targetId, targetStatus) {
     if (!dragging) return;
     updateTasks(ts => {
@@ -2272,9 +2530,29 @@ function App() {
   }
 
   const frogTask = tasks.find(t => t.isFrog);
-  const filteredTasks = projectFilter ? tasks.filter(t => t.projectId === projectFilter) : tasks;
+  const filteredTasks = (() => {
+    let ts = tasks;
+    if (projectFilter) ts = ts.filter(t => t.projectId === projectFilter);
+    if (dueDateFilter) {
+      const now = new Date(); now.setHours(0,0,0,0);
+      const todayStr = today();
+      if (dueDateFilter === "today") ts = ts.filter(t => t.due === todayStr);
+      if (dueDateFilter === "week") {
+        const end = new Date(now); end.setDate(now.getDate() + 7);
+        ts = ts.filter(t => t.due && t.due >= todayStr && t.due <= end.toISOString().split("T")[0]);
+      }
+      if (dueDateFilter === "next_week") {
+        const start = new Date(now); start.setDate(now.getDate() + 7);
+        const end = new Date(now); end.setDate(now.getDate() + 14);
+        ts = ts.filter(t => t.due && t.due >= start.toISOString().split("T")[0] && t.due <= end.toISOString().split("T")[0]);
+      }
+      if (dueDateFilter === "overdue") ts = ts.filter(t => t.due && t.due < todayStr && t.status !== "Done");
+      if (dueDateFilter === "no_date") ts = ts.filter(t => !t.due);
+    }
+    return ts;
+  })();
   const colDotColor = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
-  const views = [["board","Board"],["calendar","Calendar"],["wellbeing","Wellbeing"],["analytics","Analytics"]];
+  const views = [["board","Board"],["calendar","Calendar"],["wellbeing","Wellbeing"],["analytics","Analytics"],["settings","Settings"]];
 
   return (
     <div style={{ minHeight: "100vh", background: COLORS.bg }}>
@@ -2294,7 +2572,7 @@ function App() {
 
           {/* Desktop view toggle */}
           <div className="view-toggle desktop-only">
-            {views.map(([v, label]) => (
+            {views.filter(([v]) => v !== "settings").map(([v, label]) => (
               <button key={v} onClick={() => setView(v)} style={{ background: view===v ? COLORS.surface : "transparent", color: view===v ? COLORS.text : COLORS.textMuted, borderRadius: 7, padding: "5px 12px", fontSize: 13, fontWeight: 500, boxShadow: view===v ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>{label}</button>
             ))}
           </div>
@@ -2322,52 +2600,62 @@ function App() {
       {/* Mobile bottom navigation */}
       <div className="bottom-nav">
         {[
-          { v: "board",     icon: "⊞", label: "Board"     },
-          { v: "calendar",  icon: "◧", label: "Calendar"  },
-          { v: "wellbeing", icon: "☼", label: "Wellbeing" },
-          { v: "analytics", icon: "◎",  label: "Analytics" },
-        ].map(({ v, icon, label }) => (
+          { v: "board", label: "Board", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
+          { v: "calendar", label: "Calendar", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
+          { v: "wellbeing", label: "Wellbeing", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> },
+          { v: "analytics", label: "Stats", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
+          { v: "settings", label: "Settings", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> },
+        ].map(({ v, label, svg }) => (
           <button key={v} className="bottom-nav-item" onClick={() => setView(v)}
             style={{ color: view === v ? COLORS.accent : COLORS.textMuted }}>
-            <span className="icon">{icon}</span>
+            <span className="icon" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 24, height: 24 }}>{svg}</span>
             <span className="label">{label}</span>
           </button>
         ))}
-        <button className="bottom-nav-item" onClick={() => setShowDaily(true)}
-          style={{ color: COLORS.textMuted }}>
-          <span className="icon">≡</span>
-          <span className="label">Daily</span>
-        </button>
-        <button className="bottom-nav-item" onClick={() => setShowDailyPlan(true)}
-          style={{ color: COLORS.textMuted }}>
-          <span className="icon">◇</span>
-          <span className="label">Plan</span>
-        </button>
       </div>
 
       <div className="page-pad">
         {user && view === "board" && <GreetingBanner user={user} tasks={tasks} />}
 
-        {/* Project filter bar */}
-        {view === "board" && projects.length > 0 && (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14, alignItems: "center" }}>
-            <button onClick={() => setProjectFilter(null)} style={{ background: !projectFilter ? COLORS.accent : COLORS.surface3, color: !projectFilter ? "#fff" : COLORS.textMuted, borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${!projectFilter ? COLORS.accent : COLORS.border}` }}>All</button>
-            {projects.map(p => {
-              const c = getProjectColor(p.colorId);
-              const active = projectFilter === p.id;
-              return (
-                <button key={p.id} onClick={() => setProjectFilter(active ? null : p.id)}
-                  style={{ background: active ? c.text : c.bg, color: active ? "#fff" : c.text, borderRadius: 20, padding: "4px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${c.border}` }}>
-                  {p.name}
-                </button>
-              );
-            })}
-            <button onClick={() => setShowProjectManager(true)} style={{ background: "none", color: COLORS.textMuted, borderRadius: 20, padding: "4px 10px", fontSize: 12, border: `1px dashed ${COLORS.border}` }}>+ Manage</button>
-          </div>
-        )}
-        {view === "board" && projects.length === 0 && (
+        {/* Filter bar — due date + project */}
+        {view === "board" && (
           <div style={{ marginBottom: 14 }}>
-            <button onClick={() => setShowProjectManager(true)} style={{ background: "none", color: COLORS.textMuted, borderRadius: 20, padding: "4px 12px", fontSize: 12, border: `1px dashed ${COLORS.border}` }}>+ Add project</button>
+            {/* Due date filters */}
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 8 }}>
+              {[
+                { key: null, label: "All dates" },
+                { key: "today", label: "Today" },
+                { key: "week", label: "Next 7 days" },
+                { key: "next_week", label: "Next week" },
+                { key: "overdue", label: "Overdue" },
+                { key: "no_date", label: "No date" },
+              ].map(({ key, label }) => (
+                <button key={String(key)} onClick={() => setDueDateFilter(key)}
+                  style={{ background: dueDateFilter === key ? (key === "overdue" ? COLORS.high : COLORS.accent) : COLORS.surface3, color: dueDateFilter === key ? "#fff" : COLORS.textMuted, borderRadius: 20, padding: "4px 11px", fontSize: 12, fontWeight: 600, border: `1px solid ${dueDateFilter === key ? "transparent" : COLORS.border}` }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {/* Project filters */}
+            {projects.length > 0 && (
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+                <button onClick={() => setProjectFilter(null)} style={{ background: !projectFilter ? COLORS.accent : COLORS.surface3, color: !projectFilter ? "#fff" : COLORS.textMuted, borderRadius: 20, padding: "4px 11px", fontSize: 12, fontWeight: 600, border: `1px solid ${!projectFilter ? COLORS.accent : COLORS.border}` }}>All projects</button>
+                {projects.map(p => {
+                  const c = getProjectColor(p.colorId);
+                  const active = projectFilter === p.id;
+                  return (
+                    <button key={p.id} onClick={() => setProjectFilter(active ? null : p.id)}
+                      style={{ background: active ? c.text : c.bg, color: active ? "#fff" : c.text, borderRadius: 20, padding: "4px 11px", fontSize: 12, fontWeight: 600, border: `1px solid ${c.border}` }}>
+                      {p.name}
+                    </button>
+                  );
+                })}
+                <button onClick={() => setView("settings")} style={{ background: "none", color: COLORS.textMuted, borderRadius: 20, padding: "4px 10px", fontSize: 12, border: `1px dashed ${COLORS.border}` }}>+ Projects</button>
+              </div>
+            )}
+            {projects.length === 0 && (
+              <button onClick={() => setView("settings")} style={{ background: "none", color: COLORS.textMuted, borderRadius: 20, padding: "4px 12px", fontSize: 12, border: `1px dashed ${COLORS.border}` }}>+ Add project</button>
+            )}
           </div>
         )}
 
@@ -2413,6 +2701,7 @@ function App() {
         {view === "calendar" && <CalendarView tasks={tasks} onEdit={setEditingTask} />}
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
+        {view === "settings" && <SettingsView user={user} workHours={workHours} projects={projects} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} />}
       </div>
 
       {!user && <OnboardingModal onComplete={saveUser} />}
