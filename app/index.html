@@ -2293,38 +2293,124 @@ function SaveButton({ onClick, saved }) {
 
 // ── Onboarding Modal ───────────────────────────────────────────────────────────
 function OnboardingModal({ onComplete }) {
+  const [step, setStep] = React.useState(1); // 1 = welcome/name, 2 = work hours
   const [firstName, setFirstName] = React.useState("");
   const [lastName, setLastName] = React.useState("");
+  const [wStart, setWStart] = React.useState("09:00");
+  const [wEnd, setWEnd] = React.useState("17:30");
   const [error, setError] = React.useState("");
 
-  function handleSubmit() {
+  function handleStep1() {
     if (!firstName.trim() || !lastName.trim()) {
       setError("Please enter both your first and last name.");
       return;
     }
-    onComplete({ firstName: firstName.trim(), lastName: lastName.trim() });
+    setError("");
+    setStep(2);
   }
 
+  function handleFinish() {
+    onComplete({
+      user: { firstName: firstName.trim(), lastName: lastName.trim() },
+      workHours: { start: wStart, end: wEnd }
+    });
+  }
+
+  const steps = [
+    { n: 1, label: "Your name" },
+    { n: 2, label: "Work hours" },
+  ];
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div style={{ background: COLORS.surface, borderRadius: 16, padding: 36, maxWidth: 440, width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.18)", border: `1px solid ${COLORS.border}`, textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>👋</div>
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>Welcome to Tasklist.uk</h2>
-        <p style={{ fontSize: 14, color: COLORS.textDim, marginBottom: 28, lineHeight: 1.6 }}>Your personal operating system for tasks and wellbeing. Let's start by getting your name.</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, textAlign: "left" }}>
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>FIRST NAME</label>
-            <input value={firstName} onChange={e => setFirstName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="e.g. Danny" autoFocus />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>LAST NAME</label>
-            <input value={lastName} onChange={e => setLastName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} placeholder="e.g. Lawless" />
-          </div>
-          {error && <div style={{ fontSize: 13, color: COLORS.high, background: COLORS.highDim, borderRadius: 8, padding: "8px 12px" }}>{error}</div>}
-          <button onClick={handleSubmit} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "13px", fontSize: 14, fontWeight: 700, marginTop: 4 }}>
-            Get Started
-          </button>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: COLORS.surface, borderRadius: 18, padding: "36px 32px", maxWidth: 460, width: "100%", boxShadow: "0 24px 64px rgba(0,0,0,0.2)", border: `1px solid ${COLORS.border}` }}>
+
+        {/* Step indicators */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28, justifyContent: "center" }}>
+          {steps.map((s, i) => (
+            <React.Fragment key={s.n}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                  background: step > s.n ? COLORS.frog : step === s.n ? COLORS.accent : COLORS.surface3,
+                  color: step >= s.n ? "#fff" : COLORS.textMuted,
+                  fontSize: 12, fontWeight: 700, transition: "all 0.2s",
+                  border: `2px solid ${step >= s.n ? "transparent" : COLORS.border}`
+                }}>
+                  {step > s.n ? "✓" : s.n}
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, color: step === s.n ? COLORS.text : COLORS.textMuted }}>{s.label}</span>
+              </div>
+              {i < steps.length - 1 && (
+                <div style={{ flex: 1, height: 2, background: step > s.n ? COLORS.frog : COLORS.border, borderRadius: 1, transition: "background 0.3s", maxWidth: 40 }} />
+              )}
+            </React.Fragment>
+          ))}
         </div>
+
+        {/* Step 1 — Name */}
+        {step === 1 && (
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 42, marginBottom: 10 }}>👋</div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Welcome to Tasklist.uk</h2>
+              <p style={{ fontSize: 14, color: COLORS.textDim, lineHeight: 1.6 }}>
+                Your personal operating system for tasks, wellbeing, and productivity. Takes 30 seconds to set up.
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>FIRST NAME</label>
+                  <input value={firstName} onChange={e => setFirstName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleStep1()} placeholder="e.g. Danny" autoFocus />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>LAST NAME</label>
+                  <input value={lastName} onChange={e => setLastName(e.target.value)} onKeyDown={e => e.key === "Enter" && handleStep1()} placeholder="e.g. Lawless" />
+                </div>
+              </div>
+              {error && <div style={{ fontSize: 13, color: COLORS.high, background: COLORS.highDim, borderRadius: 8, padding: "10px 12px" }}>{error}</div>}
+              <button onClick={handleStep1} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "13px", fontSize: 14, fontWeight: 700, marginTop: 4 }}>
+                Continue →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2 — Work hours */}
+        {step === 2 && (
+          <div>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 42, marginBottom: 10 }}>🕐</div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Your Work Hours</h2>
+              <p style={{ fontSize: 14, color: COLORS.textDim, lineHeight: 1.6 }}>
+                We'll use these to prompt your end-of-day journal at the right time. You can change this later in Settings.
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>WORK STARTS</label>
+                <input type="time" value={wStart} onChange={e => setWStart(e.target.value)} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>WORK ENDS</label>
+                <input type="time" value={wEnd} onChange={e => setWEnd(e.target.value)} />
+              </div>
+            </div>
+            <div style={{ background: COLORS.accentDim, borderRadius: 10, padding: "10px 14px", marginBottom: 18, fontSize: 13, color: COLORS.accent, lineHeight: 1.5 }}>
+              📝 Your end-of-day journal will appear at <strong>{wEnd}</strong>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => setStep(1)} style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 8, padding: "12px 16px", fontSize: 14, fontWeight: 600, border: `1px solid ${COLORS.border}` }}>
+                ← Back
+              </button>
+              <button onClick={handleFinish} style={{ flex: 1, background: COLORS.frog, color: "#fff", borderRadius: 8, padding: "13px", fontSize: 14, fontWeight: 700 }}>
+                Get Started 🎉
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -2404,14 +2490,18 @@ function App() {
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
 
-  // Auto show check-in once per day
+  // Auto show check-in once per day — only for returning users
   useEffect(() => {
     const lastShown = localStorage.getItem("vtm_checkin_shown");
-    if (lastShown !== today()) {
-      const t = setTimeout(() => { setShowCheckin(true); localStorage.setItem("vtm_checkin_shown", today()); }, 1200);
-      return () => clearTimeout(t);
-    }
-  }, []);
+    const storedUser = localStorage.getItem(USER_KEY);
+    // Don't show if: already shown today, or user hasn't completed onboarding yet
+    if (!storedUser || lastShown === today()) return;
+    const t = setTimeout(() => {
+      setShowCheckin(true);
+      localStorage.setItem("vtm_checkin_shown", today());
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [user]); // re-evaluate when user state changes (i.e. after onboarding)
 
   // Auto show end-of-day journal prompt
   useEffect(() => {
@@ -2708,7 +2798,12 @@ function App() {
         {view === "settings" && <SettingsView user={user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} />}
       </div>
 
-      {!user && <OnboardingModal onComplete={saveUser} />}
+      {!user && <OnboardingModal onComplete={({ user, workHours: wh }) => {
+        saveUser(user);
+        saveWorkHours(wh);
+        // Mark check-in as shown today so it doesn't pop up on first use
+        localStorage.setItem("vtm_checkin_shown", today());
+      }} />}
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
       {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
