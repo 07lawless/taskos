@@ -6,7 +6,7 @@
   <title>Tasklist.uk — Task Manager &amp; Wellbeing Tracker</title>
   <meta name="description" content="Free, privacy-first task manager with AI-powered breakdowns, wellbeing tracking, and the Eat the Frog productivity method. No account required — your data stays in your browser." />
   <meta property="og:title" content="Tasklist.uk — Task Manager &amp; Wellbeing Tracker" />
-  <meta property="og:description" content="Free, private, no account needed. Kill the frog, track your wellbeing, and get AI-powered task breakdowns." />
+  <meta property="og:description" content="Free, private, no account needed. Eat the frog, track your wellbeing, and get AI-powered task breakdowns." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tasklist.uk/app" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -123,6 +123,7 @@ const METRIC_CONFIG = {
 };
 
 function generateId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function cap(s) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
 function today() { return new Date().toISOString().split("T")[0]; }
 function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split("T")[0]; }
 
@@ -2185,9 +2186,9 @@ function CorrelationAnalysis({ tasks, checkins }) {
 
 
 // ── Settings View ─────────────────────────────────────────────────────────────
-function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData }) {
-  const [firstName, setFirstName] = useState(user?.firstName || "");
-  const [lastName, setLastName] = useState(user?.lastName || "");
+function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData, onOpenIE }) {
+  const [firstName, setFirstName] = useState(user?.firstName || user?.first_name || "");
+  const [lastName, setLastName] = useState(user?.lastName || user?.last_name || "");
   const [wStart, setWStart] = useState(workHours?.start || "09:00");
   const [wEnd, setWEnd] = useState(workHours?.end || "17:30");
   const [saved, setSaved] = useState("");
@@ -2250,6 +2251,46 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
       </Section>
 
       {/* Profile */}
+      <Section title="Account">
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
+            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
+          </div>
+        </div>
+        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
+      </Section>
+      <Section title="Account">
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
+            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
+          </div>
+        </div>
+        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
+      </Section>
+      <Section title="Account">
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
+            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
+          </div>
+        </div>
+        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
+      </Section>
+      <Section title="Account">
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
+          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
+            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
+          </div>
+        </div>
+        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
+      </Section>
       <Section title="Profile">
         <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1 }}>
@@ -2312,6 +2353,12 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
       </Section>
 
       {/* Danger zone */}
+      <Section title="Import / Export">
+        <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>Back up your tasks as a JSON file, or import a previously exported file.</p>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onOpenIE} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.accent}30` }}>Import / Export</button>
+        </div>
+      </Section>
       <Section title="Data">
         <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>Use Import / Export on the board to back up your tasks before clearing.</p>
         {!showClearConfirm ? (
@@ -2497,7 +2544,7 @@ function GreetingBanner({ user, tasks }) {
     <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "16px 18px", marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.3 }}>
-          {timeGreeting}, {user.firstName}! {phrase}
+          {timeGreeting}, {cap(user.firstName || user.first_name)}! {phrase}
         </div>
         <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>
           {dateStr} — Here are your tasks for today.
@@ -2510,7 +2557,7 @@ function GreetingBanner({ user, tasks }) {
         <div style={{ paddingTop: 8, borderTop: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6, justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5 }}>LOGGED IN AS</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{user.firstName || user.first_name} {user.lastName || user.last_name}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{cap(user.firstName || user.first_name)} {cap(user.lastName || user.last_name)}</div>
           </div>
           <a href="/auth/logout" style={{ fontSize: 12, color: COLORS.textMuted, textDecoration: "none", background: COLORS.surface3, padding: "3px 10px", borderRadius: 6, border: `1px solid ${COLORS.border}` }}>Sign out</a>
         </div>
@@ -2686,7 +2733,7 @@ function App() {
   }
 
   function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); }
-  function toggleFrog(id) { updateTasks(ts => ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) }))); }
+  function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask(t).catch(console.error); }); } return updated; }); }
 
   function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
@@ -2700,7 +2747,7 @@ function App() {
   }
 
   function saveBreakdown(taskId, breakdown) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, aiBreakdown: breakdown } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask(task).catch(console.error); } return updated; }); }
-  function saveHappiness(taskId, rating) { setTasks(ts => ts.map(t => t.id === taskId ? { ...t, happiness: rating } : t)); }
+  function saveHappiness(taskId, rating) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, happiness: rating } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask(task).catch(console.error); } return updated; }); }
   function saveUser(userData) { setUser(userData); localStorage.setItem(USER_KEY, JSON.stringify(userData)); }
   function toggleTheme(newTheme) {
     const t = newTheme || (theme === "light" ? "dark" : "light");
@@ -2745,10 +2792,11 @@ function App() {
       const arr = [...ts];
       const fromIdx = arr.findIndex(t => t.id === dragging);
       const toIdx = targetId ? arr.findIndex(t => t.id === targetId) : -1;
-      const task = { ...arr[fromIdx], status: targetStatus };
+      const task = { ...arr[fromIdx], status: targetStatus, completedAt: targetStatus === 'Done' && !arr[fromIdx].completedAt ? new Date().toISOString() : arr[fromIdx].completedAt };
       arr.splice(fromIdx, 1);
       if (toIdx >= 0) arr.splice(toIdx, 0, task);
       else arr.push(task);
+      if (authUser) api.saveTask(task).catch(console.error);
       return arr;
     });
     setDragging(null); setDragOver(null);
@@ -2810,7 +2858,6 @@ function App() {
             <button onClick={() => setShowDailyPlan(true)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>🤖 Plan</button>
             <button onClick={() => setShowJournal(true)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>📝</button>
             <button onClick={() => setShowDaily(true)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>Daily</button>
-            <button onClick={() => setShowIE(true)} style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 8, padding: "7px 10px", fontSize: 13, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>IO</button>
           </div>
 
           {/* Always-visible actions */}
@@ -2928,7 +2975,7 @@ function App() {
         {view === "calendar" && <CalendarView tasks={tasks} onEdit={setEditingTask} />}
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
-        {view === "settings" && <SettingsView user={user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} />}
+        {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} />}
       </div>
 
       {!authUser && !user && <OnboardingModal onComplete={({ user, workHours: wh }) => {
@@ -2940,7 +2987,7 @@ function App() {
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
       {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
-      {showIE && <ImportExportModal tasks={tasks} onImport={data => setTasks(data)} onClose={() => setShowIE(false)} />}
+      {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showCheckin && <WellbeingCheckinModal existing={checkins.find(c => c.date === today())} onSave={saveCheckin} onClose={() => setShowCheckin(false)} />}
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
