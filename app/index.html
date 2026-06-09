@@ -6,7 +6,7 @@
   <title>Tasklist.uk — Task Manager &amp; Wellbeing Tracker</title>
   <meta name="description" content="Free, privacy-first task manager with AI-powered breakdowns, wellbeing tracking, and the Eat the Frog productivity method. No account required — your data stays in your browser." />
   <meta property="og:title" content="Tasklist.uk — Task Manager &amp; Wellbeing Tracker" />
-  <meta property="og:description" content="Free, private, no account needed. Eat the frog, track your wellbeing, and get AI-powered task breakdowns." />
+  <meta property="og:description" content="Free, private, no account needed. Kill the frog, track your wellbeing, and get AI-powered task breakdowns." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://tasklist.uk/app" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -19,24 +19,28 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .login-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .login-backdrop { position: absolute; inset: 0; background: rgba(10,10,20,0.6); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-    .login-card { position: relative; z-index: 1; background: rgba(26,26,36,0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 24px; padding: 48px 44px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 32px 80px rgba(0,0,0,0.5); }
-    .login-logo { width: 56px; height: 56px; background: #4f46e5; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px; font-family: "DM Sans", system-ui, sans-serif; }
-    .login-h1 { font-size: 26px; font-weight: 800; color: #ffffff; margin-bottom: 8px; letter-spacing: -0.5px; font-family: "DM Sans", system-ui, sans-serif; }
-    .login-tagline { font-size: 14px; color: rgba(255,255,255,0.45); margin-bottom: 32px; line-height: 1.6; font-family: "DM Sans", system-ui, sans-serif; }
-    .login-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; text-align: left; }
-    .login-feature { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); }
-    .login-feature-icon { font-size: 16px; flex-shrink: 0; }
-    .login-feature-text { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.4; font-family: "DM Sans", system-ui, sans-serif; }
-    .login-feature-text strong { color: rgba(255,255,255,0.85); font-weight: 600; }
-    .login-btn { display: flex; align-items: center; justify-content: center; gap: 12px; background: #ffffff; border: none; border-radius: 12px; padding: 15px 24px; font-size: 15px; font-weight: 600; color: #1a1a24; cursor: pointer; text-decoration: none; transition: all 0.2s; width: 100%; font-family: "DM Sans", system-ui, sans-serif; }
-    .login-btn:hover { background: #eeedfb; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(79,70,229,0.35); }
-    .login-btn img { width: 20px; height: 20px; }
-    .login-footer { margin-top: 20px; font-size: 11px; color: rgba(255,255,255,0.2); line-height: 1.6; font-family: "DM Sans", system-ui, sans-serif; }
-    .login-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-    .login-divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
-    .login-divider-text { font-size: 11px; color: rgba(255,255,255,0.25); font-family: "DM Sans", system-ui, sans-serif; }
+    .login-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .login-backdrop { position: absolute; inset: 0; background: rgba(15,15,25,0.55); backdrop-filter: blur(18px) brightness(0.45); -webkit-backdrop-filter: blur(18px) brightness(0.45); }
+    .login-card { position: relative; z-index: 1; background: #ffffff; border-radius: 20px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06); overflow: hidden; max-height: 92vh; overflow-y: auto; }
+    .login-gradient { height: 100px; background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 40%, #818cf8 100%); position: relative; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0; }
+    .login-gradient::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 32px; background: #ffffff; border-radius: 50% 50% 0 0 / 32px 32px 0 0; }
+    .login-logo-wrap { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); width: 56px; height: 56px; background: #ffffff; border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(79,70,229,0.25); z-index: 2; }
+    .login-logo-inner { width: 44px; height: 44px; background: linear-gradient(135deg, #4f46e5, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: white; letter-spacing: 1px; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-body { padding: 32px 24px 20px; }
+    .login-h1 { font-size: 22px; font-weight: 800; color: #1a1a24; margin-bottom: 6px; letter-spacing: -0.5px; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-tagline { font-size: 13px; color: #9090a0; margin-bottom: 28px; line-height: 1.6; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-features { display: flex; flex-direction: column; gap: 7px; margin-bottom: 28px; text-align: left; }
+    .login-feature { display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #f9f9fb; border-radius: 10px; border: 1px solid #e8e8f0; }
+    .login-feature-icon { font-size: 15px; flex-shrink: 0; }
+    .login-feature-text { font-size: 12px; color: #6b6b80; line-height: 1.4; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-feature-text strong { color: #1a1a24; font-weight: 600; }
+    .login-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #ffffff; border: 2px solid #e0e0e6; border-radius: 12px; padding: 14px 24px; font-size: 14px; font-weight: 600; color: #1a1a24; cursor: pointer; text-decoration: none; transition: all 0.2s; width: 100%; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-btn:hover { border-color: #4f46e5; background: #eeedfb; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.15); }
+    .login-btn img { width: 18px; height: 18px; }
+    .login-footer { margin-top: 16px; font-size: 11px; color: #c0c0cc; line-height: 1.6; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .login-divider-line { flex: 1; height: 1px; background: #e8e8f0; }
+    .login-divider-text { font-size: 10px; color: #b0b0c0; font-weight: 600; letter-spacing: 0.8px; font-family: "DM Sans", system-ui, sans-serif; }
   </style>
 </head>
 <body>
@@ -44,21 +48,27 @@
   <div id="login-overlay" class="login-overlay" style="display:none">
     <div class="login-backdrop"></div>
     <div class="login-card">
-      <div class="login-logo">tl</div>
-      <h1 class="login-h1">Tasklist.uk</h1>
-      <p class="login-tagline">Your personal productivity operating system.<br>Tasks, wellbeing, and AI — all in one place.</p>
-      <div class="login-features">
-        <div class="login-feature"><span class="login-feature-icon">🐸</span><div class="login-feature-text"><strong>Eat the Frog</strong> — tackle your most important task first, every day</div></div>
-        <div class="login-feature"><span class="login-feature-icon">✨</span><div class="login-feature-text"><strong>AI Breakdowns</strong> — turn any task into a clear action plan</div></div>
-        <div class="login-feature"><span class="login-feature-icon">💆</span><div class="login-feature-text"><strong>Wellbeing Tracking</strong> — mood, energy, sleep and productivity insights</div></div>
-        <div class="login-feature"><span class="login-feature-icon">☁️</span><div class="login-feature-text"><strong>Synced across devices</strong> — your data lives in the cloud, not just your browser</div></div>
+      <div class="login-gradient">
+        <div class="login-logo-wrap">
+          <div class="login-logo-inner">tl</div>
+        </div>
       </div>
-      <div class="login-divider"><div class="login-divider-line"></div><div class="login-divider-text">SIGN IN TO CONTINUE</div><div class="login-divider-line"></div></div>
-      <a href="/auth/google" class="login-btn">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" />
-        Continue with Google
-      </a>
-      <div class="login-footer">Your data is stored securely and never sold or shared.</div>
+      <div class="login-body">
+        <h1 class="login-h1">Tasklist.uk</h1>
+        <p class="login-tagline">Your personal productivity operating system.<br>Tasks, wellbeing, and AI — all in one place.</p>
+        <div class="login-features">
+          <div class="login-feature"><span class="login-feature-icon">🐸</span><div class="login-feature-text"><strong>Eat the Frog</strong> — tackle your most important task first, every day</div></div>
+          <div class="login-feature"><span class="login-feature-icon">✨</span><div class="login-feature-text"><strong>AI Breakdowns</strong> — turn any task into a clear action plan</div></div>
+          <div class="login-feature"><span class="login-feature-icon">💆</span><div class="login-feature-text"><strong>Wellbeing Tracking</strong> — mood, energy, sleep and productivity insights</div></div>
+          <div class="login-feature"><span class="login-feature-icon">☁️</span><div class="login-feature-text"><strong>Synced across devices</strong> — your data lives in the cloud, not just your browser</div></div>
+        </div>
+        <div class="login-divider"><div class="login-divider-line"></div><div class="login-divider-text">SIGN IN TO CONTINUE</div><div class="login-divider-line"></div></div>
+        <a href="/auth/google" class="login-btn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" />
+          Continue with Google
+        </a>
+        <div class="login-footer">Your data is stored securely and never sold or shared.</div>
+      </div>
     </div>
   </div>
   <script>
@@ -2261,36 +2271,6 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
         </div>
         <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
       </Section>
-      <Section title="Account">
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
-            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
-          </div>
-        </div>
-        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
-      </Section>
-      <Section title="Account">
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
-            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
-          </div>
-        </div>
-        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
-      </Section>
-      <Section title="Account">
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-          {user?.avatar && <img src={user.avatar} style={{ width: 48, height: 48, borderRadius: "50%", border: `2px solid ${COLORS.border}` }} />}
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15 }}>{cap(user?.firstName || user?.first_name)} {cap(user?.lastName || user?.last_name)}</div>
-            <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
-          </div>
-        </div>
-        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
-      </Section>
       <Section title="Profile">
         <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1 }}>
@@ -2582,6 +2562,46 @@ const api = {
   async saveSettings(s) { await fetch('/api/settings', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) }); },
 };
 
+
+// ── Work Hours Setup Modal ─────────────────────────────────────────────────────
+function WorkHoursSetupModal({ onSave, onSkip }) {
+  const [start, setStart] = React.useState("09:00");
+  const [end, setEnd] = React.useState("17:30");
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 20, maxWidth: 380, width: "100%", overflow: "hidden", boxShadow: "0 24px 60px rgba(0,0,0,0.2)" }}>
+        <div style={{ height: 8, background: "linear-gradient(135deg, #7c3aed, #4f46e5)" }} />
+        <div style={{ padding: "32px 28px 28px" }}>
+          <div style={{ fontSize: 28, marginBottom: 12, textAlign: "center" }}>🕐</div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: "#1a1a24", marginBottom: 8, textAlign: "center", fontFamily: "'DM Sans', system-ui" }}>Set your work hours</h2>
+          <p style={{ fontSize: 13, color: "#9090a0", lineHeight: 1.6, marginBottom: 24, textAlign: "center", fontFamily: "'DM Sans', system-ui" }}>
+            We'll use these to prompt your end-of-day journal at the right time. You can change this later in Settings.
+          </p>
+          <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#9090a0", display: "block", marginBottom: 6, letterSpacing: 0.5 }}>WORK STARTS</label>
+              <input type="time" value={start} onChange={e => setStart(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e0e0e6", fontSize: 15, fontFamily: "'DM Sans', system-ui", outline: "none" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, color: "#9090a0", display: "block", marginBottom: 6, letterSpacing: 0.5 }}>WORK ENDS</label>
+              <input type="time" value={end} onChange={e => setEnd(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid #e0e0e6", fontSize: 15, fontFamily: "'DM Sans', system-ui", outline: "none" }} />
+            </div>
+          </div>
+          <div style={{ background: "#eeedfb", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: "#4f46e5", fontFamily: "'DM Sans', system-ui" }}>
+            📝 Your end-of-day journal will appear at <strong>{end}</strong>
+          </div>
+          <button onClick={() => onSave({ start, end })} style={{ width: "100%", background: "#4f46e5", color: "#fff", borderRadius: 10, padding: "13px", fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'DM Sans', system-ui", marginBottom: 10 }}>
+            Save & Get Started 🎉
+          </button>
+          <button onClick={onSkip} style={{ width: "100%", background: "none", color: "#9090a0", border: "none", padding: "8px", fontSize: 13, cursor: "pointer", fontFamily: "'DM Sans', system-ui" }}>
+            Skip for now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [tasks, setTasks] = useState(() => { try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : SAMPLE_TASKS; } catch { return SAMPLE_TASKS; } });
   const [checkins, setCheckins] = useState(() => { try { const s = localStorage.getItem(WELLBEING_KEY); return s ? JSON.parse(s) : []; } catch { return []; } });
@@ -2613,6 +2633,7 @@ function App() {
 
   const [authUser, setAuthUser] = React.useState(null);
   const [dataLoaded, setDataLoaded] = React.useState(false);
+  const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
 
   // Check auth on load and show/hide login overlay
   useEffect(() => {
@@ -2661,6 +2682,8 @@ function App() {
         if (settingsData.theme) { setTheme(settingsData.theme); localStorage.setItem(THEME_KEY, settingsData.theme); }
       }
       setDataLoaded(true);
+      // Show work hours prompt if not set
+      if (!settingsData || !settingsData.work_hours) setShowWorkHoursSetup(true);
     } catch(e) { console.error('Failed to load data', e); setDataLoaded(true); }
   }
 
@@ -2739,7 +2762,11 @@ function App() {
     const task = tasks.find(t => t.id === id);
     const becomingDone = status === "Done" && task?.status !== "Done";
     const wasFrog = task?.isFrog;
-    updateTasks(ts => ts.map(t => t.id === id ? { ...t, status, completedAt: status === "Done" && !t.completedAt ? new Date().toISOString() : t.completedAt } : t));
+    updateTasks(ts => {
+      const updated = ts.map(t => t.id === id ? { ...t, status, completedAt: status === "Done" && !t.completedAt ? new Date().toISOString() : t.completedAt } : t);
+      if (authUser) { const task = updated.find(t => t.id === id); if (task) api.saveTask(task).catch(console.error); }
+      return updated;
+    });
     if (becomingDone) {
       if (wasFrog) setTimeout(() => setConfetti(true), 200);
       if (task) setTimeout(() => setHappinessTask(task), wasFrog ? 2000 : 300);
@@ -2988,6 +3015,7 @@ function App() {
       {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
+      {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
       {showCheckin && <WellbeingCheckinModal existing={checkins.find(c => c.date === today())} onSave={saveCheckin} onClose={() => setShowCheckin(false)} />}
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
