@@ -2441,7 +2441,7 @@ function CorrelationAnalysis({ tasks, checkins }) {
 
 
 // ── Settings View ─────────────────────────────────────────────────────────────
-function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData, onOpenIE }) {
+function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData, onOpenIE, onShareToken, onShareLoading, onShareCopied, onGenerateShare, onRevokeShare, onCopyShare }) {
   const [firstName, setFirstName] = useState(user?.firstName || user?.first_name || "");
   const [lastName, setLastName] = useState(user?.lastName || user?.last_name || "");
   const [wStart, setWStart] = useState(workHours?.start || "09:00");
@@ -2578,6 +2578,30 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
       </Section>
 
       {/* Danger zone */}
+      <Section title="Share Board">
+        <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>
+          Generate a read-only link to your task board. Anyone with the link can view your tasks without logging in.
+        </p>
+        {onShareToken ? (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "10px 12px", fontSize: 12, color: COLORS.textDim, fontFamily: "monospace", wordBreak: "break-all", marginBottom: 8 }}>
+              https://app.tasklist.uk/share/{onShareToken}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={onCopyShare} style={{ background: onShareCopied ? COLORS.frogDim : COLORS.accentDim, color: onShareCopied ? COLORS.frog : COLORS.accent, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${onShareCopied ? COLORS.frogBorder : COLORS.accent+"30"}`, flex: 1 }}>
+                {onShareCopied ? "✓ Copied!" : "Copy link"}
+              </button>
+              <button onClick={onRevokeShare} style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.high}30` }}>
+                Revoke
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={onGenerateShare} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 600 }}>
+            {onShareLoading ? "Generating..." : "Generate share link"}
+          </button>
+        )}
+      </Section>
       <Section title="Import / Export">
         <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>Back up your tasks as a JSON file, or import a previously exported file.</p>
         <div style={{ display: "flex", gap: 10 }}>
@@ -2844,6 +2868,141 @@ function WorkHoursSetupModal({ onSave, onSkip }) {
   );
 }
 
+
+// ── Shared Board View ─────────────────────────────────────────────────────────
+function SharedBoardView({ token }) {
+  const [data, setData] = React.useState(null);
+  const [error, setError] = React.useState(null);
+
+  React.useEffect(() => {
+    fetch('/api/share/' + token)
+      .then(r => r.ok ? r.json() : Promise.reject('Not found'))
+      .then(d => setData(d))
+      .catch(() => setError(true));
+  }, [token]);
+
+  if (error) return (
+    <div style={{ minHeight: "100vh", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 28, marginBottom: 8, color: COLORS.text }}>Board not found</h2>
+        <p style={{ color: COLORS.textMuted, fontSize: 15 }}>This link may have been revoked or doesn't exist.</p>
+      </div>
+    </div>
+  );
+
+  if (!data) return (
+    <div style={{ minHeight: "100vh", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ color: COLORS.textMuted, fontSize: 14 }}>Loading board...</div>
+    </div>
+  );
+
+  const tasks = (data.tasks || []).map(t => ({
+    ...t, isFrog: t.is_frog, projectId: t.project_id,
+    subtasks: typeof t.subtasks === 'string' ? JSON.parse(t.subtasks) : (t.subtasks || []),
+  }));
+  const projects = (data.projects || []).map(p => ({ ...p, colorId: p.color_id }));
+  const STATUS_COLS = ["To Do", "In Progress", "Done"];
+  const colDotColor = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
+  const frogTask = tasks.find(t => t.isFrog);
+  const name = data.user ? cap(data.user.first_name) + "'s" : "Shared";
+
+  // Check if this is a share URL
+  const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9]{32})$/);
+  if (shareMatch) return <SharedBoardView token={shareMatch[1]} />;
+
+  return (
+    <div style={{ minHeight: "100dvh", background: COLORS.bg }}>
+      <style>{`
+        body { background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'DM Sans', system-ui, sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap');
+      `}</style>
+
+      {/* Header */}
+      <div style={{ background: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`, padding: "0 20px", height: 60, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1 }}>tl</div>
+          <span style={{ fontWeight: 700, fontSize: 15, color: COLORS.text }}>Tasklist.uk</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 12, color: COLORS.textMuted, background: COLORS.surface3, padding: "4px 10px", borderRadius: 100, border: `1px solid ${COLORS.border}` }}>
+            👁 View only
+          </span>
+          <a href="https://app.tasklist.uk" style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+            Get started →
+          </a>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px 40px" }}>
+        {/* Title */}
+        <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
+          <h1 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 400, letterSpacing: "-0.5px", color: COLORS.text }}>
+            {name} <em style={{ fontStyle: "italic", color: COLORS.accent }}>board</em>
+          </h1>
+          <p style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>{tasks.filter(t => t.status !== "Done").length} active · {tasks.filter(t => t.status === "Done").length} completed</p>
+        </div>
+
+        {/* Frog banner */}
+        {frogTask && (
+          <div style={{ background: "#1a1a2e", borderRadius: 14, padding: "14px 16px", marginBottom: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.25)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: 13 }}>🐸</span>
+              <span style={{ fontSize: 10, color: "#86efac", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Eat the Frog — Priority task</span>
+              <span style={{ marginLeft: "auto", fontSize: 11, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.06)", borderRadius: 5, padding: "2px 8px", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 500 }}>{frogTask.status}</span>
+            </div>
+            <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 17, color: "white", letterSpacing: "-0.2px", lineHeight: 1.35 }}>{frogTask.title}</div>
+          </div>
+        )}
+
+        {/* Board */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+          {STATUS_COLS.map(col => {
+            const colTasks = tasks.filter(t => t.status === col);
+            return (
+              <div key={col}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 12, borderBottom: `2px solid ${COLORS.border}` }}>
+                  <div style={{ width: 3, height: 16, borderRadius: 2, background: colDotColor[col], flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: 13 }}>{col}</span>
+                  <span style={{ background: COLORS.surface3, color: COLORS.textMuted, fontSize: 11, padding: "2px 8px", borderRadius: 100, border: `1px solid ${COLORS.border}`, fontWeight: 600 }}>{colTasks.length}</span>
+                </div>
+                {colTasks.map(t => {
+                  const project = projects.find(p => p.id === t.projectId);
+                  const pc = { High: { line: COLORS.high, dim: COLORS.highDim, text: COLORS.high }, Medium: { line: COLORS.medium, dim: COLORS.mediumDim, text: COLORS.medium }, Low: { line: COLORS.low, dim: COLORS.lowDim, text: COLORS.low } }[t.priority] || {};
+                  const isOverdue = t.due && t.due < new Date().toISOString().split("T")[0] && t.status !== "Done";
+                  return (
+                    <div key={t.id} style={{ background: t.isFrog ? COLORS.frogDim : COLORS.surface, border: `1px solid ${t.isFrog ? COLORS.frogBorder : COLORS.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                      <div style={{ height: 3, background: t.isFrog ? COLORS.frog : pc.line }} />
+                      <div style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", gap: 5, marginBottom: 7, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: pc.text, background: pc.dim, padding: "2px 7px", borderRadius: 100 }}>{t.priority?.toUpperCase()}</span>
+                          {project && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: getProjectColor(project.colorId).bg, color: getProjectColor(project.colorId).text }}>{project.name}</span>}
+                          {t.due && <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : COLORS.surface3, borderRadius: 4 }}>{isOverdue ? "⚠ " : ""}{t.due}</span>}
+                        </div>
+                        <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4, color: COLORS.text }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
+                        {t.description && <div style={{ fontSize: 12, color: COLORS.textDim, marginTop: 4, lineHeight: 1.5 }}>{t.description.slice(0, 100)}{t.description.length > 100 ? "…" : ""}</div>}
+                        {t.subtasks?.length > 0 && (
+                          <div style={{ marginTop: 8 }}>
+                            <div style={{ height: 3, background: COLORS.surface3, borderRadius: 2, overflow: "hidden", marginBottom: 3 }}>
+                              <div style={{ height: "100%", width: `${Math.round((t.subtasks.filter(s=>s.done).length/t.subtasks.length)*100)}%`, background: COLORS.accent, borderRadius: 2 }} />
+                            </div>
+                            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{t.subtasks.filter(s=>s.done).length}/{t.subtasks.length} subtasks</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {colTasks.length === 0 && <div style={{ border: `2px dashed ${COLORS.border}`, borderRadius: 10, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>No tasks</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [tasks, setTasks] = useState(() => { try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : SAMPLE_TASKS; } catch { return SAMPLE_TASKS; } });
   const [checkins, setCheckins] = useState(() => { try { const s = localStorage.getItem(WELLBEING_KEY); return s ? JSON.parse(s) : []; } catch { return []; } });
@@ -2875,6 +3034,9 @@ function App() {
 
   const [authUser, setAuthUser] = React.useState(null);
   const [dataLoaded, setDataLoaded] = React.useState(false);
+  const [shareToken, setShareToken] = React.useState(null);
+  const [shareLoading, setShareLoading] = React.useState(false);
+  const [shareCopied, setShareCopied] = React.useState(false);
   const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
 
   // Check auth on load and show/hide login overlay
@@ -3073,6 +3235,36 @@ function App() {
     localStorage.removeItem(STORAGE_KEY);
   }
 
+  async function generateShare() {
+    setShareLoading(true);
+    try {
+      const r = await fetch('/api/share', { method: 'POST', credentials: 'include' });
+      const d = await r.json();
+      setShareToken(d.token);
+    } catch(e) { console.error(e); }
+    setShareLoading(false);
+  }
+
+  async function revokeShare() {
+    await fetch('/api/share', { method: 'DELETE', credentials: 'include' });
+    setShareToken(null);
+  }
+
+  function copyShare() {
+    navigator.clipboard.writeText(`https://app.tasklist.uk/share/${shareToken}`);
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2500);
+  }
+
+  // Load existing share token on startup
+  React.useEffect(() => {
+    if (!authUser) return;
+    fetch('/api/share/mine', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.token) setShareToken(d.token); })
+      .catch(() => {});
+  }, [authUser]);
+
   function handleDrop(targetId, targetStatus) {
     if (!dragging) return;
     updateTasks(ts => {
@@ -3113,6 +3305,10 @@ function App() {
   })();
   const colDotColor = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
   const views = [["board","Board"],["calendar","Calendar"],["wellbeing","Wellbeing"],["analytics","Analytics"]];
+
+  // Check if this is a share URL
+  const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9]{32})$/);
+  if (shareMatch) return <SharedBoardView token={shareMatch[1]} />;
 
   return (
     <div style={{ minHeight: "100dvh", background: COLORS.bg }}>
@@ -3347,7 +3543,7 @@ function App() {
         {view === "calendar" && <CalendarView tasks={tasks} onEdit={setEditingTask} />}
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
-        {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} />}
+        {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} />}
       </div>
 
       {!authUser && !user && <OnboardingModal onComplete={({ user, workHours: wh }) => {
