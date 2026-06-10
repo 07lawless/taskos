@@ -1,4 +1,3 @@
-/////--!dgdfgfd////
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2534,12 +2533,12 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
       {/* Work Hours */}
       <Section title="Work Hours">
         <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>The end-of-day journal will appear automatically at your work end time.</p>
-        <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>START TIME</label>
             <input type="time" value={wStart} onChange={e => setWStart(e.target.value)} />
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>END TIME</label>
             <input type="time" value={wEnd} onChange={e => setWEnd(e.target.value)} />
           </div>
