@@ -59,10 +59,37 @@
     .login-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
     .login-divider-line { flex: 1; height: 1px; background: #e8e8f0; }
     .login-divider-text { font-size: 10px; color: #b0b0c0; font-weight: 600; letter-spacing: 0.8px; font-family: "DM Sans", system-ui, sans-serif; }
+
+    .auth-loader {
+      position: fixed; inset: 0; z-index: 9998;
+      background: #0f0f14;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .auth-loader-logo {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; color: white;
+      letter-spacing: 1px; font-family: "DM Sans", system-ui, sans-serif;
+    }
+    .auth-loader-spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: #4f46e5;
+      border-radius: 50%;
+      animation: auth-spin 0.7s linear infinite;
+    }
+    @keyframes auth-spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div id="root"></div>
+  <div id="auth-loader" class="auth-loader">
+    <div class="auth-loader-logo">tl</div>
+    <div class="auth-loader-spinner"></div>
+  </div>
   <div id="login-overlay" class="login-overlay" style="display:none">
     <div class="login-backdrop"></div>
     <div class="login-card">
@@ -98,14 +125,11 @@
       // Show login overlay only if not a share link
       document.addEventListener('DOMContentLoaded', function() {
         const isShareRoute = /^\/share\/[a-f0-9]{32}$/.test(window.location.pathname);
-        if (!isShareRoute) {
-          const overlay = document.getElementById('login-overlay');
-          if (overlay) overlay.style.display = 'flex';
-          document.body.style.background = '#0f0f14';
-        } else {
+        if (isShareRoute) {
           document.body.style.background = '#f5f5f3';
           document.documentElement.style.background = '#f5f5f3';
         }
+        // Overlay is hidden by default — React will show it only if unauthenticated
       });
       const t = localStorage.getItem("vtm_theme_v1") || "light";
       document.body.style.background = t === "dark" ? "#0f0f14" : "#f4f4f6";
@@ -3060,11 +3084,17 @@ function App() {
   // Check auth on load and show/hide login overlay
   useEffect(() => {
     const isShareRoute = /^\/share\/[a-f0-9]{32}$/.test(window.location.pathname);
-    if (isShareRoute) { return; }
+    if (isShareRoute) {
+      const loader = document.getElementById('auth-loader');
+      if (loader) loader.style.display = 'none';
+      return;
+    }
     fetch('/auth/me', { credentials: 'include' })
       .then(r => r.json())
       .then(user => {
         setAuthUser(user);
+        const loader = document.getElementById('auth-loader');
+        if (loader) loader.style.display = 'none';
         const overlay = document.getElementById('login-overlay');
         if (!user) {
           if (overlay) overlay.style.display = 'flex';
@@ -3074,6 +3104,8 @@ function App() {
         }
       })
       .catch(() => {
+        const loader = document.getElementById('auth-loader');
+        if (loader) loader.style.display = 'none';
         const overlay = document.getElementById('login-overlay');
         if (overlay) overlay.style.display = 'flex';
       });
