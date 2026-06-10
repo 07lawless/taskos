@@ -3103,6 +3103,14 @@ function App() {
       setDataLoaded(true);
       // Show work hours prompt if not set
       if (!settingsData || !settingsData.work_hours) setShowWorkHoursSetup(true);
+      // Load existing share token
+      try {
+        const shareRes = await fetch('/api/share/mine', { credentials: 'include' });
+        if (shareRes.ok) {
+          const shareData = await shareRes.json();
+          if (shareData.token) setShareToken(shareData.token);
+        }
+      } catch(e) {}
     } catch(e) { console.error('Failed to load data', e); setDataLoaded(true); }
   }
 
@@ -3271,14 +3279,7 @@ function App() {
     setTimeout(() => setShareCopied(false), 2500);
   }
 
-  // Load existing share token on startup
-  React.useEffect(() => {
-    if (!authUser) return;
-    fetch('/api/share/mine', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.token) setShareToken(d.token); })
-      .catch(() => {});
-  }, [authUser]);
+
 
   function handleDrop(targetId, targetStatus) {
     if (!dragging) return;
