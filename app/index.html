@@ -3048,7 +3048,7 @@ function App() {
   // Check auth on load and show/hide login overlay
   useEffect(() => {
     const isShareRoute = /^\/share\/[a-f0-9]{32}$/.test(window.location.pathname);
-    if (isShareRoute) { setAuthChecked(true); return; }
+    if (isShareRoute) { return; }
     fetch('/auth/me', { credentials: 'include' })
       .then(r => r.json())
       .then(user => {
