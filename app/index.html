@@ -260,7 +260,7 @@ const css = `
   .stats-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
   .wellbeing-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
   .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-  .page-pad { max-width: 1200px; margin: 0 auto; padding: 24px 28px 0; }
+  .page-pad { max-width: 1200px; margin: 0 auto; padding: 24px 28px 0; padding-left: max(28px, env(safe-area-inset-left)); padding-right: max(28px, env(safe-area-inset-right)); }
 
   /* Header */
   .app-header {
@@ -269,8 +269,9 @@ const css = `
     position: sticky; top: 0; z-index: 100;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    padding-top: env(safe-area-inset-top);
   }
-  .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; }
+  .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
   
   /* View toggle */
   .view-toggle {
