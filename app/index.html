@@ -669,19 +669,20 @@ function WellbeingView({ checkins, tasks, onOpenCheckin }) {
 
   return (
     <div style={{ padding: "0 0 40px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <div>
+      <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</div>
             <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>wellbeing</em></h2>
           </div>
-        <button onClick={onOpenCheckin} style={{
-          background: todayEntry ? COLORS.frogDim : COLORS.accent,
-          color: todayEntry ? COLORS.frog : "#fff",
-          borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600,
-          border: todayEntry ? `1px solid ${COLORS.frogBorder}` : "none"
-        }}>
-          {todayEntry ? "✓ Checked in today" : "Check in now"}
-        </button>
+          <button onClick={onOpenCheckin} style={{
+            background: todayEntry ? COLORS.frogDim : COLORS.accent,
+            color: todayEntry ? COLORS.frog : "#fff",
+            borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600,
+            border: todayEntry ? `1px solid ${COLORS.frogBorder}` : "none"
+          }}>
+            {todayEntry ? "✓ Checked in today" : "Check in now"}
+          </button>
         </div>
       </div>
 
