@@ -3437,29 +3437,19 @@ function WorkHoursSetupModal({ onSave, onSkip }) {
 function SharedBoardView({ token }) {
   const [data, setData] = React.useState(null);
   const [error, setError] = React.useState(null);
+  const [activeWsId, setActiveWsId] = React.useState(null);
   const fetched = React.useRef(false);
 
   React.useEffect(() => {
     if (fetched.current) return;
     fetched.current = true;
     fetch('/api/share/' + token, { credentials: 'omit' })
-      .then(r => {
-        if (!r.ok) throw new Error('Not found');
-        return r.json();
-      })
-      .then(d => {
-        setData(d);
-      })
-      .catch(e => {
-        console.error('Share error:', e);
-        setError(true);
-      });
+      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(d => { setData(d); })
+      .catch(e => { console.error('Share error:', e); setError(true); });
   }, []);
 
-  if (error) {
-    window.location.href = '/not-found.html';
-    return null;
-  }
+  if (error) { window.location.href = '/not-found.html'; return null; }
 
   if (!data) return (
     <div style={{ minHeight: "100vh", background: COLORS.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -3467,15 +3457,84 @@ function SharedBoardView({ token }) {
     </div>
   );
 
-  const tasks = (data.tasks || []).map(t => ({
+  const allTasks = (data.tasks || []).map(t => ({
     ...t, isFrog: t.is_frog, projectId: t.project_id,
     subtasks: typeof t.subtasks === 'string' ? JSON.parse(t.subtasks) : (t.subtasks || []),
   }));
   const projects = (data.projects || []).map(p => ({ ...p, colorId: p.color_id }));
   const STATUS_COLS = ["To Do", "In Progress", "Done"];
   const colDotColor = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
-  const frogTask = tasks.find(t => t.isFrog);
   const name = data.user ? cap(data.user.first_name) + "'s" : "Shared";
+  const isMultiWorkspace = !data.workspaceName;
+
+  // Get unique workspaces from tasks when showing all
+  const wsGroups = React.useMemo(() => {
+    if (!isMultiWorkspace) return null;
+    const map = {};
+    allTasks.forEach(t => {
+      const wsId = t.workspace_id || 'none';
+      if (!map[wsId]) map[wsId] = { id: wsId, tasks: [] };
+      map[wsId].tasks.push(t);
+    });
+    return Object.values(map);
+  }, [allTasks, isMultiWorkspace]);
+
+  const currentWsId = activeWsId || (wsGroups?.[0]?.id);
+  const tasks = isMultiWorkspace
+    ? (wsGroups?.find(w => w.id === currentWsId)?.tasks || [])
+    : allTasks;
+
+  const frogTask = tasks.find(t => t.isFrog);
+  const boardTitle = data.workspaceName
+    ? `${name} ${data.workspaceIcon || ''} ${data.workspaceName} board`
+    : `${name} board`;
+
+  function renderBoard(boardTasks) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+        {STATUS_COLS.map(col => {
+          const colTasks = boardTasks.filter(t => t.status === col);
+          return (
+            <div key={col}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 12, borderBottom: `2px solid ${COLORS.border}` }}>
+                <div style={{ width: 3, height: 16, borderRadius: 2, background: colDotColor[col], flexShrink: 0 }} />
+                <span style={{ fontWeight: 700, fontSize: 13 }}>{col}</span>
+                <span style={{ background: COLORS.surface3, color: COLORS.textMuted, fontSize: 11, padding: "2px 8px", borderRadius: 100, border: `1px solid ${COLORS.border}`, fontWeight: 600 }}>{colTasks.length}</span>
+              </div>
+              {colTasks.map(t => {
+                const project = projects.find(p => p.id === t.projectId);
+                const pc = { High: { line: COLORS.high, dim: COLORS.highDim, text: COLORS.high }, Medium: { line: COLORS.medium, dim: COLORS.mediumDim, text: COLORS.medium }, Low: { line: COLORS.low, dim: COLORS.lowDim, text: COLORS.low } }[t.priority] || {};
+                const isOverdue = t.due && t.due < new Date().toISOString().split("T")[0] && t.status !== "Done";
+                return (
+                  <div key={t.id} style={{ background: t.isFrog ? COLORS.frogDim : COLORS.surface, border: `1px solid ${t.isFrog ? COLORS.frogBorder : COLORS.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+                    <div style={{ height: 3, background: t.isFrog ? COLORS.frog : pc.line }} />
+                    <div style={{ padding: "12px 14px" }}>
+                      <div style={{ display: "flex", gap: 5, marginBottom: 7, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: pc.text, background: pc.dim, padding: "2px 7px", borderRadius: 100 }}>{t.priority?.toUpperCase()}</span>
+                        {project && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: getProjectColor(project.colorId).bg, color: getProjectColor(project.colorId).text }}>{project.name}</span>}
+                        {t.due && <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : COLORS.surface3, borderRadius: 4 }}>{isOverdue ? "⚠ " : ""}{t.due}</span>}
+                      </div>
+                      <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4, color: COLORS.text }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
+                      {t.description && <div style={{ fontSize: 12, color: COLORS.textDim, marginTop: 4, lineHeight: 1.5 }}>{t.description.slice(0, 100)}{t.description.length > 100 ? "…" : ""}</div>}
+                      {t.subtasks?.length > 0 && (
+                        <div style={{ marginTop: 8 }}>
+                          <div style={{ height: 3, background: COLORS.surface3, borderRadius: 2, overflow: "hidden", marginBottom: 3 }}>
+                            <div style={{ height: "100%", width: `${Math.round((t.subtasks.filter(s=>s.done).length/t.subtasks.length)*100)}%`, background: COLORS.accent, borderRadius: 2 }} />
+                          </div>
+                          <div style={{ fontSize: 11, color: COLORS.textMuted }}>{t.subtasks.filter(s=>s.done).length}/{t.subtasks.length} subtasks</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {colTasks.length === 0 && <div style={{ border: `2px dashed ${COLORS.border}`, borderRadius: 10, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>No tasks</div>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100dvh", background: COLORS.bg }}>
@@ -3491,12 +3550,8 @@ function SharedBoardView({ token }) {
           <span style={{ fontWeight: 700, fontSize: 15, color: COLORS.text }}>Tasklist.uk</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 12, color: COLORS.textMuted, background: COLORS.surface3, padding: "4px 10px", borderRadius: 100, border: `1px solid ${COLORS.border}` }}>
-            👁 View only
-          </span>
-          <a href="https://app.tasklist.uk" style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
-            Get started →
-          </a>
+          <span style={{ fontSize: 12, color: COLORS.textMuted, background: COLORS.surface3, padding: "4px 10px", borderRadius: 100, border: `1px solid ${COLORS.border}` }}>👁 View only</span>
+          <a href="https://app.tasklist.uk" style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "6px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Get started →</a>
         </div>
       </div>
 
@@ -3504,10 +3559,32 @@ function SharedBoardView({ token }) {
         {/* Title */}
         <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
           <h1 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 4vw, 36px)", fontWeight: 400, letterSpacing: "-0.5px", color: COLORS.text }}>
-            {name} <em style={{ fontStyle: "italic", color: COLORS.accent }}>board</em>
+            {name} <em style={{ fontStyle: "italic", color: COLORS.accent }}>
+              {data.workspaceName ? `${data.workspaceIcon || ''} ${data.workspaceName} board` : 'board'}
+            </em>
           </h1>
-          <p style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>{tasks.filter(t => t.status !== "Done").length} active · {tasks.filter(t => t.status === "Done").length} completed</p>
+          <p style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>
+            {tasks.filter(t => t.status !== "Done").length} active · {tasks.filter(t => t.status === "Done").length} completed
+          </p>
         </div>
+
+        {/* Workspace tabs — shown when sharing all workspaces */}
+        {isMultiWorkspace && wsGroups && wsGroups.length > 1 && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 24, flexWrap: "wrap" }}>
+            {wsGroups.map((ws, i) => {
+              const isActive = ws.id === currentWsId;
+              const wsTaskCount = ws.tasks.filter(t => t.status !== "Done").length;
+              return (
+                <button key={ws.id} onClick={() => setActiveWsId(ws.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 7, padding: "8px 16px", borderRadius: 10, border: `1.5px solid ${isActive ? COLORS.accent : COLORS.border}`, background: isActive ? COLORS.accentDim : COLORS.surface, color: isActive ? COLORS.accent : COLORS.textDim, fontFamily: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all 0.15s" }}>
+                  <span style={{ fontSize: 16 }}>📋</span>
+                  <span>Workspace {i + 1}</span>
+                  <span style={{ fontSize: 11, background: isActive ? COLORS.accent+'20' : COLORS.surface3, color: isActive ? COLORS.accent : COLORS.textMuted, borderRadius: 100, padding: "1px 7px", fontWeight: 700 }}>{wsTaskCount}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Frog banner */}
         {frogTask && (
@@ -3521,49 +3598,7 @@ function SharedBoardView({ token }) {
           </div>
         )}
 
-        {/* Board */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
-          {STATUS_COLS.map(col => {
-            const colTasks = tasks.filter(t => t.status === col);
-            return (
-              <div key={col}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, paddingBottom: 12, borderBottom: `2px solid ${COLORS.border}` }}>
-                  <div style={{ width: 3, height: 16, borderRadius: 2, background: colDotColor[col], flexShrink: 0 }} />
-                  <span style={{ fontWeight: 700, fontSize: 13 }}>{col}</span>
-                  <span style={{ background: COLORS.surface3, color: COLORS.textMuted, fontSize: 11, padding: "2px 8px", borderRadius: 100, border: `1px solid ${COLORS.border}`, fontWeight: 600 }}>{colTasks.length}</span>
-                </div>
-                {colTasks.map(t => {
-                  const project = projects.find(p => p.id === t.projectId);
-                  const pc = { High: { line: COLORS.high, dim: COLORS.highDim, text: COLORS.high }, Medium: { line: COLORS.medium, dim: COLORS.mediumDim, text: COLORS.medium }, Low: { line: COLORS.low, dim: COLORS.lowDim, text: COLORS.low } }[t.priority] || {};
-                  const isOverdue = t.due && t.due < new Date().toISOString().split("T")[0] && t.status !== "Done";
-                  return (
-                    <div key={t.id} style={{ background: t.isFrog ? COLORS.frogDim : COLORS.surface, border: `1px solid ${t.isFrog ? COLORS.frogBorder : COLORS.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                      <div style={{ height: 3, background: t.isFrog ? COLORS.frog : pc.line }} />
-                      <div style={{ padding: "12px 14px" }}>
-                        <div style={{ display: "flex", gap: 5, marginBottom: 7, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: pc.text, background: pc.dim, padding: "2px 7px", borderRadius: 100 }}>{t.priority?.toUpperCase()}</span>
-                          {project && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: getProjectColor(project.colorId).bg, color: getProjectColor(project.colorId).text }}>{project.name}</span>}
-                          {t.due && <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : COLORS.surface3, borderRadius: 4 }}>{isOverdue ? "⚠ " : ""}{t.due}</span>}
-                        </div>
-                        <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4, color: COLORS.text }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
-                        {t.description && <div style={{ fontSize: 12, color: COLORS.textDim, marginTop: 4, lineHeight: 1.5 }}>{t.description.slice(0, 100)}{t.description.length > 100 ? "…" : ""}</div>}
-                        {t.subtasks?.length > 0 && (
-                          <div style={{ marginTop: 8 }}>
-                            <div style={{ height: 3, background: COLORS.surface3, borderRadius: 2, overflow: "hidden", marginBottom: 3 }}>
-                              <div style={{ height: "100%", width: `${Math.round((t.subtasks.filter(s=>s.done).length/t.subtasks.length)*100)}%`, background: COLORS.accent, borderRadius: 2 }} />
-                            </div>
-                            <div style={{ fontSize: 11, color: COLORS.textMuted }}>{t.subtasks.filter(s=>s.done).length}/{t.subtasks.length} subtasks</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                {colTasks.length === 0 && <div style={{ border: `2px dashed ${COLORS.border}`, borderRadius: 10, padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>No tasks</div>}
-              </div>
-            );
-          })}
-        </div>
+        {renderBoard(tasks)}
       </div>
     </div>
   );
