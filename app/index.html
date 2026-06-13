@@ -3330,7 +3330,7 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
                     style={{ width:24, height:24, borderRadius:'50%', background:col, border:`3px solid ${newColor===col ? COLORS.text : 'transparent'}`, cursor:'pointer', transition:'border 0.12s' }} />
                 ))}
               </div>
-              <div style={{ display:'flex', gap:8' }}>
+              <div style={{ display:'flex', gap:8 }}>
                 <button onClick={() => setCreating(false)} style={{ flex:1, padding:'8px', borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background:COLORS.surface3, color:COLORS.textDim, border:`1px solid ${COLORS.border}` }}>Cancel</button>
                 <button onClick={handleCreate} disabled={!newName.trim()} style={{ flex:2, padding:'8px', borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:700, cursor:'pointer', background:newName.trim()?COLORS.accent:COLORS.surface3, color:newName.trim()?'#fff':COLORS.textMuted, border:'none' }}>Create</button>
               </div>
