@@ -3744,7 +3744,7 @@ function App() {
   }
 
   function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); }
-  function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask(t).catch(console.error); }); } return updated; }); }
+  function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
   function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
@@ -3752,7 +3752,7 @@ function App() {
     const wasFrog = task?.isFrog;
     updateTasks(ts => {
       const updated = ts.map(t => t.id === id ? { ...t, status, completedAt: status === "Done" && !t.completedAt ? new Date().toISOString() : t.completedAt } : t);
-      if (authUser) { const task = updated.find(t => t.id === id); if (task) api.saveTask(task).catch(console.error); }
+      if (authUser) { const task = updated.find(t => t.id === id); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); }
       return updated;
     });
     if (becomingDone) {
@@ -3761,8 +3761,8 @@ function App() {
     }
   }
 
-  function saveBreakdown(taskId, breakdown) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, aiBreakdown: breakdown } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask(task).catch(console.error); } return updated; }); }
-  function saveHappiness(taskId, rating) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, happiness: rating } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask(task).catch(console.error); } return updated; }); }
+  function saveBreakdown(taskId, breakdown) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, aiBreakdown: breakdown } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); } return updated; }); }
+  function saveHappiness(taskId, rating) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, happiness: rating } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); } return updated; }); }
   function saveUser(userData) { setUser(userData); localStorage.setItem(USER_KEY, JSON.stringify(userData)); }
   function toggleTheme(newTheme) {
     const t = newTheme || (theme === "light" ? "dark" : "light");
@@ -3943,7 +3943,7 @@ function App() {
       arr.splice(fromIdx, 1);
       if (toIdx >= 0) arr.splice(toIdx, 0, task);
       else arr.push(task);
-      if (authUser) api.saveTask(task).catch(console.error);
+      if (authUser) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error);
       return arr;
     });
     if (becomingDone) {
