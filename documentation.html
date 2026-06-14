@@ -669,47 +669,34 @@ One likely blocker or risk to avoid.</div>
 
   <script>
     const root = document.documentElement;
-    const toggle = document.getElementById('themeToggle');
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-
-    const syncTheme = () => {
-      const isDark = root.getAttribute('data-theme') === 'dark';
-      themeColorMeta?.setAttribute('content', isDark ? '#7c6af7' : '#4f46e5');
-      toggle.textContent = isDark ? 'Light mode' : 'Dark mode';
-    };
-
     const saved = localStorage.getItem('tasklist_docs_theme');
     if (saved === 'dark') root.setAttribute('data-theme', 'dark');
-    syncTheme();
 
-    toggle.addEventListener('click', () => {
-      const isDark = root.getAttribute('data-theme') === 'dark';
-      isDark ? root.removeAttribute('data-theme') : root.setAttribute('data-theme', 'dark');
-      localStorage.setItem('tasklist_docs_theme', isDark ? 'light' : 'dark');
-      syncTheme();
-    });
-
-    // Active sidebar link on scroll
-    const sections = document.querySelectorAll('.section[id]');
-    const links = document.querySelectorAll('.sidebar-link');
-    // Track active section on scroll
-    const headings = document.querySelectorAll('.section[id]');
-    const navLinks = document.querySelectorAll('.sidebar-link[href^="#"]');
-
-    const onScroll = () => {
-      const scrollY = window.scrollY + 100;
-      let current = null;
-      headings.forEach(section => {
-        if (section.offsetTop <= scrollY) current = section.id;
+    // Sidebar active state
+    (function() {
+      var ids = ['overview','getting-started','tasks','frog','ai','projects','workspaces','bookmarks','calendar','wellbeing','analytics','share','data','faq'];
+      var links = {};
+      ids.forEach(function(id) {
+        var el = document.querySelector('.sidebar-link[href="#' + id + '"]');
+        if (el) links[id] = el;
       });
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) link.classList.add('active');
-      });
-    };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+      function update() {
+        var scrollY = window.scrollY + 120;
+        var current = ids[0];
+        ids.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el && el.offsetTop <= scrollY) current = id;
+        });
+        ids.forEach(function(id) {
+          if (links[id]) links[id].classList.remove('active');
+        });
+        if (links[current]) links[current].classList.add('active');
+      }
+
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    })();
   </script>
 </body>
 </html>
