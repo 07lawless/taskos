@@ -3367,10 +3367,10 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
                 </div>
                 {isActive && <div style={{ width:8, height:8, borderRadius:'50%', background:COLORS.accent }}/>}
                 {!isActive && workspaces.length > 1 && (
-                  <button onClick={e => { e.stopPropagation(); onDelete(ws.id); }}
-                    style={{ background:'none', border:'none', color:COLORS.textMuted, cursor:'pointer', padding:'4px', borderRadius:6, fontSize:13, opacity:0 }}
-                    onMouseEnter={e => e.currentTarget.style.opacity=1}
-                    onMouseLeave={e => e.currentTarget.style.opacity=0}>✕</button>
+                  <button onClick={e => { e.stopPropagation(); if(window.confirm(`Delete "${ws.name}"? All tasks in this workspace will also be deleted.`)) onDelete(ws.id); }}
+                    style={{ background:COLORS.highDim, border:`1px solid ${COLORS.high}30`, color:COLORS.high, cursor:'pointer', padding:'4px 8px', borderRadius:6, fontSize:11, fontWeight:600, fontFamily:'inherit', flexShrink:0 }}>
+                    Delete
+                  </button>
                 )}
               </div>
             );
