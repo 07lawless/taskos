@@ -886,7 +886,7 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
       {/* Priority colour line at top */}
       <div className="task-card-priority-line" style={{ background: task.isFrog ? COLORS.frog : pc.line }} />
 
-      <div className="task-card-body" style={ WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }>
+      <div className="task-card-body" style={{ WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>
         {/* Frog label */}
         {task.isFrog && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
