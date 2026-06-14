@@ -4,8 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#4f46e5" />
-  <title>Tasklist.uk — Documentation</title>
-  <meta name="description" content="Complete guide to Tasklist.uk — tasks, AI breakdowns, wellbeing, workspaces, bookmarks and more." />
+  <title>Tasklist.uk Documentation — Tasks, AI, Wellbeing & More</title>
+  <meta name="description" content="Complete guide to Tasklist.uk — task management, AI breakdowns, frog task method, wellbeing tracking, workspaces, bookmarks and analytics." />
+  <meta name="keywords" content="tasklist, task manager, documentation, eat the frog, AI breakdown, wellbeing tracker, productivity app, workspaces" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://tasklist.uk/documentation" />
+  <meta property="og:title" content="Tasklist.uk Documentation" />
+  <meta property="og:description" content="Everything you need to master Tasklist.uk — tasks, AI planning, wellbeing, workspaces, bookmarks and analytics." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tasklist.uk/documentation" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Tasklist.uk Documentation" />
+  <meta name="twitter:description" content="Complete guide to Tasklist.uk — task management, AI breakdowns, wellbeing tracking and more." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='16' y='22' font-family='system-ui,sans-serif' font-weight='700' font-size='14' fill='white' text-anchor='middle' letter-spacing='1.5'>tl</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
@@ -682,12 +693,14 @@ One likely blocker or risk to avoid.</div>
       });
 
       function update() {
+        var atBottom = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 40;
         var scrollY = window.scrollY + 120;
         var current = ids[0];
         ids.forEach(function(id) {
           var el = document.getElementById(id);
           if (el && el.offsetTop <= scrollY) current = id;
         });
+        if (atBottom) current = ids[ids.length - 1];
         ids.forEach(function(id) {
           if (links[id]) links[id].classList.remove('active');
         });
