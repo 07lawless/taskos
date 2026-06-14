@@ -692,16 +692,24 @@ One likely blocker or risk to avoid.</div>
     // Active sidebar link on scroll
     const sections = document.querySelectorAll('.section[id]');
     const links = document.querySelectorAll('.sidebar-link');
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          links.forEach(l => l.classList.remove('active'));
-          const active = document.querySelector(`.sidebar-link[href="#${e.target.id}"]`);
-          if (active) active.classList.add('active');
-        }
+    // Track active section on scroll
+    const headings = document.querySelectorAll('.section[id]');
+    const navLinks = document.querySelectorAll('.sidebar-link[href^="#"]');
+
+    const onScroll = () => {
+      const scrollY = window.scrollY + 100;
+      let current = null;
+      headings.forEach(section => {
+        if (section.offsetTop <= scrollY) current = section.id;
       });
-    }, { rootMargin: '-20% 0px -70% 0px' });
-    sections.forEach(s => observer.observe(s));
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === '#' + current) link.classList.add('active');
+      });
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
   </script>
 </body>
 </html>
