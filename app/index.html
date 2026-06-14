@@ -308,6 +308,9 @@ const css = `
     padding: 0;
     margin-bottom: 10px;
     cursor: grab;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
     position: relative;
     overflow: hidden;
@@ -317,6 +320,11 @@ const css = `
   .task-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-1px); border-color: var(--c-border-hover); }
   .task-card.is-frog { border-color: var(--c-frog-border); background: var(--c-frog-dim); }
   .task-card.is-dragging { opacity: 0.4; }
+  .task-card *, .task-card button, .task-card span, .task-card p, .task-card div {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
   .task-card.touch-dragging { opacity: 0.5; transform: scale(0.97); box-shadow: 0 0 0 2px var(--c-accent); }
   .task-card-body { padding: 14px 16px; }
   .task-card-footer {
