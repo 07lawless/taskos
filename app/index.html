@@ -890,7 +890,7 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
         {/* Frog label */}
         {task.isFrog && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-            <span style={ fontSize: 10, fontWeight: 700, color: COLORS.frog, letterSpacing: 0.8, textTransform: "uppercase", WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }>🐸 Priority task</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: COLORS.frog, letterSpacing: 0.8, textTransform: "uppercase", WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>🐸 Priority task</span>
           </div>
         )}
 
@@ -917,13 +917,13 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
         </div>
 
         {/* Title */}
-        <div style={ fontWeight: 600, fontSize: 14, lineHeight: 1.45, color: COLORS.text, marginBottom: task.description ? 5 : 0, WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }>
+        <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.45, color: COLORS.text, marginBottom: task.description ? 5 : 0, WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>
           {task.title}
         </div>
 
         {/* Description */}
         {task.description && (
-          <div style={ fontSize: 12, color: COLORS.textDim, lineHeight: 1.55, marginTop: 4, WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }>
+          <div style={{ fontSize: 12, color: COLORS.textDim, lineHeight: 1.55, marginTop: 4, WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>
             {task.description.slice(0, 100)}{task.description.length > 100 ? "…" : ""}
           </div>
         )}
