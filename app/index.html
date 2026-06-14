@@ -881,7 +881,7 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
       className={`task-card${task.isFrog ? " is-frog" : ""}${isDragging ? " is-dragging" : ""}`}
       style={{ touchAction: 'pan-y', WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}
       data-task-id={task.id}
-      data-col={col || task.status || 'To Do'}
+      data-col={task.status}
     >
       {/* Priority colour line at top */}
       <div className="task-card-priority-line" style={{ background: task.isFrog ? COLORS.frog : pc.line }} />
@@ -4381,7 +4381,6 @@ function App() {
                         isDragging={dragging===t.id} onDragStart={() => setDragging(t.id)}
                         onDragOver={e => { e.preventDefault(); setDragOver(t.id); }}
                         onDrop={e => { e.preventDefault(); handleDrop(t.id, col); }}
-                        col={col}
                         {...makeTouchHandlers(t.id)} />
                     ))}
                   </div>
