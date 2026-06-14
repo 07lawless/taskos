@@ -3769,12 +3769,21 @@ function App() {
       setDataLoaded(true);
       // Show work hours prompt if not set
       if (!settingsData || !settingsData.work_hours) setShowWorkHoursSetup(true);
-      // Load existing share token
+      // Load existing share tokens (one per workspace scope)
       try {
         const shareRes = await fetch('/api/share/mine', { credentials: 'include' });
         if (shareRes.ok) {
           const shareData = await shareRes.json();
-          if (shareData.token) setShareToken(shareData.token);
+          // shareData is now { tokens: [{token, workspace_id}] }
+          if (shareData.tokens?.length) {
+            // Load the most recent token for display
+            const first = shareData.tokens[0];
+            setShareToken(first.token);
+            setShareWorkspaceId(first.workspace_id || null);
+          } else if (shareData.token) {
+            // Backwards compat
+            setShareToken(shareData.token);
+          }
         }
       } catch(e) {}
     } catch(e) { console.error('Failed to load data', e); setDataLoaded(true); }
@@ -4019,7 +4028,7 @@ function App() {
   async function generateShare(wsId) {
     setShareLoading(true);
     try {
-      const body = wsId ? { workspace_id: wsId } : {};
+      const body = { workspace_id: wsId || null, replace_scope_only: true };
       const r = await fetch('/api/share', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
       setShareToken(d.token);
