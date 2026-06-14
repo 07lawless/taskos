@@ -856,7 +856,7 @@ function ProgressBar({ subtasks }) {
 }
 
 // ── TaskCard ───────────────────────────────────────────────────────────────────
-function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart, onDragOver, onDrop, onTouchStart, onTouchMove, onTouchEnd, isDragging, onSaveBreakdown, projects }) {
+function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart, onDragOver, onDrop, onTouchStart, onTouchMove, onTouchEnd, isDragging, onSaveBreakdown, projects, col }) {
   const isOverdue = task.due && task.due < today() && task.status !== "Done";
   const isDueToday = task.due === today();
   const project = projects?.find(p => p.id === task.projectId);
@@ -872,8 +872,9 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
       draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
       onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
       className={`task-card${task.isFrog ? " is-frog" : ""}${isDragging ? " is-dragging" : ""}`}
-      style={{ touchAction: 'pan-y' }}
+      style={{ touchAction: 'manipulation', WebkitUserSelect: 'none', userSelect: 'none' }}
       data-task-id={task.id}
+      data-col={col || task.status}
     >
       {/* Priority colour line at top */}
       <div className="task-card-priority-line" style={{ background: task.isFrog ? COLORS.frog : pc.line }} />
@@ -4004,68 +4005,113 @@ function App() {
         touchDragRef.current.startY = touch.clientY;
         touchDragRef.current.taskId = taskId;
         touchDragRef.current.active = false;
+
         touchDragRef.current.timer = setTimeout(() => {
           touchDragRef.current.active = true;
           setDragging(taskId);
-          // Visual feedback — vibrate if supported
           if (navigator.vibrate) navigator.vibrate(40);
-          // Create ghost element
+
+          // Create ghost — clone the actual card element
           const card = e.currentTarget;
+          const rect = card.getBoundingClientRect();
           const ghost = card.cloneNode(true);
-          ghost.style.cssText = `position:fixed;z-index:9999;opacity:0.85;pointer-events:none;width:${card.offsetWidth}px;transform:scale(1.03) rotate(1.5deg);box-shadow:0 20px 40px rgba(0,0,0,0.2);border-radius:12px;`;
-          ghost.style.left = (touch.clientX - card.offsetWidth / 2) + 'px';
-          ghost.style.top = (touch.clientY - 40) + 'px';
+          ghost.style.cssText = [
+            'position:fixed',
+            `width:${rect.width}px`,
+            `left:${rect.left}px`,
+            `top:${rect.top}px`,
+            'z-index:9999',
+            'pointer-events:none',
+            'opacity:0.9',
+            'transform:scale(1.04) rotate(1deg)',
+            'box-shadow:0 16px 40px rgba(0,0,0,0.25)',
+            'border-radius:12px',
+            'transition:none',
+          ].join(';');
           document.body.appendChild(ghost);
           touchDragRef.current.ghost = ghost;
-        }, 700);
+          touchDragRef.current.offsetX = touch.clientX - rect.left;
+          touchDragRef.current.offsetY = touch.clientY - rect.top;
+
+          // Make original card semi-transparent but keep it visible
+          card.style.opacity = '0.3';
+          touchDragRef.current.originalCard = card;
+        }, 600);
       },
+
       onTouchMove: (e) => {
         const touch = e.touches[0];
-        const dx = Math.abs(touch.clientX - touchDragRef.current.startX);
-        const dy = Math.abs(touch.clientY - touchDragRef.current.startY);
-        // Cancel long press if user is scrolling
-        if (!touchDragRef.current.active && (dx > 8 || dy > 8)) {
-          clearTimeout(touchDragRef.current.timer);
+
+        // Cancel if not yet in drag mode and user moved too much (scrolling)
+        if (!touchDragRef.current.active) {
+          const dx = Math.abs(touch.clientX - touchDragRef.current.startX);
+          const dy = Math.abs(touch.clientY - touchDragRef.current.startY);
+          if (dx > 6 || dy > 6) clearTimeout(touchDragRef.current.timer);
           return;
         }
-        if (!touchDragRef.current.active) return;
+
         e.preventDefault();
-        // Move ghost
+
+        // Move ghost with finger
         const ghost = touchDragRef.current.ghost;
         if (ghost) {
-          ghost.style.left = (touch.clientX - ghost.offsetWidth / 2) + 'px';
-          ghost.style.top = (touch.clientY - 40) + 'px';
+          ghost.style.left = (touch.clientX - touchDragRef.current.offsetX) + 'px';
+          ghost.style.top  = (touch.clientY - touchDragRef.current.offsetY) + 'px';
         }
-        // Find element under finger
-        ghost && (ghost.style.display = 'none');
+
+        // Find what's under the finger (hide ghost temporarily)
+        if (ghost) ghost.style.display = 'none';
         const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        ghost && (ghost.style.display = '');
-        // Find closest task card or column
-        const taskCard = el?.closest('[data-task-id]');
-        const colEl = el?.closest('[data-col]');
-        if (taskCard) setDragOver(taskCard.dataset.taskId);
-        else if (colEl) setDragOver(colEl.dataset.col);
+        if (ghost) ghost.style.display = '';
+
+        if (!el) return;
+        const taskEl = el.closest('[data-task-id]');
+        const colEl  = el.closest('[data-col]');
+        if (taskEl)      setDragOver(taskEl.dataset.taskId);
+        else if (colEl)  setDragOver(colEl.dataset.col);
       },
+
       onTouchEnd: (e) => {
         clearTimeout(touchDragRef.current.timer);
+
+        // Restore original card opacity
+        if (touchDragRef.current.originalCard) {
+          touchDragRef.current.originalCard.style.opacity = '';
+          touchDragRef.current.originalCard = null;
+        }
+
+        // Remove ghost
         const ghost = touchDragRef.current.ghost;
         if (ghost) { ghost.remove(); touchDragRef.current.ghost = null; }
-        if (!touchDragRef.current.active) { touchDragRef.current.active = false; return; }
+
+        if (!touchDragRef.current.active) {
+          touchDragRef.current.active = false;
+          return;
+        }
+
         const touch = e.changedTouches[0];
+
         // Find drop target
-        ghost && (ghost.style.display = 'none');
-        const el = document.elementFromPoint(touch.clientX, touch.clientY);
-        const taskCard = el?.closest('[data-task-id]');
-        const colEl = el?.closest('[data-col]');
-        if (taskCard) handleDrop(taskCard.dataset.taskId, taskCard.dataset.col);
-        else if (colEl) handleDrop(null, colEl.dataset.col);
+        let el = null;
+        try {
+          el = document.elementFromPoint(touch.clientX, touch.clientY);
+        } catch(err) {}
+
+        if (el) {
+          const taskEl = el.closest('[data-task-id]');
+          const colEl  = el.closest('[data-col]');
+          if (taskEl)     handleDrop(taskEl.dataset.taskId, taskEl.dataset.col || dragOver);
+          else if (colEl) handleDrop(null, colEl.dataset.col);
+        }
+
         touchDragRef.current.active = false;
         touchDragRef.current.taskId = null;
         setDragging(null);
         setDragOver(null);
-      }
+      },
     };
   }
+
 
   function handleDrop(targetId, targetStatus) {
     if (!dragging) return;
@@ -4362,6 +4408,7 @@ function App() {
                       isDragging={dragging===t.id} onDragStart={() => setDragging(t.id)}
                       onDragOver={e => { e.preventDefault(); setDragOver(t.id); }}
                       onDrop={e => { e.preventDefault(); handleDrop(t.id, col); }}
+                      col={col}
                       {...makeTouchHandlers(t.id)} />
                   ))}
                   {colTasks.length === 0 && (
