@@ -273,7 +273,7 @@ const css = `
   }
   .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
   .nav-bar { border-top: 1px solid var(--c-border); overflow-x: auto; scrollbar-width: none; background: color-mix(in srgb, var(--c-surface) 96%, transparent); }
-  .nav-bar-inner { max-width: 1200px; margin: 0 auto; padding: 4px 20px; display: flex; align-items: center; gap: 2px; }
+  .nav-bar-inner { max-width: 1200px; margin: 0 auto; padding: 4px max(20px, env(safe-area-inset-right)) 4px max(20px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 2px; }
   .nav-bar::-webkit-scrollbar { display: none; }
   .nav-bar-btn { display: flex; align-items: center; gap: 5px; padding: 6px 11px; border-radius: 7px; border: none; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; transition: all 0.12s; background: transparent; color: var(--c-text-dim); }
   .nav-bar-btn:hover { background: var(--c-surface3); color: var(--c-text); }
@@ -4440,7 +4440,7 @@ function App() {
         {/* Collapsible nav bar */}
         {navBarOpen && (
           <div className="nav-bar desktop-only">
-            <div className="nav-bar-inner">
+            <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "4px 20px", display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
             {/* Views */}
             {views.map(([v, label]) => (
               <button key={v} className={"nav-bar-btn" + (view===v ? " active" : "")} onClick={() => setView(v)}>
