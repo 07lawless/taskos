@@ -281,6 +281,11 @@
     .doc-footer a { color: var(--c-accent); }
 
     /* Responsive */
+    /* Grid column modifiers (used instead of inline grid-template-columns so media queries can override them) */
+    .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .cards.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .stat-row.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
     @media (max-width: 860px) {
       .main-wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; }
       .sidebar { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -288,12 +293,17 @@
       .sidebar-label { display: none; }
       .sidebar-link { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 100px; padding: 6px 14px; font-size: 12px; }
       .hero { padding: 48px 20px; }
+      .stat-row.cols-5 { grid-template-columns: repeat(3, 1fr); }
     }
     @media (max-width: 560px) {
-      .cards { grid-template-columns: repeat(2, 1fr); }
-      .stat-row { grid-template-columns: repeat(2, 1fr); }
-      .stat-row { grid-template-columns: repeat(2, 1fr); }
+      .cards, .cards.cols-2, .cards.cols-3 { grid-template-columns: repeat(2, 1fr); }
+      .stat-row, .stat-row.cols-5 { grid-template-columns: repeat(2, 1fr); }
       .hero h1 { font-size: 32px; letter-spacing: -1px; }
+      .sidebar { display: none; }
+      .main-wrap { display: block; }
+    }
+    @media (max-width: 400px) {
+      .cards, .cards.cols-2, .cards.cols-3, .stat-row, .stat-row.cols-5 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -329,6 +339,7 @@
         <span class="hero-chip">📊 Analytics</span>
         <span class="hero-chip">📁 Workspaces</span>
         <span class="hero-chip">🔖 Bookmarks</span>
+        <span class="hero-chip">👥 Teams</span>
         <span class="hero-chip">☁️ Cloud sync</span>
       </div>
     </div>
@@ -350,6 +361,7 @@
         <a class="sidebar-link" href="#ai"><span class="dot"></span>AI breakdown</a>
         <a class="sidebar-link" href="#projects"><span class="dot"></span>Projects</a>
         <a class="sidebar-link" href="#workspaces"><span class="dot"></span>Workspaces</a>
+        <a class="sidebar-link" href="#collab"><span class="dot"></span>Collaboration Board</a>
         <a class="sidebar-link" href="#bookmarks"><span class="dot"></span>Bookmarks</a>
         <a class="sidebar-link" href="#calendar"><span class="dot"></span>Calendar</a>
         <a class="sidebar-link" href="#wellbeing"><span class="dot"></span>Wellbeing</a>
@@ -467,7 +479,7 @@ A short explanation of what the task involves and why it matters.
 
 <span class="code-key">WATCH OUT</span>
 One likely blocker or risk to avoid.</div>
-        <div class="cards" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="cards cols-3">
           <div class="card"><div class="card-icon">✨</div><div class="card-title">Task breakdown</div><div class="card-body">Send task details to Groq — get a summary, 4–8 steps and one warning back in seconds.</div></div>
           <div class="card"><div class="card-icon">🤖</div><div class="card-title">Daily plan</div><div class="card-body">Tell the AI how you feel and it suggests the optimal order to tackle your tasks.</div></div>
           <div class="card"><div class="card-icon">📝</div><div class="card-title">EOD journal</div><div class="card-body">Appears automatically at your work end time. Write a few lines and get a warm AI reflection.</div></div>
@@ -481,7 +493,7 @@ One likely blocker or risk to avoid.</div>
         <div class="section-tag">Projects</div>
         <h2 class="section-title">Organise tasks by <em>outcome</em></h2>
         <p class="section-body">Projects group related tasks together, making Tasklist.uk suitable for any workstream — website launches, campaigns, product builds, fitness goals or personal admin.</p>
-        <div class="cards" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="cards cols-3">
           <div class="card"><div class="card-icon">📁</div><div class="card-title">Project assignment</div><div class="card-body">Link any task to a project to make filtering and understanding your workload easier.</div></div>
           <div class="card"><div class="card-icon">🎨</div><div class="card-title">Colour labels</div><div class="card-body">Each project gets a colour. Labels appear on task cards so context is visible at a glance.</div></div>
           <div class="card"><div class="card-icon">🔽</div><div class="card-title">Filter by project</div><div class="card-body">Click a project pill in the filter bar to show only tasks belonging to that project.</div></div>
@@ -494,12 +506,32 @@ One likely blocker or risk to avoid.</div>
       <section class="section" id="workspaces">
         <div class="section-tag">Workspaces</div>
         <h2 class="section-title">Separate work from <em>personal</em></h2>
-        <p class="section-body">Workspaces give you completely isolated environments within one account. Tasks, projects and bookmarks are scoped per workspace — switching is instant from the header pill.</p>
+        <p class="section-body">Workspaces give you completely isolated environments within one account. Tasks, projects and bookmarks are scoped per workspace — switching is instant from the workspace pill on the Board tab.</p>
         <div class="cards">
           <div class="card"><div class="card-icon">🏠</div><div class="card-title">Personal</div><div class="card-body">Created automatically on first login. For personal goals, habits and life admin.</div></div>
           <div class="card"><div class="card-icon">💼</div><div class="card-title">Work</div><div class="card-body">A dedicated space for professional tasks and projects, isolated from personal data.</div></div>
           <div class="card"><div class="card-icon">✨</div><div class="card-title">Custom spaces</div><div class="card-body">Create as many workspaces as you need with a custom name, emoji and colour.</div></div>
-          <div class="card"><div class="card-icon">🔄</div><div class="card-title">Instant switching</div><div class="card-body">Tap the workspace pill in the header. Data reloads for the selected space immediately.</div></div>
+          <div class="card"><div class="card-icon">🔄</div><div class="card-title">Instant switching</div><div class="card-body">Tap the workspace pill in the greeting banner at the top of the Board tab. Data reloads for the selected space immediately.</div></div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Collaboration Board -->
+      <section class="section" id="collab">
+        <div class="section-tag">Collaboration Board</div>
+        <h2 class="section-title">Plan and assign work as a <em>team</em></h2>
+        <p class="section-body">Every team gets its own shared Collaboration Board — a Kanban board separate from your personal workspace where any member can create tasks and assign them to teammates. Open it from the Collaborate tab.</p>
+        <div class="cards cols-3">
+          <div class="card"><div class="card-icon">🗂️</div><div class="card-title">Shared To Do / In Progress / Done</div><div class="card-body">One board per team with the same three-column workflow as your personal board, visible to every member.</div></div>
+          <div class="card"><div class="card-icon">🙋</div><div class="card-title">Assign to anyone</div><div class="card-body">When creating or editing a task, pick any teammate from the Assign To dropdown — or leave it unassigned for anyone to pick up.</div></div>
+          <div class="card"><div class="card-icon">🔔</div><div class="card-title">Assignment notifications</div><div class="card-body">Assigning or reassigning a task to someone sends them a notification, which appears live in the bell menu within 30 seconds.</div></div>
+        </div>
+        <div class="feature-row">
+          <div class="feature-row-inner">
+            <div class="feature-row-icon">🔀</div>
+            <div><div class="feature-row-title">Multiple teams</div><div class="feature-row-body">If you belong to more than one team, a team switcher at the top of the Collaboration Board lets you jump between each team's board.</div></div>
+          </div>
         </div>
       </section>
 
@@ -525,7 +557,7 @@ One likely blocker or risk to avoid.</div>
         <div class="section-tag">Calendar</div>
         <h2 class="section-title">See your tasks in <em>time</em></h2>
         <p class="section-body">The calendar view maps tasks with due dates onto a monthly grid. Spot upcoming deadlines, see busy periods and plan your workload across the month at a glance.</p>
-        <div class="cards" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="cards cols-2">
           <div class="card"><div class="card-icon">📅</div><div class="card-title">Monthly view</div><div class="card-body">All tasks with due dates appear on their deadline day across a full calendar grid.</div></div>
           <div class="card"><div class="card-icon">🚨</div><div class="card-title">Overdue alerts</div><div class="card-body">Tasks past their due date are visually flagged in red so nothing slips through unnoticed.</div></div>
         </div>
@@ -538,7 +570,7 @@ One likely blocker or risk to avoid.</div>
         <div class="section-tag">Wellbeing</div>
         <h2 class="section-title">Daily check-ins and personal <em>trends</em></h2>
         <p class="section-body">Tasklist.uk tracks wellbeing alongside work. Daily check-ins take under a minute and reveal how productivity connects with your mood, energy, stress and sleep over time.</p>
-        <div class="stat-row" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="stat-row cols-5">
           <div class="stat-card"><div class="stat-val">😊</div><div class="stat-label">Mood</div></div>
           <div class="stat-card"><div class="stat-val">⚡</div><div class="stat-label">Energy</div></div>
           <div class="stat-card"><div class="stat-val">😤</div><div class="stat-label">Stress</div></div>
@@ -653,7 +685,11 @@ One likely blocker or risk to avoid.</div>
           </details>
           <details>
             <summary>What are workspaces?</summary>
-            <p>Workspaces let you separate different areas of your life — Personal and Work are created by default. Tasks, projects and bookmarks are fully isolated per workspace. Switch between them instantly from the header.</p>
+            <p>Workspaces let you separate different areas of your life — Personal and Work are created by default. Tasks, projects and bookmarks are fully isolated per workspace. Switch between them instantly from the workspace pill on the Board tab.</p>
+          </details>
+          <details>
+            <summary>How do I assign a task to a teammate?</summary>
+            <p>Join or create a team, then open the Collaborate tab to access your team's Collaboration Board. Create a task there and pick a teammate from the Assign To dropdown — they'll get a notification and the task appears on the shared board for everyone to see.</p>
           </details>
           <details>
             <summary>Can I share my board with others?</summary>
@@ -665,7 +701,7 @@ One likely blocker or risk to avoid.</div>
           </details>
           <details>
             <summary>Is it mobile friendly?</summary>
-            <p>Yes. The interface is fully responsive with a bottom navigation bar on mobile, safe-area spacing for iOS, and a long-press menu to move tasks between columns without drag and drop.</p>
+            <p>Yes. The interface is fully responsive with a bottom navigation bar on mobile, safe-area spacing for iOS, and a long-press menu to move tasks between columns without drag and drop. The bottom nav covers Board, Calendar, Collaborate (when you're on a team) and Teams, with a More menu for Wellbeing, Stats, Saved and Settings.</p>
           </details>
         </div>
       </section>
@@ -685,7 +721,7 @@ One likely blocker or risk to avoid.</div>
 
     // Sidebar active state
     (function() {
-      var ids = ['overview','getting-started','tasks','frog','ai','projects','workspaces','bookmarks','calendar','wellbeing','analytics','share','data','faq'];
+      var ids = ['overview','getting-started','tasks','frog','ai','projects','workspaces','collab','bookmarks','calendar','wellbeing','analytics','share','data','faq'];
       var links = {};
       ids.forEach(function(id) {
         var el = document.querySelector('.sidebar-link[href="#' + id + '"]');
