@@ -3799,6 +3799,8 @@ const api = {
   async deleteWorkspace(id) { await fetch('/api/workspaces/'+id, { method:'DELETE', credentials:'include' }); },
   async saveTask(task) { await fetch('/api/tasks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); },
   async deleteTask(id) { await fetch('/api/tasks/' + id, { method: 'DELETE', credentials: 'include' }); },
+  async getAssignedTasks() { const r = await fetch('/api/tasks/assigned', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async setTaskStatus(id, status, completedAt) { await fetch('/api/tasks/' + id + '/status', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, completedAt }) }); },
   async getCheckins() { const r = await fetch('/api/checkins', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveCheckin(c) { await fetch('/api/checkins', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) }); },
   async getProjects(wsId) { const r = await fetch('/api/projects?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
@@ -4014,6 +4016,41 @@ function SharedBoardView({ token }) {
   );
 }
 
+// ── AssignedToMeSection ──────────────────────────────────────────────────────────
+function AssignedToMeSection({ tasks, onStatusChange }) {
+  const [collapsed, setCollapsed] = React.useState(false);
+  const open = tasks.filter(t => t.status !== "Done");
+  if (open.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 20, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
+      <button onClick={() => setCollapsed(c => !c)}
+        style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+        <span style={{ fontSize: 16 }}>📥</span>
+        <span style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>Assigned to you</span>
+        <span style={{ background: COLORS.accentDim, color: COLORS.accent, fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 100 }}>{open.length}</span>
+        <span style={{ marginLeft: "auto", color: COLORS.textMuted, fontSize: 12 }}>{collapsed ? "Show" : "Hide"}</span>
+      </button>
+      {!collapsed && (
+        <div style={{ padding: "0 16px 12px" }}>
+          {open.map(t => (
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: `1px solid ${COLORS.border}` }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+                  From {t.owner_first_name} {t.owner_last_name}{t.due ? ` · Due ${t.due}` : ""}
+                </div>
+              </div>
+              <select value={t.status} onChange={e => onStatusChange(t.id, e.target.value)} style={{ fontSize: 12, padding: "4px 8px", flexShrink: 0 }}>
+                {STATUS_COLS.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const [tasks, setTasks] = useState(() => { try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : SAMPLE_TASKS; } catch { return SAMPLE_TASKS; } });
   const [checkins, setCheckins] = useState(() => { try { const s = localStorage.getItem(WELLBEING_KEY); return s ? JSON.parse(s) : []; } catch { return []; } });
@@ -4146,6 +4183,11 @@ function App() {
         const teamsRes = await fetch('/api/teams', { credentials: 'include' });
         if (teamsRes.ok) setTeams(await teamsRes.json());
       } catch(e) {}
+      // Load tasks assigned to me by others
+      try {
+        const assigned = await api.getAssignedTasks();
+        if (assigned) setAssignedTasks(assigned);
+      } catch(e) {}
       // Load notifications
       try {
         const notifRes = await fetch('/api/notifications', { credentials: 'include' });
@@ -4255,6 +4297,12 @@ function App() {
       if (wasFrog) setTimeout(() => setConfetti(true), 200);
       if (task) setTimeout(() => setHappinessTask(task), wasFrog ? 2000 : 300);
     }
+  }
+
+  function setAssignedTaskStatus(id, status) {
+    const completedAt = status === "Done" ? new Date().toISOString() : null;
+    setAssignedTasks(ts => ts.map(t => t.id === id ? { ...t, status, completed_at: completedAt } : t));
+    api.setTaskStatus(id, status, completedAt).catch(console.error);
   }
 
   function saveBreakdown(taskId, breakdown) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, aiBreakdown: breakdown } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); } return updated; }); }
@@ -4442,6 +4490,7 @@ function App() {
   const [touchMoveTask, setTouchMoveTask] = React.useState(null);
   const [navBarOpen, setNavBarOpen] = React.useState(true);
   const [teams, setTeams] = React.useState([]);
+  const [assignedTasks, setAssignedTasks] = React.useState([]);
   const [notifications, setNotifications] = React.useState([]);
   const [notifTrigger, setNotifTrigger] = React.useState(0);
 
@@ -4665,6 +4714,8 @@ function App() {
 
       <div className="page-pad">
         {(authUser || user) && view === "board" && <GreetingBanner user={authUser || user} tasks={tasks} />}
+
+        {view === "board" && <AssignedToMeSection tasks={assignedTasks} onStatusChange={setAssignedTaskStatus} />}
 
         {/* Filter bar — due date + project */}
         {view === "board" && (
