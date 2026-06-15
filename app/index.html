@@ -4439,8 +4439,8 @@ function App() {
 
         {/* Collapsible nav bar */}
         {navBarOpen && (
-          <div className="nav-bar desktop-only">
-            <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "4px 20px", display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
+          <div className="nav-bar desktop-only" style={{ padding: "4px 0" }}>
+            <div style={{ maxWidth: "1200px", width: "100%", margin: "0 auto", paddingLeft: "max(20px, env(safe-area-inset-left))", paddingRight: "max(20px, env(safe-area-inset-right))", display: "flex", alignItems: "center", gap: 2, boxSizing: "border-box" }}>
             {/* Views */}
             {views.map(([v, label]) => (
               <button key={v} className={"nav-bar-btn" + (view===v ? " active" : "")} onClick={() => setView(v)}>
