@@ -4040,7 +4040,7 @@ function AssignedToMeSection({ tasks, onStatusChange }) {
                   From {t.owner_first_name} {t.owner_last_name}{t.due ? ` · Due ${t.due}` : ""}
                 </div>
               </div>
-              <select value={t.status} onChange={e => onStatusChange(t.id, e.target.value)} style={{ fontSize: 12, padding: "4px 8px", flexShrink: 0 }}>
+              <select value={t.status} onChange={e => onStatusChange(t.id, e.target.value)} style={{ fontSize: 12, padding: "4px 8px", width: "auto", flexShrink: 0 }}>
                 {STATUS_COLS.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
