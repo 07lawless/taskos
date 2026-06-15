@@ -973,6 +973,14 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
               {assignee.first_name}
             </span>
           )}
+          {task.assigned_by_first_name && (
+            <span title={`Assigned by ${task.assigned_by_first_name} ${task.assigned_by_last_name || ""}`} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, padding: "2px 7px 2px 2px", borderRadius: 100, background: COLORS.surface3, color: COLORS.textMuted }}>
+              {task.assigned_by_avatar
+                ? <img src={task.assigned_by_avatar} alt="" style={{ width: 14, height: 14, borderRadius: "50%" }} />
+                : <span style={{ width: 14, height: 14, borderRadius: "50%", background: COLORS.textMuted, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700 }}>{task.assigned_by_first_name?.[0]}</span>}
+              From {task.assigned_by_first_name}
+            </span>
+          )}
         </div>
 
         {/* Title */}
@@ -1083,6 +1091,14 @@ function TaskModal({ task, onSave, onClose, projects, teams }) {
               )}
             </div>
           </div>
+          {form.assigned_by_first_name && (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: COLORS.textMuted, background: COLORS.surface3, borderRadius: 8, padding: "8px 12px" }}>
+              {form.assigned_by_avatar
+                ? <img src={form.assigned_by_avatar} alt="" style={{ width: 20, height: 20, borderRadius: "50%" }} />
+                : <span style={{ width: 20, height: 20, borderRadius: "50%", background: COLORS.textMuted, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, flexShrink: 0 }}>{form.assigned_by_first_name[0]}</span>}
+              <span>Assigned by <strong style={{ color: COLORS.text }}>{form.assigned_by_first_name} {form.assigned_by_last_name || ""}</strong></span>
+            </div>
+          )}
           {teams && teams.length > 0 && (
             <div style={{ display: "flex", gap: 12 }}>
               <div style={{ flex: 1 }}>
@@ -2677,7 +2693,7 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
     setNotifications(prev => prev.filter(n => n.id !== id));
   }
 
-  const notifIcons = { team_joined: "🎉", member_joined: "👋", task_assigned: "📋", role_changed: "⭐", task_status_changed: "✅", task_accepted: "👍", task_declined: "🙅" };
+  const notifIcons = { team_joined: "🎉", member_joined: "👋", task_assigned: "📋", role_changed: "⭐", task_accepted: "👍", task_declined: "🙅", task_completed: "🎉" };
 
   return (
     <div style={{ paddingBottom: 40 }}>
@@ -3800,7 +3816,6 @@ const api = {
   async saveTask(task) { await fetch('/api/tasks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); },
   async deleteTask(id) { await fetch('/api/tasks/' + id, { method: 'DELETE', credentials: 'include' }); },
   async getAssignedTasks() { const r = await fetch('/api/tasks/assigned', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
-  async setTaskStatus(id, status, completedAt) { await fetch('/api/tasks/' + id + '/status', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, completedAt }) }); },
   async respondToTask(id, action, workspaceId) { const r = await fetch('/api/tasks/' + id + '/respond', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, workspaceId }) }); return r.ok; },
   async getCheckins() { const r = await fetch('/api/checkins', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveCheckin(c) { await fetch('/api/checkins', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) }); },
