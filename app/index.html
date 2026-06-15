@@ -1095,7 +1095,7 @@ function TaskModal({ task, onSave, onClose, projects }) {
 }
 
 // ── CollabTaskCard ─────────────────────────────────────────────────────────────
-function CollabTaskCard({ task, team, onEdit, onDelete, onStatusChange, onDragStart, onDragOver, onDrop, isDragging }) {
+function CollabTaskCard({ task, team, onEdit, onDelete, onStatusChange, onDragStart, onDragOver, onDrop, onTouchStart, onTouchMove, onTouchEnd, isDragging }) {
   const assignee = task.assigned_to ? team?.members?.find(m => String(m.id) === String(task.assigned_to)) : null;
   const isOverdue = task.due && task.due < today() && task.status !== "Done";
   const priorityColors = {
@@ -1109,7 +1109,9 @@ function CollabTaskCard({ task, team, onEdit, onDelete, onStatusChange, onDragSt
   return (
     <div
       draggable onDragStart={onDragStart} onDragOver={onDragOver} onDrop={onDrop}
+      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
       className={`task-card${isDragging ? " is-dragging" : ""}${isOverdue ? " is-overdue" : ""}`}
+      style={{ touchAction: 'pan-y', WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}
     >
       <div className="task-card-priority-line" style={{ background: pc.line }} />
       <div className="task-card-body">
@@ -1220,6 +1222,7 @@ function CollabBoardView({ teams }) {
   const [editingTask, setEditingTask] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [dragging, setDragging] = useState(null);
+  const [touchMoveTask, setTouchMoveTask] = useState(null);
 
   const activeTeam = teams.find(t => t.id === activeTeamId) || teams[0];
 
@@ -1232,13 +1235,35 @@ function CollabBoardView({ teams }) {
     loadTasks(activeTeam.id);
   }, [activeTeam?.id]);
 
-  async function loadTasks(teamId) {
-    setLoading(true);
+  // Poll for changes from teammates while the board is open
+  useEffect(() => {
+    if (!activeTeam) return;
+    const interval = setInterval(() => loadTasks(activeTeam.id, true), 8000);
+    return () => clearInterval(interval);
+  }, [activeTeam?.id]);
+
+  async function loadTasks(teamId, silent) {
+    if (!silent) setLoading(true);
     try {
       const r = await fetch(`/api/teams/${teamId}/tasks`, { credentials: 'include' });
       if (r.ok) setTasks(await r.json());
     } catch (e) {}
-    setLoading(false);
+    if (!silent) setLoading(false);
+  }
+
+  function makeTouchHandlers(taskId) {
+    let timer = null;
+    return {
+      onTouchStart: () => {
+        timer = setTimeout(() => {
+          if (navigator.vibrate) navigator.vibrate(40);
+          const task = tasks.find(t => t.id === taskId);
+          setTouchMoveTask(task);
+        }, 600);
+      },
+      onTouchEnd: () => clearTimeout(timer),
+      onTouchMove: () => clearTimeout(timer),
+    };
   }
 
   async function saveTask(task) {
@@ -1321,11 +1346,14 @@ function CollabBoardView({ teams }) {
                 isDragging={dragging === t.id}
                 onDragStart={() => setDragging(t.id)}
                 onDragOver={e => e.preventDefault()}
-                onDrop={e => { e.preventDefault(); handleDrop(col); }} />
+                onDrop={e => { e.preventDefault(); handleDrop(col); }}
+                {...makeTouchHandlers(t.id)} />
             ))}
           </div>
         ))}
       </div>
+
+      {touchMoveTask && <TouchMoveModal task={touchMoveTask} onMove={setStatus} onClose={() => setTouchMoveTask(null)} />}
 
       {(showNew || editingTask) && <CollabTaskModal task={editingTask} team={activeTeam} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
     </div>
@@ -4420,6 +4448,18 @@ function App() {
     const interval = setInterval(checkTime, 30000);
     return () => { clearTimeout(t); clearInterval(interval); };
   }, [workHours]);
+
+  // Poll for new notifications (team invites, task assignments, etc.)
+  useEffect(() => {
+    if (!authUser) return;
+    const interval = setInterval(async () => {
+      try {
+        const r = await fetch('/api/notifications', { credentials: 'include' });
+        if (r.ok) setNotifications(await r.json());
+      } catch (e) {}
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [authUser]);
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }, [tasks]);
   useEffect(() => { localStorage.setItem(WELLBEING_KEY, JSON.stringify(checkins)); }, [checkins]);
