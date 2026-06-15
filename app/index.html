@@ -3461,7 +3461,7 @@ function OnboardingModal({ onComplete }) {
 }
 
 // ── Greeting Banner ────────────────────────────────────────────────────────────
-function GreetingBanner({ user, tasks }) {
+function GreetingBanner({ user, tasks, activeWorkspace, onOpenWorkspaceSwitcher }) {
   const todayStr = today();
   const dueTodayCount = tasks.filter(t => t.due === todayStr && t.status !== "Done").length;
   const overdueCount = tasks.filter(t => t.due && t.due < todayStr && t.status !== "Done").length;
@@ -3498,7 +3498,16 @@ function GreetingBanner({ user, tasks }) {
             )}
           </div>
         </div>
-        <a href="/auth/logout" style={{ fontSize: 12, color: COLORS.textMuted, textDecoration: "none", background: COLORS.surface3, padding: "5px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, flexShrink: 0, fontWeight: 500 }}>Sign out</a>
+        {activeWorkspace && (
+          <button onClick={onOpenWorkspaceSwitcher}
+            style={{ display:'flex', alignItems:'center', gap:6, background:COLORS.surface3, border:`1px solid ${COLORS.border}`, borderRadius:8, padding:'5px 12px', cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s', flexShrink:0 }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor=COLORS.accent; e.currentTarget.style.background=COLORS.accentDim; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor=COLORS.border; e.currentTarget.style.background=COLORS.surface3; }}>
+            <span style={{ fontSize:14 }}>{workspaceIcon(activeWorkspace)}</span>
+            <span style={{ fontSize:12, fontWeight:600, color:COLORS.text }}>{activeWorkspace.name}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={COLORS.textMuted} strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -4745,17 +4754,6 @@ function App() {
             <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1 }}>tl</div>
             <span style={{ fontWeight: 700, fontSize: 15, color: COLORS.text, letterSpacing: -0.3 }} className="desktop-only">Tasklist.uk</span>
           </a>
-          {activeWorkspace && (
-            <button onClick={() => setShowWorkspaceSwitcher(true)}
-              style={{ display:'flex', alignItems:'center', gap:6, background:COLORS.surface3, border:`1px solid ${COLORS.border}`, borderRadius:8, padding:'5px 10px', cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s', flexShrink:0 }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor=COLORS.accent; e.currentTarget.style.background=COLORS.accentDim; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor=COLORS.border; e.currentTarget.style.background=COLORS.surface3; }}>
-              <span style={{ fontSize:14 }}>{workspaceIcon(activeWorkspace)}</span>
-              <span style={{ fontSize:12, fontWeight:600, color:COLORS.text }} className="desktop-only">{activeWorkspace.name}</span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={COLORS.textMuted} strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-          )}
-
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
@@ -4794,6 +4792,9 @@ function App() {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span className="desktop-only">New task</span>
             </button>
+
+            {/* Sign out */}
+            <a href="/auth/logout" className="desktop-only" style={{ fontSize: 12, color: COLORS.textMuted, textDecoration: "none", background: COLORS.surface3, padding: "6px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, flexShrink: 0, fontWeight: 500, whiteSpace: "nowrap" }}>Sign out</a>
             {/* Notifications bell */}
             <button onClick={() => { setView("teams"); setNotifTrigger(n => n + 1); }} title="Notifications" style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: 8, color: COLORS.textMuted, display: "flex", alignItems: "center" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -4874,7 +4875,7 @@ function App() {
       </div>
 
       <div className="page-pad">
-        {(authUser || user) && view === "board" && <GreetingBanner user={authUser || user} tasks={tasks} />}
+        {(authUser || user) && view === "board" && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} />}
 
         {/* Filter bar — due date + project */}
         {view === "board" && (
