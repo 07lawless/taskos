@@ -2590,6 +2590,15 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
     setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.filter(m => m.id !== userId) } : t));
   }
 
+  async function leaveTeam(teamId, isSoleMember) {
+    const msg = isSoleMember
+      ? "Delete this team? This can't be undone."
+      : "Leave this team? You'll need a new invite to rejoin.";
+    if (!window.confirm(msg)) return;
+    await fetch(`/api/teams/${teamId}/members/${authUser.id}`, { method: 'DELETE', credentials: 'include' });
+    setTeams(prev => prev.filter(t => t.id !== teamId));
+  }
+
   async function promoteToggle(teamId, userId, currentRole) {
     const newRole = currentRole === 'admin' ? 'member' : 'admin';
     await fetch(`/api/teams/${teamId}/members/${userId}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: newRole }) });
@@ -2725,6 +2734,12 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
                     </div>
                   );
                 })}
+              </div>
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${COLORS.border}`, display: "flex", justifyContent: "flex-end" }}>
+                <button onClick={() => leaveTeam(team.id, (team.members?.length || 0) <= 1)}
+                  style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.high}30`, cursor: "pointer", fontFamily: "inherit" }}>
+                  {(team.members?.length || 0) <= 1 ? "Delete team" : "Leave team"}
+                </button>
               </div>
             </div>
           ))}
