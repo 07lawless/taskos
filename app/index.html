@@ -1019,7 +1019,10 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 
 // ── TaskModal ──────────────────────────────────────────────────────────────────
 function TaskModal({ task, onSave, onClose, projects, teams }) {
-  const [form, setForm] = useState(task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "", teamId: null, assignedTo: null });
+  const [form, setForm] = useState(() => {
+    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "", teamId: null, assignedTo: null };
+    return Array.isArray(base.subtasks) ? base : { ...base, subtasks: [] };
+  });
   const [newSub, setNewSub] = useState("");
   const [dueSuggesting, setDueSuggesting] = useState(false);
   const [dueSuggestion, setDueSuggestion] = useState(null);
