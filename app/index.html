@@ -911,10 +911,13 @@ function ProgressBar({ subtasks }) {
 }
 
 // ── TaskCard ───────────────────────────────────────────────────────────────────
-function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart, onDragOver, onDrop, onTouchStart, onTouchMove, onTouchEnd, isDragging, onSaveBreakdown, projects }) {
+function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart, onDragOver, onDrop, onTouchStart, onTouchMove, onTouchEnd, isDragging, onSaveBreakdown, projects, teams }) {
   const isOverdue = task.due && task.due < today() && task.status !== "Done";
   const isDueToday = task.due === today();
   const project = projects?.find(p => p.id === task.projectId);
+  const assigneeId = task.assignedTo ?? task.assigned_to ?? null;
+  const teamId = task.teamId ?? task.team_id ?? null;
+  const assignee = assigneeId ? teams?.find(tm => tm.id === teamId)?.members?.find(m => m.id === assigneeId) : null;
   const priorityColors = {
     High: { line: COLORS.high, badge: COLORS.highDim, text: COLORS.high },
     Medium: { line: COLORS.medium, badge: COLORS.mediumDim, text: COLORS.medium },
@@ -962,6 +965,14 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
               {"★".repeat(task.happiness)}
             </span>
           )}
+          {assignee && (
+            <span title={`Assigned to ${assignee.first_name} ${assignee.last_name}`} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 600, padding: "2px 7px 2px 2px", borderRadius: 100, background: COLORS.accentDim, color: COLORS.accent }}>
+              {assignee.avatar
+                ? <img src={assignee.avatar} alt="" style={{ width: 14, height: 14, borderRadius: "50%" }} />
+                : <span style={{ width: 14, height: 14, borderRadius: "50%", background: COLORS.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700 }}>{assignee.first_name?.[0]}</span>}
+              {assignee.first_name}
+            </span>
+          )}
         </div>
 
         {/* Title */}
@@ -999,11 +1010,15 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 }
 
 // ── TaskModal ──────────────────────────────────────────────────────────────────
-function TaskModal({ task, onSave, onClose, projects }) {
-  const [form, setForm] = useState(task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" });
+function TaskModal({ task, onSave, onClose, projects, teams }) {
+  const [form, setForm] = useState(task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "", teamId: null, assignedTo: null });
   const [newSub, setNewSub] = useState("");
   const [dueSuggesting, setDueSuggesting] = useState(false);
   const [dueSuggestion, setDueSuggestion] = useState(null);
+
+  const teamId = form.teamId ?? form.team_id ?? null;
+  const assignedTo = form.assignedTo ?? form.assigned_to ?? null;
+  const selectedTeam = teams?.find(t => t.id === teamId);
 
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })); }
   function addSub() { if (!newSub.trim()) return; setF("subtasks", [...form.subtasks, { id: generateId(), title: newSub.trim(), done: false }]); setNewSub(""); }
@@ -1068,6 +1083,26 @@ function TaskModal({ task, onSave, onClose, projects }) {
               )}
             </div>
           </div>
+          {teams && teams.length > 0 && (
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>TEAM</label>
+                <select value={teamId || ""} onChange={e => { const v = e.target.value || null; setF("teamId", v); setF("team_id", v); if (!v) { setF("assignedTo", null); setF("assigned_to", null); } }}>
+                  <option value="">No team (private)</option>
+                  {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              {selectedTeam && (
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>ASSIGN TO</label>
+                  <select value={assignedTo || ""} onChange={e => { const v = e.target.value || null; setF("assignedTo", v ? Number(v) : null); setF("assigned_to", v ? Number(v) : null); }}>
+                    <option value="">Unassigned</option>
+                    {selectedTeam.members?.map(m => <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
           <div>
             <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 10 }}>SUBTASKS</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -2642,7 +2677,7 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
     setNotifications(prev => prev.filter(n => n.id !== id));
   }
 
-  const notifIcons = { team_joined: "🎉", member_joined: "👋", task_assigned: "📋", role_changed: "⭐" };
+  const notifIcons = { team_joined: "🎉", member_joined: "👋", task_assigned: "📋", role_changed: "⭐", task_status_changed: "✅" };
 
   return (
     <div style={{ paddingBottom: 40 }}>
@@ -4795,7 +4830,7 @@ function App() {
                     <button onClick={() => { setShowNew(true); }} style={{ background: "none", color: COLORS.textMuted, fontSize: 16, padding: "0 4px", opacity: 0.5, lineHeight: 1 }} title="Add task">+</button>
                   </div>
                   {colTasks.map(t => (
-                    <TaskCard key={t.id} task={t} projects={projects} onEdit={setEditingTask} onDelete={deleteTask} onFrog={toggleFrog} onStatusChange={setStatus} onSaveBreakdown={saveBreakdown}
+                    <TaskCard key={t.id} task={t} projects={projects} teams={teams} onEdit={setEditingTask} onDelete={deleteTask} onFrog={toggleFrog} onStatusChange={setStatus} onSaveBreakdown={saveBreakdown}
                       isDragging={dragging===t.id} onDragStart={() => setDragging(t.id)}
                       onDragOver={e => { e.preventDefault(); setDragOver(t.id); }}
                       onDrop={e => { e.preventDefault(); handleDrop(t.id, col); }}
@@ -4821,7 +4856,7 @@ function App() {
                       {showArchivedDone ? "Hide archived" : `Show archived (${archivedDone.length})`}
                     </button>
                     {showArchivedDone && archivedDone.map(t => (
-                      <TaskCard key={t.id} task={t} projects={projects} onEdit={setEditingTask} onDelete={deleteTask} onFrog={toggleFrog} onStatusChange={setStatus} onSaveBreakdown={saveBreakdown}
+                      <TaskCard key={t.id} task={t} projects={projects} teams={teams} onEdit={setEditingTask} onDelete={deleteTask} onFrog={toggleFrog} onStatusChange={setStatus} onSaveBreakdown={saveBreakdown}
                         isDragging={dragging===t.id} onDragStart={() => setDragging(t.id)}
                         onDragOver={e => { e.preventDefault(); setDragOver(t.id); }}
                         onDrop={e => { e.preventDefault(); handleDrop(t.id, col); }}
@@ -4851,7 +4886,7 @@ function App() {
         localStorage.setItem("vtm_checkin_shown", today());
       }} />}
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
-      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
+      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} teams={teams} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
