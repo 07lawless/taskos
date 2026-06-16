@@ -5183,4 +5183,5 @@ const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9]{32})$/);
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(shareMatch ? <SharedBoardView token={shareMatch[1]} /> : <App />);
   </script>
+</body>
 </html>
