@@ -3,27 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32"  href="/icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png" />
+  <link rel="apple-touch-icon"                      href="/icons/favicon-192.png" />
+
   <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-YFR7JQD884"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFR7JQD884"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-YFR7JQD884');
+  </script>
 
-  gtag('config', 'G-YFR7JQD884');
-</script>
-
-  <title>Tasklist.uk — Your productivity operating system</title>
-  <meta name="description" content="A productivity operating system with Google sign-in, cloud sync, AI-powered task breakdowns, wellbeing tracking, and the Eat the Frog method." />
-  <meta name="keywords" content="task manager, productivity app, eat the frog, wellbeing tracker, AI task breakdown, cloud task manager, UK productivity" />
-  <meta property="og:title" content="Tasklist.uk — Your productivity operating system" />
-  <meta property="og:description" content="Sign in with Google. Tasks, wellbeing, and AI — synced across all your devices." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://tasklist.uk" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <title>Tasklist.uk — Free Task Manager & Productivity App</title>
+  <meta name="description" content="A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method. Sign in and get things done." />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://tasklist.uk" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='16' y='22' font-family='system-ui,sans-serif' font-weight='700' font-size='14' fill='white' text-anchor='middle' letter-spacing='1.5'>tl</text></svg>">
+
+  <meta property="og:type"         content="website" />
+  <meta property="og:url"          content="https://tasklist.uk" />
+  <meta property="og:title"        content="Tasklist.uk — Free Task Manager & Productivity App" />
+  <meta property="og:description"  content="A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method." />
+  <meta property="og:image"        content="https://tasklist.uk/og-image.png" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name"    content="Tasklist.uk" />
+  <meta property="og:locale"       content="en_GB" />
+
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Tasklist.uk — Free Task Manager & Productivity App" />
+  <meta name="twitter:description" content="A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method." />
+  <meta name="twitter:image"       content="https://tasklist.uk/og-image.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://tasklist.uk/#website",
+        "url": "https://tasklist.uk",
+        "name": "Tasklist.uk",
+        "description": "Free task manager and productivity app with AI breakdowns and wellbeing tracking.",
+        "inLanguage": "en-GB"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://tasklist.uk/#app",
+        "name": "Tasklist.uk",
+        "url": "https://tasklist.uk",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "GBP"
+        },
+        "description": "A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method.",
+        "featureList": [
+          "AI task breakdowns",
+          "Wellbeing tracking",
+          "Eat the Frog method",
+          "Kanban board",
+          "Calendar view",
+          "Pomodoro focus mode",
+          "Google sign-in",
+          "Cloud sync"
+        ],
+        "screenshot": "https://tasklist.uk/og-image.png",
+        "author": {
+          "@type": "Person",
+          "name": "Daniel Lawless",
+          "url": "https://www.linkedin.com/in/daniel-lawless-4324b8198/"
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <style>
@@ -63,31 +124,13 @@
       height: 100%; padding: 0 24px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .nav-logo {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none; color: var(--text);
-    }
-    .nav-logo-mark {
-      width: 32px; height: 32px;
-      background: var(--accent); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 800; color: white; letter-spacing: 1px;
-    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .nav-logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: white; letter-spacing: 1px; }
     .nav-logo-text { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
     .nav-links { display: flex; align-items: center; gap: 8px; }
-    .nav-link {
-      font-size: 14px; font-weight: 500; color: var(--text-dim);
-      text-decoration: none; padding: 6px 12px; border-radius: 8px;
-      transition: color 0.15s, background 0.15s;
-    }
+    .nav-link { font-size: 14px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px; transition: color 0.15s, background 0.15s; }
     .nav-link:hover { color: var(--text); background: var(--surface2); }
-    .nav-cta {
-      background: var(--accent); color: white;
-      font-size: 14px; font-weight: 600;
-      padding: 8px 18px; border-radius: 8px;
-      text-decoration: none;
-      transition: opacity 0.15s, transform 0.15s;
-    }
+    .nav-cta { background: var(--accent); color: white; font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 8px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
     .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
 
     /* ── Sections ── */
@@ -95,424 +138,140 @@
     .container { max-width: 1100px; margin: 0 auto; }
 
     /* ── Hero ── */
-    .hero {
-      padding-top: calc(var(--nav-h) + 80px);
-      padding-bottom: 80px;
-      padding-left: 24px;
-      padding-right: 24px;
-      text-align: center;
-    }
-    .hero-eyebrow {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--frog-dim); color: var(--frog);
-      border: 1px solid var(--frog-border);
-      font-size: 12px; font-weight: 700; letter-spacing: 0.8px;
-      padding: 5px 12px; border-radius: 100px;
-      text-transform: uppercase; margin-bottom: 28px;
-    }
-    .hero-title {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(42px, 7vw, 80px);
-      line-height: 1.08;
-      letter-spacing: -2px;
-      color: var(--text);
-      margin-bottom: 24px;
-      max-width: 780px;
-      margin-left: auto; margin-right: auto;
-    }
-    .hero-title em {
-      font-style: italic;
-      color: var(--accent);
-    }
-    .hero-sub {
-      font-size: clamp(16px, 2.5vw, 20px);
-      color: var(--text-dim);
-      max-width: 520px;
-      margin: 0 auto 40px;
-      font-weight: 400;
-      line-height: 1.6;
-    }
-    .hero-actions {
-      display: flex; align-items: center; justify-content: center;
-      gap: 12px; flex-wrap: wrap; margin-bottom: 64px;
-    }
-    .btn-primary {
-      background: var(--accent); color: white;
-      font-size: 15px; font-weight: 600;
-      padding: 13px 28px; border-radius: var(--radius);
-      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
-      transition: all 0.2s;
-      box-shadow: 0 4px 14px rgba(79,70,229,0.3);
-    }
+    .hero { padding-top: calc(var(--nav-h) + 80px); padding-bottom: 80px; padding-left: 24px; padding-right: 24px; text-align: center; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: var(--frog-dim); color: var(--frog); border: 1px solid var(--frog-border); font-size: 12px; font-weight: 700; letter-spacing: 0.8px; padding: 5px 12px; border-radius: 100px; text-transform: uppercase; margin-bottom: 28px; }
+    .hero-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(42px, 7vw, 80px); line-height: 1.08; letter-spacing: -2px; color: var(--text); margin-bottom: 24px; max-width: 780px; margin-left: auto; margin-right: auto; }
+    .hero-title em { font-style: italic; color: var(--accent); }
+    .hero-sub { font-size: clamp(16px, 2.5vw, 20px); color: var(--text-dim); max-width: 520px; margin: 0 auto 40px; font-weight: 400; line-height: 1.6; }
+    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 64px; }
+    .btn-primary { background: var(--accent); color: white; font-size: 15px; font-weight: 600; padding: 13px 28px; border-radius: var(--radius); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
     .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.35); }
-    .btn-secondary {
-      background: var(--surface); color: var(--text);
-      font-size: 15px; font-weight: 500;
-      padding: 13px 24px; border-radius: var(--radius);
-      text-decoration: none; border: 1px solid var(--border);
-      transition: all 0.2s;
-    }
+    .btn-secondary { background: var(--surface); color: var(--text); font-size: 15px; font-weight: 500; padding: 13px 24px; border-radius: var(--radius); text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
     .btn-secondary:hover { background: var(--surface2); border-color: #c8c8c2; }
 
     /* Hero mockup */
-    .hero-mockup {
-      max-width: 900px; margin: 0 auto;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06);
-      overflow: hidden;
-    }
-    .mockup-bar {
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      display: flex; align-items: center; gap: 10px;
-    }
+    .hero-mockup { max-width: 900px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 24px 80px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06); overflow: hidden; }
+    .mockup-bar { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
     .mockup-dots { display: flex; gap: 6px; }
     .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .mockup-url {
-      flex: 1; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 6px; padding: 4px 10px;
-      font-size: 12px; color: var(--text-muted); text-align: center;
-      max-width: 200px; margin: 0 auto;
-    }
+    .mockup-url { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text-muted); text-align: center; max-width: 200px; margin: 0 auto; }
     .mockup-body { padding: 20px; }
-    .mockup-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px;
-    }
+    .mockup-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .mockup-logo { font-size: 13px; font-weight: 800; color: var(--text); }
     .mockup-nav { display: flex; gap: 6px; }
-    .mockup-nav-item {
-      font-size: 11px; padding: 4px 10px; border-radius: 6px;
-      background: var(--surface2); color: var(--text-dim); font-weight: 500;
-    }
+    .mockup-nav-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: var(--surface2); color: var(--text-dim); font-weight: 500; }
     .mockup-nav-item.active { background: var(--accent-dim); color: var(--accent); }
-    .mockup-frog {
-      background: var(--frog-dim);
-      border: 1px solid var(--frog-border);
-      border-radius: 10px; padding: 10px 14px;
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 16px;
-    }
+    .mockup-frog { background: var(--frog-dim); border: 1px solid var(--frog-border); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
     .mockup-frog-label { font-size: 10px; font-weight: 700; color: var(--frog); text-transform: uppercase; letter-spacing: 0.5px; }
     .mockup-frog-title { font-size: 13px; font-weight: 600; color: var(--text); }
     .mockup-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .mockup-col-head {
-      display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
-    }
+    .mockup-col-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
     .mockup-col-dot { width: 6px; height: 6px; border-radius: 50%; }
     .mockup-col-name { font-size: 11px; font-weight: 600; color: var(--text); }
-    .mockup-col-count {
-      font-size: 10px; padding: 1px 6px; border-radius: 10px;
-      background: var(--surface2); color: var(--text-muted);
-    }
-    .mockup-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px;
-      margin-bottom: 6px;
-    }
-    .mockup-card-badge {
-      display: inline-block; font-size: 9px; font-weight: 700;
-      padding: 2px 6px; border-radius: 3px; margin-bottom: 5px;
-      letter-spacing: 0.5px;
-    }
+    .mockup-col-count { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: var(--surface2); color: var(--text-muted); }
+    .mockup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 6px; }
+    .mockup-card-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-bottom: 5px; letter-spacing: 0.5px; }
     .mockup-card-title { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
     .mockup-progress { height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
     .mockup-progress-fill { height: 100%; border-radius: 2px; background: var(--accent); }
 
     /* ── Frog Section ── */
-    .frog-section {
-      background: var(--text);
-      color: white;
-      border-radius: 24px;
-      padding: 80px 60px;
-      margin: 0 24px;
-      max-width: 1100px;
-      margin-left: auto; margin-right: auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 60px;
-      align-items: center;
-    }
-    .frog-eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: #86efac; margin-bottom: 16px;
-    }
-    .frog-title {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(32px, 4vw, 48px);
-      line-height: 1.1;
-      letter-spacing: -1px;
-      margin-bottom: 20px;
-    }
+    .frog-section { background: var(--text); color: white; border-radius: 24px; padding: 80px 60px; margin: 0 24px; max-width: 1100px; margin-left: auto; margin-right: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .frog-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #86efac; margin-bottom: 16px; }
+    .frog-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -1px; margin-bottom: 20px; }
     .frog-title em { font-style: italic; color: #86efac; }
     .frog-body { font-size: 16px; color: rgba(255,255,255,0.65); line-height: 1.7; margin-bottom: 28px; }
-    .frog-quote {
-      border-left: 3px solid #86efac;
-      padding-left: 16px;
-      font-size: 14px; color: rgba(255,255,255,0.5);
-      font-style: italic; line-height: 1.6;
-    }
-    .frog-visual {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 16px; padding: 24px;
-    }
-    .frog-task {
-      background: rgba(22,163,74,0.15);
-      border: 1px solid rgba(134,239,172,0.2);
-      border-radius: 10px; padding: 16px;
-      margin-bottom: 12px;
-    }
+    .frog-quote { border-left: 3px solid #86efac; padding-left: 16px; font-size: 14px; color: rgba(255,255,255,0.5); font-style: italic; line-height: 1.6; }
+    .frog-visual { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; }
+    .frog-task { background: rgba(22,163,74,0.15); border: 1px solid rgba(134,239,172,0.2); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
     .frog-task-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .frog-tag {
-      font-size: 9px; font-weight: 700; padding: 2px 8px;
-      border-radius: 100px; background: #16a34a; color: white;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
+    .frog-tag { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: #16a34a; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
     .frog-task-title { font-size: 14px; font-weight: 600; color: white; margin-bottom: 12px; }
     .frog-steps { display: flex; flex-direction: column; gap: 6px; }
-    .frog-step {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: rgba(255,255,255,0.6);
-    }
-    .frog-step-check {
-      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center; font-size: 9px;
-    }
+    .frog-step { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.6); }
+    .frog-step-check { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; }
     .frog-step-check.done { background: #16a34a; }
     .frog-step-check.todo { border: 1.5px solid rgba(255,255,255,0.2); }
     .frog-other { display: flex; flex-direction: column; gap: 8px; }
-    .frog-other-task {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 8px; padding: 10px 12px;
-      display: flex; align-items: center; gap: 8px;
-    }
+    .frog-other-task { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
     .frog-other-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .frog-other-title { font-size: 12px; color: rgba(255,255,255,0.5); }
 
     /* ── Features Grid ── */
     .features-section { padding: 100px 24px; }
-    .section-eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--accent);
-      margin-bottom: 12px; text-align: center;
-    }
-    .section-title {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(32px, 5vw, 52px);
-      line-height: 1.1; letter-spacing: -1.5px;
-      text-align: center; margin-bottom: 16px;
-    }
-    .section-sub {
-      font-size: 17px; color: var(--text-dim);
-      text-align: center; max-width: 480px;
-      margin: 0 auto 60px; line-height: 1.6;
-    }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-    .feature-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+    .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; text-align: center; }
+    .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(32px, 5vw, 52px); line-height: 1.1; letter-spacing: -1.5px; text-align: center; margin-bottom: 16px; }
+    .section-sub { font-size: 17px; color: var(--text-dim); text-align: center; max-width: 480px; margin: 0 auto 60px; line-height: 1.6; }
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; transition: transform 0.2s, box-shadow 0.2s; }
     .feature-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
-    .feature-card.featured {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: white;
-      grid-column: span 2;
-    }
+    .feature-card.featured { background: var(--accent); border-color: var(--accent); color: white; grid-column: span 2; }
     .feature-icon { font-size: 28px; margin-bottom: 16px; display: block; }
     .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
     .feature-card.featured .feature-title { color: white; }
     .feature-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
     .feature-card.featured .feature-desc { color: rgba(255,255,255,0.7); }
-    .feature-tag {
-      display: inline-block; font-size: 10px; font-weight: 700;
-      padding: 3px 8px; border-radius: 100px;
-      background: rgba(255,255,255,0.15); color: white;
-      margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase;
-    }
+    .feature-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; background: rgba(255,255,255,0.15); color: white; margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
 
     /* ── Wellbeing Section ── */
-    .wellbeing-section {
-      padding: 100px 24px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .wellbeing-inner {
-      max-width: 1100px; margin: 0 auto;
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 60px; align-items: center;
-    }
-    .wellbeing-metrics-demo {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 16px; padding: 24px;
-    }
-    .metric-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    .wellbeing-section { padding: 100px 24px; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .wellbeing-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .wellbeing-metrics-demo { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+    .metric-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .metric-row:last-child { border-bottom: none; }
     .metric-emoji { font-size: 20px; flex-shrink: 0; width: 32px; text-align: center; }
     .metric-label { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
     .metric-bar { flex: 2; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
     .metric-bar-fill { height: 100%; border-radius: 3px; }
     .metric-val { font-size: 12px; font-weight: 700; min-width: 28px; text-align: right; }
-    .checkin-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--frog-dim); color: var(--frog);
-      border: 1px solid var(--frog-border);
-      font-size: 12px; font-weight: 600;
-      padding: 6px 12px; border-radius: 100px; margin-top: 16px;
-    }
+    .checkin-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--frog-dim); color: var(--frog); border: 1px solid var(--frog-border); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 100px; margin-top: 16px; }
 
     /* ── AI Section ── */
     .ai-section { padding: 100px 24px; }
-    .ai-inner {
-      max-width: 1100px; margin: 0 auto;
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 60px; align-items: center;
-    }
-    .ai-demo {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.06);
-    }
-    .ai-demo-header {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 8px;
-      background: var(--surface2);
-    }
+    .ai-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .ai-demo { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
+    .ai-demo-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--surface2); }
     .ai-demo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
     .ai-demo-title { font-size: 12px; font-weight: 700; color: var(--accent); }
     .ai-demo-body { padding: 18px; }
-    .ai-summary {
-      background: var(--surface2); border-radius: 8px;
-      padding: 12px 14px; font-size: 13px; color: var(--text-dim);
-      line-height: 1.6; margin-bottom: 14px;
-      border: 1px solid var(--border);
-    }
-    .ai-steps-title {
-      font-size: 10px; font-weight: 700; color: var(--text-muted);
-      letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px;
-    }
-    .ai-step {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 7px 0; border-bottom: 1px solid var(--surface2);
-    }
+    .ai-summary { background: var(--surface2); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; border: 1px solid var(--border); }
+    .ai-steps-title { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+    .ai-step { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--surface2); }
     .ai-step:last-child { border-bottom: none; }
-    .ai-step-num {
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--accent-dim); color: var(--accent);
-      font-size: 10px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; margin-top: 1px;
-    }
+    .ai-step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
     .ai-step-text { font-size: 12px; color: var(--text); line-height: 1.5; }
-    .ai-warning {
-      background: #fef3c7; border: 1px solid #fcd34d;
-      border-radius: 8px; padding: 10px 12px;
-      display: flex; gap: 8px; margin-top: 12px;
-      font-size: 12px; color: #92400e; line-height: 1.5;
-    }
+    .ai-warning { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 12px; display: flex; gap: 8px; margin-top: 12px; font-size: 12px; color: #92400e; line-height: 1.5; }
 
     /* ── Stats ── */
-    .stats-section {
-      padding: 80px 24px;
-      border-top: 1px solid var(--border);
-    }
-    .stats-grid {
-      max-width: 900px; margin: 0 auto;
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 0;
-    }
-    .stat-item {
-      text-align: center; padding: 32px 24px;
-      border-right: 1px solid var(--border);
-    }
+    .stats-section { padding: 80px 24px; border-top: 1px solid var(--border); }
+    .stats-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .stat-item { text-align: center; padding: 32px 24px; border-right: 1px solid var(--border); }
     .stat-item:last-child { border-right: none; }
-    .stat-num {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: 48px; letter-spacing: -2px;
-      color: var(--text); line-height: 1; margin-bottom: 8px;
-    }
+    .stat-num { font-family: 'DM Serif Display', Georgia, serif; font-size: 48px; letter-spacing: -2px; color: var(--text); line-height: 1; margin-bottom: 8px; }
     .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
 
-    /* ── Pricing/CTA ── */
+    /* ── CTA ── */
     .cta-section { padding: 100px 24px; text-align: center; }
-    .cta-card {
-      max-width: 1100px; margin: 0 auto;
-      background: var(--text);
-      color: white;
-      border-radius: 24px;
-      padding: 60px 48px;
-    }
-    .cta-eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
-      color: #86efac; text-transform: uppercase; margin-bottom: 16px;
-    }
-    .cta-title {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-size: clamp(28px, 4vw, 44px);
-      line-height: 1.1; letter-spacing: -1px;
-      margin-bottom: 16px;
-    }
+    .cta-card { max-width: 1100px; margin: 0 auto; background: var(--text); color: white; border-radius: 24px; padding: 60px 48px; }
+    .cta-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #86efac; text-transform: uppercase; margin-bottom: 16px; }
+    .cta-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(28px, 4vw, 44px); line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px; }
     .cta-title em { font-style: italic; color: #818cf8; }
     .cta-sub { font-size: 16px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 36px; }
-    .cta-btn {
-      display: inline-flex; align-items: center; gap: 10px;
-      background: white; color: var(--text);
-      font-size: 15px; font-weight: 700;
-      padding: 14px 32px; border-radius: var(--radius);
-      text-decoration: none;
-      transition: all 0.2s;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    }
+    .cta-btn { display: inline-flex; align-items: center; gap: 10px; background: white; color: var(--text); font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: var(--radius); text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
     .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
     .cta-note { font-size: 13px; color: rgba(255,255,255,0.3); margin-top: 16px; }
 
     /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 40px 24px;
-    }
-    .footer-inner {
-      max-width: 1100px; margin: 0 auto;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px;
-    }
+    footer { border-top: 1px solid var(--border); padding: 40px 24px; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
     .footer-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-    .footer-logo-mark {
-      width: 24px; height: 24px; background: var(--accent);
-      border-radius: 6px; display: flex; align-items: center;
-      justify-content: center; font-size: 9px; font-weight: 800; color: white;
-    }
+    .footer-logo-mark { width: 24px; height: 24px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: white; }
     .footer-logo-text { font-size: 14px; font-weight: 700; color: var(--text); }
     .footer-links { display: flex; align-items: center; gap: 20px; }
     .footer-link { font-size: 13px; color: var(--text-muted); text-decoration: none; }
     .footer-link:hover { color: var(--text); }
     .footer-copy { font-size: 12px; color: var(--text-muted); }
-    .footer-built {
-      font-size: 12px; color: var(--text-muted);
-      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-    }
+    .footer-built { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .footer-built a { color: var(--text-muted); text-decoration: none; }
     .footer-built a:hover { color: var(--text); }
 
@@ -752,56 +511,47 @@
       <h2 class="section-title">Built for the way you actually work</h2>
       <p class="section-sub">Not just a to-do list. A full productivity system that learns your patterns.</p>
       <div class="features-grid">
-
         <div class="feature-card featured">
           <span class="feature-icon">✨</span>
           <div class="feature-title">AI Task Breakdowns</div>
           <div class="feature-desc">Mark any task as your frog and get an instant AI-powered action plan — a summary of what's involved, numbered steps to completion, and a heads-up on what might derail you.</div>
           <span class="feature-tag">Powered by Groq</span>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">📅</span>
           <div class="feature-title">Calendar View</div>
           <div class="feature-desc" style="color:var(--text-dim)">See your tasks laid out by week. Drag to reschedule. Spot what's overdue at a glance.</div>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">🎯</span>
           <div class="feature-title">Focus Mode</div>
           <div class="feature-desc" style="color:var(--text-dim)">Lock in on your frog with a full-screen Pomodoro timer. Presets for 25/5, 50/10, or custom.</div>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">🤖</span>
           <div class="feature-title">AI Daily Plan</div>
           <div class="feature-desc" style="color:var(--text-dim)">Tell the AI how you're feeling today and it'll suggest the optimal order to tackle your tasks based on priority, energy, and deadlines.</div>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">📋</span>
           <div class="feature-title">Kanban Board</div>
           <div class="feature-desc" style="color:var(--text-dim)">Drag tasks between To Do, In Progress, and Done. Filter by project, date, or priority. Subtasks with progress tracking.</div>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">📝</span>
           <div class="feature-title">End-of-Day Journal</div>
           <div class="feature-desc" style="color:var(--text-dim)">Write a few lines about your day and get a warm, personal AI reflection. Appears automatically at your work end time.</div>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">📊</span>
           <div class="feature-title">Analytics</div>
           <div class="feature-desc" style="color:var(--text-dim)">Completion streaks, productivity by day of week, on-time rate, task happiness ratings. Understand your patterns.</div>
         </div>
-
         <div class="feature-card">
           <span class="feature-icon">☁️</span>
           <div class="feature-title">Cloud Sync</div>
           <div class="feature-desc" style="color:var(--text-dim)">Sign in with Google and your tasks follow you everywhere. Phone, tablet, laptop — always in sync.</div>
         </div>
-
       </div>
     </div>
   </section>
@@ -818,52 +568,19 @@
           Daily check-ins take 30 seconds. Log your mood, energy, stress, sleep, and happiness. Over time, Tasklist reveals the correlations — which days you're most productive, what drains you, what helps.
         </p>
         <ul style="list-style:none;display:flex;flex-direction:column;gap:12px">
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)">
-            <span style="color:var(--frog);font-size:16px">✓</span> 5 tracked metrics: mood, energy, stress, sleep, happiness
-          </li>
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)">
-            <span style="color:var(--frog);font-size:16px">✓</span> 14-day trend charts with correlations
-          </li>
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)">
-            <span style="color:var(--frog);font-size:16px">✓</span> Task happiness ratings when you complete work
-          </li>
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)">
-            <span style="color:var(--frog);font-size:16px">✓</span> Weekly summary ready to paste into your Monday report
-          </li>
+          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> 5 tracked metrics: mood, energy, stress, sleep, happiness</li>
+          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> 14-day trend charts with correlations</li>
+          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> Task happiness ratings when you complete work</li>
+          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> Weekly summary ready to paste into your Monday report</li>
         </ul>
       </div>
       <div class="wellbeing-metrics-demo">
         <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:16px">Today's Check-in</div>
-        <div class="metric-row">
-          <span class="metric-emoji">😊</span>
-          <span class="metric-label">Mood</span>
-          <div class="metric-bar"><div class="metric-bar-fill" style="width:80%;background:#8b5cf6"></div></div>
-          <span class="metric-val" style="color:#8b5cf6">4/5</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-emoji">⚡</span>
-          <span class="metric-label">Energy</span>
-          <div class="metric-bar"><div class="metric-bar-fill" style="width:60%;background:#10b981"></div></div>
-          <span class="metric-val" style="color:#10b981">3/5</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-emoji">😤</span>
-          <span class="metric-label">Stress</span>
-          <div class="metric-bar"><div class="metric-bar-fill" style="width:40%;background:#ef4444"></div></div>
-          <span class="metric-val" style="color:#ef4444">2/5</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-emoji">😴</span>
-          <span class="metric-label">Sleep</span>
-          <div class="metric-bar"><div class="metric-bar-fill" style="width:100%;background:#3b82f6"></div></div>
-          <span class="metric-val" style="color:#3b82f6">5/5</span>
-        </div>
-        <div class="metric-row">
-          <span class="metric-emoji">😄</span>
-          <span class="metric-label">Happiness</span>
-          <div class="metric-bar"><div class="metric-bar-fill" style="width:80%;background:#f59e0b"></div></div>
-          <span class="metric-val" style="color:#f59e0b">4/5</span>
-        </div>
+        <div class="metric-row"><span class="metric-emoji">😊</span><span class="metric-label">Mood</span><div class="metric-bar"><div class="metric-bar-fill" style="width:80%;background:#8b5cf6"></div></div><span class="metric-val" style="color:#8b5cf6">4/5</span></div>
+        <div class="metric-row"><span class="metric-emoji">⚡</span><span class="metric-label">Energy</span><div class="metric-bar"><div class="metric-bar-fill" style="width:60%;background:#10b981"></div></div><span class="metric-val" style="color:#10b981">3/5</span></div>
+        <div class="metric-row"><span class="metric-emoji">😤</span><span class="metric-label">Stress</span><div class="metric-bar"><div class="metric-bar-fill" style="width:40%;background:#ef4444"></div></div><span class="metric-val" style="color:#ef4444">2/5</span></div>
+        <div class="metric-row"><span class="metric-emoji">😴</span><span class="metric-label">Sleep</span><div class="metric-bar"><div class="metric-bar-fill" style="width:100%;background:#3b82f6"></div></div><span class="metric-val" style="color:#3b82f6">5/5</span></div>
+        <div class="metric-row"><span class="metric-emoji">😄</span><span class="metric-label">Happiness</span><div class="metric-bar"><div class="metric-bar-fill" style="width:80%;background:#f59e0b"></div></div><span class="metric-val" style="color:#f59e0b">4/5</span></div>
         <div class="checkin-badge">✓ Checked in today</div>
       </div>
     </div>
@@ -885,26 +602,11 @@
           <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:12px">
             <div style="height:100%;width:40%;background:var(--frog);border-radius:2px"></div>
           </div>
-          <div class="ai-step">
-            <div class="ai-step-num" style="background:var(--frog-dim);color:var(--frog)">✓</div>
-            <span class="ai-step-text" style="text-decoration:line-through;color:var(--text-muted)">Audit current page — identify what's not working</span>
-          </div>
-          <div class="ai-step">
-            <div class="ai-step-num" style="background:var(--frog-dim);color:var(--frog)">✓</div>
-            <span class="ai-step-text" style="text-decoration:line-through;color:var(--text-muted)">Write new hero headline and subheading</span>
-          </div>
-          <div class="ai-step">
-            <div class="ai-step-num">3</div>
-            <span class="ai-step-text">Sketch wireframe — above the fold layout</span>
-          </div>
-          <div class="ai-step">
-            <div class="ai-step-num">4</div>
-            <span class="ai-step-text">Source or create feature visuals</span>
-          </div>
-          <div class="ai-step">
-            <div class="ai-step-num">5</div>
-            <span class="ai-step-text">Dev handoff with annotated designs</span>
-          </div>
+          <div class="ai-step"><div class="ai-step-num" style="background:var(--frog-dim);color:var(--frog)">✓</div><span class="ai-step-text" style="text-decoration:line-through;color:var(--text-muted)">Audit current page — identify what's not working</span></div>
+          <div class="ai-step"><div class="ai-step-num" style="background:var(--frog-dim);color:var(--frog)">✓</div><span class="ai-step-text" style="text-decoration:line-through;color:var(--text-muted)">Write new hero headline and subheading</span></div>
+          <div class="ai-step"><div class="ai-step-num">3</div><span class="ai-step-text">Sketch wireframe — above the fold layout</span></div>
+          <div class="ai-step"><div class="ai-step-num">4</div><span class="ai-step-text">Source or create feature visuals</span></div>
+          <div class="ai-step"><div class="ai-step-num">5</div><span class="ai-step-text">Dev handoff with annotated designs</span></div>
           <div class="ai-warning">
             <span>⚠️</span>
             <div><strong>Watch out:</strong> Scope creep is the main risk here — set a clear boundary between redesign and full rebuild before starting.</div>
@@ -957,7 +659,7 @@
         <span>Built with</span>
         <a href="https://groq.com" target="_blank" rel="noopener">Groq</a>
         <a href="https://hetzner.com" target="_blank" rel="noopener">Hetzner</a>
-        <a href="https://github.com/07lawless-netizen/taskos" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/07lawless/taskos" target="_blank" rel="noopener">GitHub</a>
         <a href="https://www.linkedin.com/in/daniel-lawless-4324b8198/" target="_blank" rel="noopener">Daniel Lawless</a>
       </div>
       <span class="footer-copy">© 2026 Tasklist.uk</span>
@@ -965,4 +667,4 @@
   </footer>
 
 </body>
-</html> 
+</html>
