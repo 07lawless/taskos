@@ -4844,7 +4844,7 @@ function App() {
               )}
             </button>
             {/* Nav bar toggle */}
-            <button onClick={() => setNavBarOpen(o => !o)} title={navBarOpen ? "Hide nav" : "Show nav"} className="desktop-only"
+            <button onClick={() => setNavBarOpen(o => !o)} title={navBarOpen ? "Hide nav" : "Show nav"}
               style={{ background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: 8, color: COLORS.textMuted, display: "flex", alignItems: "center", transition: "transform 0.2s" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <polyline points={navBarOpen ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} />
