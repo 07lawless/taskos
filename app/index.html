@@ -4031,6 +4031,68 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
     </div>
   );
 }
+function xpForLevel(n) {
+  return Math.round((60 + n * 26 + Math.pow(n, 1.1) * 5) / 2);
+}
+ 
+function levelTierIcon(level) {
+  if (level >= 45) return "👑";
+  if (level >= 35) return "💎";
+  if (level >= 25) return "🏆";
+  if (level >= 15) return "🥇";
+  if (level >= 5)  return "🐸";
+  return "🥚";
+}
+ 
+function XPBar({ xp }) {
+  if (!xp) return null;
+  const level = xp.current_level || 1;
+  const currentLevelXp = xp.current_level_xp || 0;
+  const streak = xp.current_streak || 0;
+  const prestige = xp.prestige_count || 0;
+  const xpNeeded = xpForLevel(level);
+  const pct = xpNeeded ? Math.min(100, Math.round((currentLevelXp / xpNeeded) * 100)) : 0;
+ 
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 100, padding: "5px 14px 5px 6px" }}>
+      <div style={{ width: 28, height: 28, borderRadius: "50%", background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, boxShadow: `0 0 0 2px ${COLORS.surface}` }}>
+        {levelTierIcon(level)}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 110 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.text }}>
+            Lv {level}{prestige > 0 ? ` · P${prestige}` : ""}
+          </span>
+          {streak > 0 && (
+            <span style={{ fontSize: 10, fontWeight: 600, color: COLORS.frog, background: COLORS.frogDim, padding: "1px 6px", borderRadius: 100 }}>
+              🔥 {streak}
+            </span>
+          )}
+        </div>
+        <div style={{ width: "100%", height: 4, background: COLORS.border, borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: "100%", borderRadius: 2, background: COLORS.accent, width: `${pct}%`, transition: "width 0.4s ease" }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+ 
+function LevelUpToast({ newLevel, onDone }) {
+  const [visible, setVisible] = React.useState(true);
+  React.useEffect(() => {
+    const t = setTimeout(() => { setVisible(false); setTimeout(onDone, 300); }, 2800);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{ position: "fixed", top: 80, left: "50%", transform: `translateX(-50%) translateY(${visible ? "0" : "-20px"})`, opacity: visible ? 1 : 0, transition: "all 0.3s ease", zIndex: 5000, background: "#1a1a2e", color: "white", borderRadius: 14, padding: "14px 24px", boxShadow: "0 12px 40px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 12, pointerEvents: "none" }}>
+      <span style={{ fontSize: 28 }}>{levelTierIcon(newLevel)}</span>
+      <div>
+        <div style={{ fontSize: 11, color: "#86efac", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>Level Up!</div>
+        <div style={{ fontSize: 16, fontWeight: 700 }}>You reached Level {newLevel}</div>
+      </div>
+    </div>
+  );
+}
 
 // ── App ────────────────────────────────────────────────────────────────────────
 
@@ -4040,7 +4102,7 @@ const api = {
   async getWorkspaces() { const r = await fetch('/api/workspaces', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveWorkspace(w) { const method = w.id ? 'PUT' : 'POST'; const url = w.id ? '/api/workspaces/'+w.id : '/api/workspaces'; const r = await fetch(url, { method, credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(w) }); return r.ok ? r.json() : null; },
   async deleteWorkspace(id) { await fetch('/api/workspaces/'+id, { method:'DELETE', credentials:'include' }); },
-  async saveTask(task) { await fetch('/api/tasks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); },
+  async saveTask(task) { const r = await fetch('/api/tasks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); return r.ok ? r.json() : null; },
   async deleteTask(id) { await fetch('/api/tasks/' + id, { method: 'DELETE', credentials: 'include' }); },
   async getCheckins() { const r = await fetch('/api/checkins', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveCheckin(c) { await fetch('/api/checkins', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) }); },
@@ -4053,7 +4115,9 @@ const api = {
   async saveBookmark(b) { const r = await fetch('/api/bookmarks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.ok ? r.json() : null; },
   async deleteBookmark(id) { await fetch('/api/bookmarks/' + id, { method: 'DELETE', credentials: 'include' }); },
   async fetchMeta(url) { const r = await fetch('/api/fetch-meta?url=' + encodeURIComponent(url), { credentials: 'include' }); if (!r.ok) return {}; return r.json(); },
+  async getXp() { const r = await fetch('/api/xp', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
 };
+
 
 
 // ── Work Hours Setup Modal ─────────────────────────────────────────────────────
@@ -4306,6 +4370,9 @@ function App() {
   const [shareCopied, setShareCopied] = React.useState(false);
   const [shareWorkspaceId, setShareWorkspaceId] = React.useState(null);
   const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
+  const [xp, setXp] = React.useState(null);
+  const [levelUpInfo, setLevelUpInfo] = React.useState(null);
+
 
   // Check auth on load and show/hide login overlay
   useEffect(() => {
@@ -4351,9 +4418,11 @@ function App() {
       }
       const wsId = activeWs?.id;
 
-      const [tasksData, checkinsData, projectsData, settingsData, bookmarksData] = await Promise.all([
-        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId)
+          const [tasksData, checkinsData, projectsData, settingsData, bookmarksData, xpData] = await Promise.all([
+        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId), api.getXp()
       ]);
+      if (xpData) setXp(xpData);
+
       if (tasksData && tasksData.length > 0) {
         setTasks(tasksData
           .sort((a, b) => (a.position ?? 999999) - (b.position ?? 999999))
@@ -4498,13 +4567,23 @@ function App() {
   function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); }
   function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
-  function setStatus(id, status) {
+    function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
     const becomingDone = status === "Done" && task?.status !== "Done";
     const wasFrog = task?.isFrog;
     updateTasks(ts => {
       const updated = ts.map(t => t.id === id ? { ...t, status, completedAt: status === "Done" && !t.completedAt ? new Date().toISOString() : t.completedAt } : t);
-      if (authUser) { const task = updated.find(t => t.id === id); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); }
+      if (authUser) {
+        const updatedTask = updated.find(t => t.id === id);
+        if (updatedTask) {
+          api.saveTask({ ...updatedTask, workspaceId: activeWorkspace?.id }).then(result => {
+            if (result?.xp) {
+              setXp(prev => ({ ...(prev || {}), total_xp: result.xp.totalXp, current_level: result.xp.level, current_streak: result.xp.currentStreak }));
+              if (result.xp.leveledUp) setLevelUpInfo(result.xp.level);
+            }
+          }).catch(console.error);
+        }
+      }
       return updated;
     });
     if (becomingDone) {
@@ -4512,6 +4591,7 @@ function App() {
       if (task) setTimeout(() => setHappinessTask(task), wasFrog ? 2000 : 300);
     }
   }
+
 
 
   function saveBreakdown(taskId, breakdown) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, aiBreakdown: breakdown } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); } return updated; }); }
@@ -4718,7 +4798,7 @@ function App() {
   }
 
 
-  function handleDrop(targetId, targetStatus) {
+    function handleDrop(targetId, targetStatus) {
     if (!dragging) return;
     const draggedTask = tasks.find(t => t.id === dragging);
     const becomingDone = targetStatus === 'Done' && draggedTask?.status !== 'Done';
@@ -4732,7 +4812,12 @@ function App() {
       if (toIdx >= 0) arr.splice(toIdx, 0, task);
       else arr.push(task);
       if (authUser) {
-        api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error);
+        api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).then(result => {
+          if (result?.xp) {
+            setXp(prev => ({ ...(prev || {}), total_xp: result.xp.totalXp, current_level: result.xp.level, current_streak: result.xp.currentStreak }));
+            if (result.xp.leveledUp) setLevelUpInfo(result.xp.level);
+          }
+        }).catch(console.error);
         // Save positions of all tasks in updated array
         arr.forEach((t, i) => { if (t.workspace_id === activeWorkspace?.id || t.workspaceId === activeWorkspace?.id) api.saveTask({ ...t, workspaceId: activeWorkspace?.id, position: i }).catch(console.error); });
       }
@@ -4744,6 +4829,7 @@ function App() {
     }
     setDragging(null); setDragOver(null);
   }
+
 
   function saveTaskOrder(updatedTasks) {
     if (!authUser) return;
@@ -4785,6 +4871,8 @@ function App() {
       <style>{css}</style>
 
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
+      {levelUpInfo && <LevelUpToast newLevel={levelUpInfo} onDone={() => setLevelUpInfo(null)} />}
+
       {showFocus && frogTask && <FocusMode task={frogTask} onClose={() => setShowFocus(false)} />}
 
       {/* Header - Redesigned */}
@@ -4834,8 +4922,12 @@ function App() {
               <span className="desktop-only">New task</span>
             </button>
 
+            {/* XP Bar */}
+            <XPBar xp={xp} />
+ 
             {/* Sign out */}
             <a href="/auth/logout" className="desktop-only" style={{ fontSize: 12, color: COLORS.textMuted, textDecoration: "none", background: COLORS.surface3, padding: "6px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, flexShrink: 0, fontWeight: 500, whiteSpace: "nowrap" }}>Sign out</a>
+
             {/* Notifications bell */}
             <button onClick={() => { setView("teams"); setNotifTrigger(n => n + 1); }} title="Notifications" style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: 8, color: COLORS.textMuted, display: "flex", alignItems: "center" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
