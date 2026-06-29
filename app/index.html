@@ -4044,7 +4044,7 @@ function levelTierIcon(level) {
   return "🥚";
 }
  
-function XPBar({ xp }) {
+function XPBar({ xp, onClick }) {
   if (!xp) return null;
   const level = xp.current_level || 1;
   const currentLevelXp = xp.current_level_xp || 0;
@@ -4054,7 +4054,7 @@ function XPBar({ xp }) {
   const pct = xpNeeded ? Math.min(100, Math.round((currentLevelXp / xpNeeded) * 100)) : 0;
  
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 100, padding: "5px 14px 5px 6px" }}>
+    <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 100, padding: "5px 14px 5px 6px", cursor: onClick ? "pointer" : "default" }}>
       <div style={{ width: 28, height: 28, borderRadius: "50%", background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, boxShadow: `0 0 0 2px ${COLORS.surface}` }}>
         {levelTierIcon(level)}
       </div>
@@ -4094,6 +4094,188 @@ function LevelUpToast({ newLevel, onDone }) {
   );
 }
 
+const LEVEL_MILESTONES = [
+  { level: 5,  name: "Frog" },
+  { level: 15, name: "Golden Frog" },
+  { level: 25, name: "Champion Frog" },
+  { level: 35, name: "Diamond Frog" },
+  { level: 45, name: "Crowned Frog" },
+];
+
+function XPDetailView({ tasks, onClose }) {
+  const [xp, setXp] = React.useState(null);
+  const [history, setHistory] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    Promise.all([api.getXp(), api.getXpHistory()]).then(([xpData, historyData]) => {
+      setXp(xpData);
+      setHistory(historyData);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading || !xp) {
+    return (
+      <div style={{ padding: "0 0 40px" }}>
+        <div style={{ textAlign: "center", padding: 60, color: COLORS.textMuted, fontSize: 14 }}>Loading your progress...</div>
+      </div>
+    );
+  }
+
+  const level = xp.current_level || 1;
+  const currentLevelXp = xp.current_level_xp || 0;
+  const totalXp = xp.total_xp || 0;
+  const streak = xp.current_streak || 0;
+  const longestStreak = xp.longest_streak || 0;
+  const prestige = xp.prestige_count || 0;
+  const xpNeeded = xpForLevel(level);
+  const xpRemaining = Math.max(0, xpNeeded - currentLevelXp);
+  const pct = xpNeeded ? Math.min(100, Math.round((currentLevelXp / xpNeeded) * 100)) : 0;
+  const streakBonusPct = Math.min(50, streak * 3);
+  const isMaxLevel = level >= 50;
+
+  const daily = history && history.daily ? history.daily : [];
+  const recentEvents = history && history.recentEvents ? history.recentEvents : [];
+  const xpThisWeek = daily.reduce(function(sum, d) { return sum + (d.final_xp_awarded || 0); }, 0);
+  const tasksThisWeek = daily.reduce(function(sum, d) { return sum + (d.tasks_completed || 0); }, 0);
+  const maxDailyXp = Math.max.apply(null, daily.map(function(d) { return d.final_xp_awarded || 0; }).concat([1]));
+
+  const nextMilestone = LEVEL_MILESTONES.find(function(m) { return m.level > level; });
+
+  return (
+    <div style={{ padding: "0 0 40px" }}>
+      <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>Your progress</div>
+          <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>
+            Level & <em style={{ fontStyle: "italic", color: COLORS.accent }}>Rewards</em>
+          </h2>
+        </div>
+        <button onClick={onClose} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "6px 12px", border: `1px solid ${COLORS.border}`, fontSize: 13 }}>Close</button>
+      </div>
+
+      <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "28px 24px", marginBottom: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.2)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "white", flexShrink: 0, boxShadow: "0 0 0 4px rgba(124,106,247,0.2)" }}>
+            {levelTierIcon(level)}
+          </div>
+          <div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: "white", lineHeight: 1.1 }}>
+              Level {level}{prestige > 0 ? " - Prestige " + prestige : ""}
+            </div>
+            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>
+              {totalXp.toLocaleString()} total XP earned
+            </div>
+          </div>
+        </div>
+
+        {!isMaxLevel ? (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 6 }}>
+              <span>{currentLevelXp} / {xpNeeded} XP</span>
+              <span>{xpRemaining} XP to level {level + 1}</span>
+            </div>
+            <div style={{ width: "100%", height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ height: "100%", borderRadius: 4, background: COLORS.accent, width: `${pct}%`, transition: "width 0.4s ease" }} />
+            </div>
+          </div>
+        ) : (
+          <div style={{ background: "rgba(134,239,172,0.1)", border: "1px solid rgba(134,239,172,0.2)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#86efac" }}>
+            Max level reached! Prestige to start a new climb and keep your streak going.
+          </div>
+        )}
+      </div>
+
+      <div className="stats-grid-3">
+        <div className="stat-card">
+          <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" }}>Current Streak</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: streak > 0 ? COLORS.frog : COLORS.textMuted }}>{streak}d</div>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>
+            {streakBonusPct >= 50 ? "Max +50% XP bonus" : `+${streakBonusPct}% XP bonus`}
+          </div>
+        </div>
+        <div className="stat-card">
+          <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" }}>Longest Streak</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: COLORS.accent }}>{longestStreak}d</div>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>your personal best</div>
+        </div>
+        <div className="stat-card">
+          <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, letterSpacing: 0.5, marginBottom: 8, textTransform: "uppercase" }}>XP This Week</div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: COLORS.accent }}>{xpThisWeek}</div>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 4 }}>{tasksThisWeek} task{tasksThisWeek !== 1 ? "s" : ""} completed</div>
+        </div>
+      </div>
+
+      {daily.length > 0 && (
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginTop: 16, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>XP - Last 14 Days</div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 90 }}>
+            {daily.map((d, i) => {
+              const h = Math.max(2, (d.final_xp_awarded / maxDailyXp) * 80);
+              const isToday = d.activity_date === today();
+              return (
+                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <div style={{ width: "100%", height: h, borderRadius: 3, background: isToday ? COLORS.accent : COLORS.accentDim }} title={`${d.final_xp_awarded} XP`} />
+                  <span style={{ fontSize: 9, color: COLORS.textMuted }}>
+                    {new Date(d.activity_date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" }).slice(0,2)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>Tier Milestones</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {LEVEL_MILESTONES.map(m => {
+            const unlocked = level >= m.level;
+            const isNext = nextMilestone && nextMilestone.level === m.level;
+            return (
+              <div key={m.level} style={{
+                display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 10,
+                background: unlocked ? COLORS.frogDim : isNext ? COLORS.accentDim : COLORS.surface2,
+                border: `1px solid ${unlocked ? COLORS.frogBorder : isNext ? COLORS.accent + "30" : COLORS.border}`,
+              }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: unlocked ? COLORS.frog : COLORS.surface3, color: unlocked ? "#fff" : COLORS.textMuted, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, flexShrink: 0 }}>
+                  {levelTierIcon(m.level)}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: unlocked ? COLORS.frog : COLORS.text }}>{m.name}</div>
+                  <div style={{ fontSize: 12, color: COLORS.textMuted }}>Reach level {m.level}</div>
+                </div>
+                {unlocked && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.frog, background: "rgba(255,255,255,0.5)", padding: "3px 10px", borderRadius: 100 }}>Unlocked</span>}
+                {isNext && !unlocked && <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.accent }}>{m.level - level} levels to go</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {recentEvents.length > 0 && (
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>Recent XP Earned</div>
+          {recentEvents.map((e, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: i < recentEvents.length - 1 ? `1px solid ${COLORS.border}` : "none" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {e.frog_bonus_applied ? "🐸 " : ""}{e.task_title || "Deleted task"}
+                </div>
+                <div style={{ fontSize: 11, color: COLORS.textMuted }}>
+                  {new Date(e.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.frog, flexShrink: 0 }}>+{e.awarded_xp} XP</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── App ────────────────────────────────────────────────────────────────────────
 
 // ── API Layer ─────────────────────────────────────────────────────────────────
@@ -4116,6 +4298,7 @@ const api = {
   async deleteBookmark(id) { await fetch('/api/bookmarks/' + id, { method: 'DELETE', credentials: 'include' }); },
   async fetchMeta(url) { const r = await fetch('/api/fetch-meta?url=' + encodeURIComponent(url), { credentials: 'include' }); if (!r.ok) return {}; return r.json(); },
   async getXp() { const r = await fetch('/api/xp', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async getXpHistory() { const r = await fetch('/api/xp/history', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
 };
 
 
@@ -4924,7 +5107,7 @@ function App() {
             </button>
 
             {/* XP Bar */}
-            <XPBar xp={xp} />
+            <XPBar xp={xp} onClick={() => setView("xp")} />
  
             {/* Sign out */}
             <a href="/auth/logout" className="desktop-only" style={{ fontSize: 12, color: COLORS.textMuted, textDecoration: "none", background: COLORS.surface3, padding: "6px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, flexShrink: 0, fontWeight: 500, whiteSpace: "nowrap" }}>Sign out</a>
@@ -5245,6 +5428,7 @@ function App() {
         {view === "collab" && <CollabBoardView teams={teams} />}
 
         {view === "teams" && <TeamsView teams={teams} setTeams={setTeams} notifications={notifications} setNotifications={setNotifications} authUser={authUser} notifTrigger={notifTrigger} />}
+        {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} />}
 
         {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} />}
       </div>
