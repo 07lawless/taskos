@@ -4567,7 +4567,7 @@ function App() {
   function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); }
   function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
-    function setStatus(id, status) {
+      function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
     const becomingDone = status === "Done" && task?.status !== "Done";
     const wasFrog = task?.isFrog;
@@ -4576,10 +4576,11 @@ function App() {
       if (authUser) {
         const updatedTask = updated.find(t => t.id === id);
         if (updatedTask) {
-          api.saveTask({ ...updatedTask, workspaceId: activeWorkspace?.id }).then(result => {
+          api.saveTask({ ...updatedTask, workspaceId: activeWorkspace?.id }).then(async result => {
             if (result?.xp) {
-              setXp(prev => ({ ...(prev || {}), total_xp: result.xp.totalXp, current_level: result.xp.level, current_streak: result.xp.currentStreak }));
               if (result.xp.leveledUp) setLevelUpInfo(result.xp.level);
+              const freshXp = await api.getXp();
+              if (freshXp) setXp(freshXp);
             }
           }).catch(console.error);
         }
@@ -4591,8 +4592,6 @@ function App() {
       if (task) setTimeout(() => setHappinessTask(task), wasFrog ? 2000 : 300);
     }
   }
-
-
 
   function saveBreakdown(taskId, breakdown) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, aiBreakdown: breakdown } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); } return updated; }); }
   function saveHappiness(taskId, rating) { setTasks(ts => { const updated = ts.map(t => t.id === taskId ? { ...t, happiness: rating } : t); if (authUser) { const task = updated.find(t => t.id === taskId); if (task) api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).catch(console.error); } return updated; }); }
@@ -4811,11 +4810,13 @@ function App() {
       arr.splice(fromIdx, 1);
       if (toIdx >= 0) arr.splice(toIdx, 0, task);
       else arr.push(task);
+      
       if (authUser) {
-        api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).then(result => {
+        api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).then(async result => {
           if (result?.xp) {
-            setXp(prev => ({ ...(prev || {}), total_xp: result.xp.totalXp, current_level: result.xp.level, current_streak: result.xp.currentStreak }));
             if (result.xp.leveledUp) setLevelUpInfo(result.xp.level);
+            const freshXp = await api.getXp();
+            if (freshXp) setXp(freshXp);
           }
         }).catch(console.error);
         // Save positions of all tasks in updated array
