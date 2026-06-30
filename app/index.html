@@ -2899,8 +2899,17 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
 
   async function promoteToggle(teamId, userId, currentRole) {
     const newRole = currentRole === 'admin' ? 'member' : 'admin';
-    await fetch(`/api/teams/${teamId}/members/${userId}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: newRole }) });
-    setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.map(m => m.id === userId ? { ...m, role: newRole } : m) } : t));
+    try {
+      const r = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: newRole }) });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        window.alert(d.error || 'Could not update role.');
+        return;
+      }
+      setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.map(m => m.id === userId ? { ...m, role: newRole } : m) } : t));
+    } catch(e) {
+      window.alert('Could not update role. Check your connection and try again.');
+    }
   }
 
   async function markAllRead() {
@@ -4750,8 +4759,28 @@ function App() {
   }, [history, future, tasks]);
 
   function pushHistory(prev) { setHistory(h => [...h.slice(-49), prev]); setFuture([]); }
-  function undo() { if (!history.length) return; const prev = history[history.length-1]; setFuture(f => [tasks, ...f]); setTasks(prev); setHistory(h => h.slice(0,-1)); }
-  function redo() { if (!future.length) return; const next = future[0]; setHistory(h => [...h, tasks]); setTasks(next); setFuture(f => f.slice(1)); }
+  function persistTaskDiff(prevTasks, nextTasks) {
+    // Undo/redo only changed local React state historically — the server
+    // never found out, so refreshing the page (or switching workspace and
+    // back) would silently bring the "undone" change back. This walks the
+    // before/after snapshots and pushes whatever actually changed.
+    if (!authUser) return;
+    const prevMap = new Map(prevTasks.map(t => [t.id, t]));
+    const nextMap = new Map(nextTasks.map(t => [t.id, t]));
+    prevMap.forEach((t, id) => {
+      if (!nextMap.has(id)) api.deleteTask(id).catch(console.error);
+    });
+    nextMap.forEach((t, id) => {
+      const prev = prevMap.get(id);
+      if (!prev || JSON.stringify(prev) !== JSON.stringify(t)) {
+        api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error);
+      }
+    });
+    // Note: this does not reverse any XP already awarded for a task that
+    // was completed before being undone — XP is intentionally left as-is.
+  }
+  function undo() { if (!history.length) return; const prev = history[history.length-1]; setFuture(f => [tasks, ...f]); persistTaskDiff(tasks, prev); setTasks(prev); setHistory(h => h.slice(0,-1)); }
+  function redo() { if (!future.length) return; const next = future[0]; setHistory(h => [...h, tasks]); persistTaskDiff(tasks, next); setTasks(next); setFuture(f => f.slice(1)); }
   function updateTasks(fn) { pushHistory(tasks); setTasks(fn); }
 
   function saveTask(task) {
@@ -5013,15 +5042,24 @@ function App() {
       else arr.push(task);
       
       if (authUser) {
-        api.saveTask({ ...task, workspaceId: activeWorkspace?.id }).then(async result => {
+        const finalPosition = toIdx >= 0 ? toIdx : arr.length - 1;
+        api.saveTask({ ...task, workspaceId: activeWorkspace?.id, position: finalPosition }).then(async result => {
           if (result?.xp) {
             if (result.xp.leveledUp) setLevelUpInfo(result.xp.level);
             const freshXp = await api.getXp();
             if (freshXp) setXp(freshXp);
           }
         }).catch(console.error);
-        // Save positions of all tasks in updated array
-        arr.forEach((t, i) => { if (t.workspace_id === activeWorkspace?.id || t.workspaceId === activeWorkspace?.id) api.saveTask({ ...t, workspaceId: activeWorkspace?.id, position: i }).catch(console.error); });
+        // Save positions of the OTHER tasks only — the dragged task was
+        // already saved above with its correct status + position, so
+        // re-saving it here would double-submit the same task and could
+        // race with the save above on the server's Done-transition check.
+        arr.forEach((t, i) => {
+          if (t.id === dragging) return;
+          if (t.workspace_id === activeWorkspace?.id || t.workspaceId === activeWorkspace?.id) {
+            api.saveTask({ ...t, workspaceId: activeWorkspace?.id, position: i }).catch(console.error);
+          }
+        });
       }
       return arr;
     });
@@ -5030,15 +5068,6 @@ function App() {
       if (draggedTask) setTimeout(() => setHappinessTask(draggedTask), wasFrog ? 2000 : 300);
     }
     setDragging(null); setDragOver(null);
-  }
-
-
-  function saveTaskOrder(updatedTasks) {
-    if (!authUser) return;
-    // Save position for each task in the updated order
-    updatedTasks.forEach((t, i) => {
-      api.saveTask({ ...t, workspaceId: activeWorkspace?.id, position: i }).catch(console.error);
-    });
   }
 
   const frogTask = tasks.find(t => t.isFrog);
