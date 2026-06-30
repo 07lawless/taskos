@@ -5343,13 +5343,14 @@ function App() {
               <span className="desktop-only">New task</span>
             </button>
 
-            {/* Tools — Focus / Plan / Journal / Daily, consolidated into one dropdown */}
-            <div style={{ position: "relative" }}>
+            {/* Tools — Focus / Plan / Journal / Daily, consolidated into one dropdown.
+                Desktop only — on mobile these live in the "More" sheet instead. */}
+            <div className="desktop-only" style={{ position: "relative" }}>
               <button onClick={() => setShowToolsMenu(o => !o)}
                 style={{ background: showToolsMenu ? COLORS.accentDim : COLORS.surface3, color: showToolsMenu ? COLORS.accent : COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${showToolsMenu ? COLORS.accent + "40" : COLORS.border}`, display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                 <span style={{ fontSize: 13 }}>✨</span>
-                <span className="desktop-only">Tools</span>
-                <svg className="desktop-only" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points={showToolsMenu ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} /></svg>
+                Tools
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points={showToolsMenu ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} /></svg>
               </button>
 
               {showToolsMenu && (
@@ -5510,6 +5511,31 @@ function App() {
                 {label}
               </button>
             ))}
+
+            <div style={{ height: 1, background: COLORS.border, margin: "8px 4px" }} />
+
+            {frogTask && (
+              <button onClick={() => { setShowFocus(true); setShowMoreMenu(false); }}
+                style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.frog, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Focus
+              </button>
+            )}
+            <button onClick={() => { setShowDailyPlan(true); setShowMoreMenu(false); }}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M18 2v4"/><path d="M22 6h-4"/></svg>
+              Plan
+            </button>
+            <button onClick={() => { setShowJournal(true); setShowMoreMenu(false); }}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"/></svg>
+              Journal
+            </button>
+            <button onClick={() => { setShowDaily(true); setShowMoreMenu(false); }}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Daily
+            </button>
           </div>
         </div>
       )}
