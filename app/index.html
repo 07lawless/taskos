@@ -359,7 +359,7 @@ const css = `
   }
   .task-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); transform: translateY(-1px); border-color: var(--c-border-hover); }
   .task-card.is-frog { border-color: var(--c-frog-border); background: var(--c-frog-dim); }
-  .task-card.is-overdue { border-color: var(--c-high); box-shadow: 0 1px 3px rgba(0,0,0,0.05), inset 3px 0 0 var(--c-high); }
+  .task-card.is-overdue { border-color: var(--c-high); background: var(--c-high-dim); }
   .task-card.is-dragging { opacity: 0.4; }
   .task-card.touch-dragging { opacity: 0.5; transform: scale(0.97); box-shadow: 0 0 0 2px var(--c-accent); }
   .task-card-body { padding: 14px 16px; }
@@ -370,6 +370,7 @@ const css = `
     display: flex; align-items: center; gap: 6px;
   }
   .task-card.is-frog .task-card-footer { border-top-color: var(--c-frog-border); background: var(--c-frog-dim); }
+  .task-card.is-overdue .task-card-footer { border-top-color: var(--c-high); background: var(--c-high-dim); }
 
   /* Stat + section cards */
   .stat-card {
@@ -976,6 +977,14 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
             <span style={{ fontSize: 10, fontWeight: 700, color: COLORS.frog, letterSpacing: 0.8, textTransform: "uppercase", WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>🐸 Priority task</span>
           </div>
         )}
+        {/* Overdue label — mirrors the frog label above, just in red. Only
+            shown when the card isn't already a frog card, so a task that's
+            both doesn't end up wearing two competing banners. */}
+        {isOverdue && !task.isFrog && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: COLORS.high, letterSpacing: 0.8, textTransform: "uppercase", WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>⚠️ Overdue</span>
+          </div>
+        )}
 
         {/* Tags row */}
         <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8, flexWrap: "wrap" }}>
@@ -988,8 +997,8 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
             </span>
           )}
           {task.due && (
-            <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : isDueToday ? COLORS.medium : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : isDueToday ? COLORS.mediumDim : COLORS.surface3, borderRadius: 4, fontWeight: 500 }}>
-              {isOverdue ? "⚠ " : isDueToday ? "● " : ""}{task.due}
+            <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : isDueToday ? COLORS.medium : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.surface : isDueToday ? COLORS.mediumDim : COLORS.surface3, borderRadius: 4, fontWeight: 500, border: isOverdue ? `1px solid ${COLORS.high}40` : "none" }}>
+              {isDueToday ? "● " : ""}{task.due}
             </span>
           )}
           {isStale && (
