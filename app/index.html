@@ -406,6 +406,19 @@ const css = `
     border-radius: 12px;
   }
 
+  /* Task card priority strip — had no base sizing previously, making it
+     effectively invisible regardless of the inline background colour set
+     per-card. Giving it explicit dimensions here also makes the
+     "card_style" reward below actually visible once equipped. */
+  .task-card-priority-line { height: 3px; width: 100%; }
+
+  /* Reward cosmetics — equipped card_style rewards override the priority
+     strip's colour. !important is intentional here: it's the only way to
+     win over each card's per-priority inline colour without threading a
+     new prop through every TaskCard render call site. */
+  body.reward-card-card_sunset .task-card-priority-line { background: linear-gradient(90deg, #f97316, #fb923c) !important; }
+  body.reward-card-card_ocean .task-card-priority-line { background: linear-gradient(90deg, #0ea5e9, #38bdf8) !important; }
+
   /* Bottom nav */
   .bottom-nav { display: none; }
 
@@ -461,6 +474,32 @@ const css = `
 function moodColor(v) {
   const colors = [COLORS.mood1, COLORS.mood2, COLORS.mood3, COLORS.mood4, COLORS.mood5];
   return colors[v - 1] || COLORS.textMuted;
+}
+
+// ── Reward cosmetics ───────────────────────────────────────────────────────────
+// Mutates the live COLORS object + CSS custom properties to apply an
+// equipped accent_theme reward. Safe to call with an undefined/null
+// preview (no-op) — used both on load and whenever the theme toggles,
+// since toggleTheme resets the whole palette and would otherwise wipe
+// out an equipped accent override.
+function applyAccentOverride(preview) {
+  if (!preview) return;
+  if (preview.accent) COLORS.accent = preview.accent;
+  if (preview.accentDim) COLORS.accentDim = preview.accentDim;
+  if (preview.accentHover) COLORS.accentHover = preview.accentHover;
+  const root = document.documentElement;
+  if (preview.accent) root.style.setProperty('--c-accent', COLORS.accent);
+  if (preview.accentDim) root.style.setProperty('--c-accent-dim', COLORS.accentDim);
+}
+// Toggles a body class for the equipped card_style reward. The actual
+// visual rule lives in the stylesheet (see "reward-card-" rules in css)
+// using !important, which is the one case where that's the right tool —
+// it needs to win over each TaskCard's per-priority inline colour
+// without threading a new prop through every render call site.
+function applyCardStyleClass(rewardKey) {
+  if (typeof document === 'undefined') return;
+  Array.from(document.body.classList).forEach(c => { if (c.startsWith('reward-card-')) document.body.classList.remove(c); });
+  if (rewardKey) document.body.classList.add('reward-card-' + rewardKey);
 }
 
 // ── AI ─────────────────────────────────────────────────────────────────────────
@@ -917,6 +956,9 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
   const isOverdue = task.due && task.due < today() && task.status !== "Done";
   const isDueToday = task.due === today();
   const project = projects?.find(p => p.id === task.projectId);
+  const lastTouchedMs = task.updated_at ? new Date(task.updated_at).getTime() : (task.createdAt ? new Date(task.createdAt).getTime() : null);
+  const daysSinceTouch = lastTouchedMs ? Math.floor((Date.now() - lastTouchedMs) / 86400000) : null;
+  const isStale = task.status !== "Done" && daysSinceTouch !== null && daysSinceTouch >= 14;
   const priorityColors = {
     High: { line: COLORS.high, badge: COLORS.highDim, text: COLORS.high },
     Medium: { line: COLORS.medium, badge: COLORS.mediumDim, text: COLORS.medium },
@@ -957,6 +999,11 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
           {task.due && (
             <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : isDueToday ? COLORS.medium : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : isDueToday ? COLORS.mediumDim : COLORS.surface3, borderRadius: 4, fontWeight: 500 }}>
               {isOverdue ? "⚠ " : isDueToday ? "● " : ""}{task.due}
+            </span>
+          )}
+          {isStale && (
+            <span title="No edits or status changes in a while — still on your plate?" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 7px", background: COLORS.surface3, borderRadius: 4, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>
+              💤 {daysSinceTouch}d untouched
             </span>
           )}
           {task.happiness && (
@@ -4055,7 +4102,7 @@ function levelTierIcon(level) {
   return "🥚";
 }
  
-function XPBar({ xp, onClick }) {
+function XPBar({ xp, onClick, skinEmoji }) {
   if (!xp) return null;
   const level = xp.current_level || 1;
   const currentLevelXp = xp.current_level_xp || 0;
@@ -4067,7 +4114,7 @@ function XPBar({ xp, onClick }) {
   return (
     <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 100, padding: "5px 14px 5px 6px", cursor: onClick ? "pointer" : "default" }}>
       <div style={{ width: 28, height: 28, borderRadius: "50%", background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, boxShadow: `0 0 0 2px ${COLORS.surface}` }}>
-        {levelTierIcon(level)}
+        {skinEmoji || levelTierIcon(level)}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 110 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -4088,7 +4135,7 @@ function XPBar({ xp, onClick }) {
   );
 }
  
-function LevelUpToast({ newLevel, onDone }) {
+function LevelUpToast({ newLevel, onDone, skinEmoji }) {
   const [visible, setVisible] = React.useState(true);
   React.useEffect(() => {
     const t = setTimeout(() => { setVisible(false); setTimeout(onDone, 300); }, 2800);
@@ -4096,7 +4143,7 @@ function LevelUpToast({ newLevel, onDone }) {
   }, []);
   return (
     <div style={{ position: "fixed", top: 80, left: "50%", transform: `translateX(-50%) translateY(${visible ? "0" : "-20px"})`, opacity: visible ? 1 : 0, transition: "all 0.3s ease", zIndex: 5000, background: "#1a1a2e", color: "white", borderRadius: 14, padding: "14px 24px", boxShadow: "0 12px 40px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", gap: 12, pointerEvents: "none" }}>
-      <span style={{ fontSize: 28 }}>{levelTierIcon(newLevel)}</span>
+      <span style={{ fontSize: 28 }}>{skinEmoji || levelTierIcon(newLevel)}</span>
       <div>
         <div style={{ fontSize: 11, color: "#86efac", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>Level Up!</div>
         <div style={{ fontSize: 16, fontWeight: 700 }}>You reached Level {newLevel}</div>
@@ -4113,10 +4160,11 @@ const LEVEL_MILESTONES = [
   { level: 45, name: "Crowned Frog" },
 ];
 
-function XPDetailView({ tasks, onClose }) {
+function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange }) {
   const [xp, setXp] = React.useState(null);
   const [history, setHistory] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [prestiging, setPrestiging] = React.useState(false);
 
   React.useEffect(() => {
     Promise.all([api.getXp(), api.getXpHistory()]).then(([xpData, historyData]) => {
@@ -4125,6 +4173,19 @@ function XPDetailView({ tasks, onClose }) {
       setLoading(false);
     });
   }, []);
+
+  async function handlePrestige() {
+    if (!window.confirm('Prestige now? Your level resets to 1, but your total XP, streak, and every unlocked reward stay exactly as they are. Continue?')) return;
+    setPrestiging(true);
+    const result = await api.prestige();
+    setPrestiging(false);
+    if (result) {
+      setXp(result);
+      if (onXpChange) onXpChange(result);
+    } else {
+      window.alert('Could not prestige right now. Try again in a moment.');
+    }
+  }
 
   if (loading || !xp) {
     return (
@@ -4145,6 +4206,10 @@ function XPDetailView({ tasks, onClose }) {
   const pct = xpNeeded ? Math.min(100, Math.round((currentLevelXp / xpNeeded) * 100)) : 0;
   const streakBonusPct = Math.min(50, streak * 3);
   const isMaxLevel = level >= 50;
+
+  const equippedSkinEmoji = rewards?.equipped?.tadpole_skin
+    ? rewards.catalogue?.find(r => r.reward_key === rewards.equipped.tadpole_skin)?.preview?.emoji
+    : null;
 
   const daily = history && history.daily ? history.daily : [];
   const recentEvents = history && history.recentEvents ? history.recentEvents : [];
@@ -4169,7 +4234,7 @@ function XPDetailView({ tasks, onClose }) {
       <div style={{ background: "#1a1a2e", borderRadius: 16, padding: "28px 24px", marginBottom: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.2)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
           <div style={{ width: 64, height: 64, borderRadius: "50%", background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "white", flexShrink: 0, boxShadow: "0 0 0 4px rgba(124,106,247,0.2)" }}>
-            {levelTierIcon(level)}
+            {equippedSkinEmoji || levelTierIcon(level)}
           </div>
           <div>
             <div style={{ fontSize: 28, fontWeight: 800, color: "white", lineHeight: 1.1 }}>
@@ -4192,8 +4257,12 @@ function XPDetailView({ tasks, onClose }) {
             </div>
           </div>
         ) : (
-          <div style={{ background: "rgba(134,239,172,0.1)", border: "1px solid rgba(134,239,172,0.2)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#86efac" }}>
-            Max level reached! Prestige to start a new climb and keep your streak going.
+          <div style={{ background: "rgba(134,239,172,0.1)", border: "1px solid rgba(134,239,172,0.2)", borderRadius: 10, padding: "14px 16px", fontSize: 13, color: "#86efac" }}>
+            <div style={{ marginBottom: 10 }}>Max level reached! Prestige to start a new climb — your total XP, streak, and unlocked rewards all stay exactly as they are.</div>
+            <button onClick={handlePrestige} disabled={prestiging}
+              style={{ background: "#86efac", color: "#0f3d22", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700, border: "none", cursor: prestiging ? "default" : "pointer", opacity: prestiging ? 0.6 : 1 }}>
+              {prestiging ? "Prestiging…" : "Prestige Now"}
+            </button>
           </div>
         )}
       </div>
@@ -4279,6 +4348,58 @@ function XPDetailView({ tasks, onClose }) {
         </div>
       </div>
 
+      {rewards && rewards.catalogue && rewards.catalogue.length > 0 && (
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Rewards</div>
+          <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 16 }}>Cosmetics unlock automatically as you level up. Equip whichever you like.</div>
+          {["tadpole_skin", "accent_theme", "card_style"].map(type => {
+            const items = rewards.catalogue.filter(r => r.reward_type === type);
+            if (!items.length) return null;
+            const typeLabel = type === "tadpole_skin" ? "Tadpole Skins" : type === "accent_theme" ? "Accent Themes" : "Card Styles";
+            const equippedKey = rewards.equipped?.[type];
+            return (
+              <div key={type} style={{ marginBottom: 18 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 10 }}>{typeLabel}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {items.map(item => {
+                    const unlocked = rewards.unlocked?.includes(item.reward_key);
+                    const isEquipped = equippedKey === item.reward_key;
+                    return (
+                      <div key={item.reward_key} style={{
+                        display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10,
+                        background: isEquipped ? COLORS.accentDim : unlocked ? COLORS.surface2 : COLORS.surface3,
+                        border: `1px solid ${isEquipped ? COLORS.accent + "50" : COLORS.border}`,
+                        opacity: unlocked ? 1 : 0.6,
+                      }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, background: COLORS.surface, border: `1px solid ${COLORS.border}` }}>
+                          {type === "tadpole_skin" && (unlocked ? (item.preview?.emoji || "🐸") : "🔒")}
+                          {type === "accent_theme" && (unlocked
+                            ? <div style={{ width: 18, height: 18, borderRadius: "50%", background: item.preview?.accent || COLORS.accent }} />
+                            : "🔒")}
+                          {type === "card_style" && (unlocked
+                            ? <div style={{ width: 18, height: 5, borderRadius: 3, background: item.preview?.stripColor || COLORS.accent }} />
+                            : "🔒")}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: unlocked ? COLORS.text : COLORS.textMuted }}>{item.name}</div>
+                          <div style={{ fontSize: 11, color: COLORS.textMuted }}>{unlocked ? item.description : `Unlocks at level ${item.unlock_level}`}</div>
+                        </div>
+                        {unlocked && (
+                          <button onClick={() => onEquip && onEquip(type, isEquipped ? null : item.reward_key)}
+                            style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 100, flexShrink: 0, border: `1px solid ${isEquipped ? COLORS.accent : COLORS.border}`, background: isEquipped ? COLORS.accent : "transparent", color: isEquipped ? "#fff" : COLORS.textMuted, cursor: "pointer", fontFamily: "inherit" }}>
+                            {isEquipped ? "Equipped" : "Equip"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {recentEvents.length > 0 && (
         <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>Recent XP Earned</div>
@@ -4324,6 +4445,9 @@ const api = {
   async fetchMeta(url) { const r = await fetch('/api/fetch-meta?url=' + encodeURIComponent(url), { credentials: 'include' }); if (!r.ok) return {}; return r.json(); },
   async getXp() { const r = await fetch('/api/xp', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async getXpHistory() { const r = await fetch('/api/xp/history', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async getRewards() { const r = await fetch('/api/rewards', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async equipReward(reward_type, reward_key) { const r = await fetch('/api/rewards/equip', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reward_type, reward_key }) }); return r.ok ? r.json() : null; },
+  async prestige() { const r = await fetch('/api/xp/prestige', { method: 'POST', credentials: 'include' }); if (!r.ok) return null; return r.json(); },
 };
 
 
@@ -4582,6 +4706,7 @@ function App() {
   const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
   const [xp, setXp] = React.useState(null);
   const [levelUpInfo, setLevelUpInfo] = React.useState(null);
+  const [rewards, setRewards] = React.useState(null);
 
 
   // Check auth on load and show/hide login overlay
@@ -4628,10 +4753,18 @@ function App() {
       }
       const wsId = activeWs?.id;
 
-          const [tasksData, checkinsData, projectsData, settingsData, bookmarksData, xpData] = await Promise.all([
-        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId), api.getXp()
+          const [tasksData, checkinsData, projectsData, settingsData, bookmarksData, xpData, rewardsData] = await Promise.all([
+        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId), api.getXp(), api.getRewards()
       ]);
       if (xpData) setXp(xpData);
+      if (rewardsData) {
+        setRewards(rewardsData);
+        if (rewardsData.equipped?.accent_theme) {
+          const entry = rewardsData.catalogue.find(r => r.reward_key === rewardsData.equipped.accent_theme);
+          applyAccentOverride(entry?.preview);
+        }
+        applyCardStyleClass(rewardsData.equipped?.card_style || null);
+      }
 
       if (tasksData && tasksData.length > 0) {
         setTasks(tasksData
@@ -4854,8 +4987,38 @@ function App() {
     root.style.setProperty('--c-high-dim', COLORS.highDim);
     root.style.setProperty('--c-medium', COLORS.medium);
     root.style.setProperty('--c-medium-dim', COLORS.mediumDim);
+    // The palette reset above wipes the accent back to the theme default —
+    // if the user has an accent_theme reward equipped, re-apply it now.
+    if (rewards?.equipped?.accent_theme) {
+      const entry = rewards.catalogue.find(r => r.reward_key === rewards.equipped.accent_theme);
+      applyAccentOverride(entry?.preview);
+    }
     setTheme(t);
     forceUpdate(n => n + 1);
+  }
+  function resetAccentToThemeDefault() {
+    const palette = theme === "dark" ? DARK_COLORS : LIGHT_COLORS;
+    COLORS.accent = palette.accent; COLORS.accentDim = palette.accentDim; COLORS.accentHover = palette.accentHover;
+    const root = document.documentElement;
+    root.style.setProperty('--c-accent', COLORS.accent);
+    root.style.setProperty('--c-accent-dim', COLORS.accentDim);
+  }
+  async function handleEquipReward(reward_type, reward_key) {
+    const result = await api.equipReward(reward_type, reward_key);
+    if (!result) return;
+    setRewards(prev => prev ? { ...prev, equipped: { ...prev.equipped, [reward_type]: reward_key || undefined } } : prev);
+    if (reward_type === 'accent_theme') {
+      if (reward_key) {
+        const entry = rewards?.catalogue?.find(r => r.reward_key === reward_key);
+        applyAccentOverride(entry?.preview);
+      } else {
+        resetAccentToThemeDefault();
+      }
+      forceUpdate(n => n + 1);
+    }
+    if (reward_type === 'card_style') {
+      applyCardStyleClass(reward_key || null);
+    }
   }
   function saveCheckin(entry) { setCheckins(prev => { const filtered = prev.filter(c => c.date !== entry.date); return [...filtered, entry]; }); if (authUser) api.saveCheckin(entry).catch(console.error); }
   function saveWorkHours(wh) { setWorkHours(wh); if (authUser) api.saveSettings({ workHours: wh, theme }).catch(console.error); }
@@ -5071,6 +5234,9 @@ function App() {
   }
 
   const frogTask = tasks.find(t => t.isFrog);
+  const equippedSkinEmoji = rewards?.equipped?.tadpole_skin
+    ? rewards.catalogue?.find(r => r.reward_key === rewards.equipped.tadpole_skin)?.preview?.emoji
+    : null;
   const filteredTasks = (() => {
     let ts = tasks;
     if (projectFilter) ts = ts.filter(t => t.projectId === projectFilter);
@@ -5089,6 +5255,12 @@ function App() {
       }
       if (dueDateFilter === "overdue") ts = ts.filter(t => t.due && t.due < todayStr && t.status !== "Done");
       if (dueDateFilter === "no_date") ts = ts.filter(t => !t.due);
+      if (dueDateFilter === "stale") ts = ts.filter(t => {
+        if (t.status === "Done") return false;
+        const lastTouchedMs = t.updated_at ? new Date(t.updated_at).getTime() : (t.createdAt ? new Date(t.createdAt).getTime() : null);
+        if (!lastTouchedMs) return false;
+        return Math.floor((Date.now() - lastTouchedMs) / 86400000) >= 14;
+      });
     }
     return ts;
   })();
@@ -5111,7 +5283,7 @@ function App() {
       <style>{css}</style>
 
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
-      {levelUpInfo && <LevelUpToast newLevel={levelUpInfo} onDone={() => setLevelUpInfo(null)} />}
+      {levelUpInfo && <LevelUpToast newLevel={levelUpInfo} onDone={() => setLevelUpInfo(null)} skinEmoji={equippedSkinEmoji} />}
 
       {showFocus && frogTask && <FocusMode task={frogTask} onClose={() => setShowFocus(false)} />}
 
@@ -5188,7 +5360,7 @@ function App() {
             </div>
 
             {/* XP Bar */}
-            <XPBar xp={xp} onClick={() => setView("xp")} />
+            <XPBar xp={xp} onClick={() => setView("xp")} skinEmoji={equippedSkinEmoji} />
 
             {/* Profile menu — consolidates settings, notifications, undo/redo, sign out */}
             <div style={{ position: "relative" }}>
@@ -5327,6 +5499,7 @@ function App() {
                 { key: "week", label: "This week" },
                 { key: "overdue", label: "Overdue" },
                 { key: "no_date", label: "No date" },
+                { key: "stale", label: "Stale" },
               ].map(({ key, label }) => (
                 <button key={String(key)} onClick={() => setDueDateFilter(key)}
                   style={{
@@ -5528,7 +5701,7 @@ function App() {
         {view === "collab" && <CollabBoardView teams={teams} />}
 
         {view === "teams" && <TeamsView teams={teams} setTeams={setTeams} notifications={notifications} setNotifications={setNotifications} authUser={authUser} notifTrigger={notifTrigger} />}
-        {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} />}
+        {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} rewards={rewards} onEquip={handleEquipReward} onXpChange={setXp} />}
 
         {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} />}
       </div>
