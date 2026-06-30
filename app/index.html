@@ -467,6 +467,15 @@ function moodColor(v) {
   const colors = [COLORS.mood1, COLORS.mood2, COLORS.mood3, COLORS.mood4, COLORS.mood5];
   return colors[v - 1] || COLORS.textMuted;
 }
+// Sorts tasks by due date ascending (soonest first). Tasks with no due
+// date are pushed to the end rather than the start — "no date" isn't
+// "due now", so it shouldn't visually outrank things that actually are.
+function sortByDueDate(a, b) {
+  if (!a.due && !b.due) return 0;
+  if (!a.due) return 1;
+  if (!b.due) return -1;
+  return a.due.localeCompare(b.due);
+}
 
 // ── Reward cosmetics ───────────────────────────────────────────────────────────
 // Mutates the live COLORS object + CSS custom properties to apply an
@@ -4142,16 +4151,18 @@ const LEVEL_MILESTONES = [
   { level: 45, name: "Crowned Frog" },
 ];
 
-function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange }) {
+function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange, authUid }) {
   const [xp, setXp] = React.useState(null);
   const [history, setHistory] = React.useState(null);
+  const [leaderboard, setLeaderboard] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [prestiging, setPrestiging] = React.useState(false);
 
   React.useEffect(() => {
-    Promise.all([api.getXp(), api.getXpHistory()]).then(([xpData, historyData]) => {
+    Promise.all([api.getXp(), api.getXpHistory(), api.getLeaderboard()]).then(([xpData, historyData, leaderboardData]) => {
       setXp(xpData);
       setHistory(historyData);
+      setLeaderboard(leaderboardData);
       setLoading(false);
     });
   }, []);
@@ -4381,6 +4392,43 @@ function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange }) {
           ))}
         </div>
       )}
+
+      {leaderboard && leaderboard.length > 0 && (
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginTop: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>Scoreboard</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {leaderboard.map((u, i) => {
+              const isMe = authUid != null && String(u.id) === String(authUid);
+              return (
+                <div key={u.id} style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10,
+                  background: isMe ? COLORS.accentDim : COLORS.surface2,
+                  border: `1px solid ${isMe ? COLORS.accent + "50" : COLORS.border}`,
+                }}>
+                  <div style={{ width: 22, textAlign: "center", fontSize: 13, fontWeight: 800, color: i < 3 ? COLORS.medium : COLORS.textMuted, flexShrink: 0 }}>
+                    {i + 1}
+                  </div>
+                  {u.avatar
+                    ? <img src={u.avatar} alt="" style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }} onError={e => e.target.style.display = "none"} />
+                    : <div style={{ width: 32, height: 32, borderRadius: "50%", background: COLORS.surface3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: COLORS.textMuted, flexShrink: 0 }}>{(u.first_name || "?").charAt(0)}</div>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {cap(u.first_name)} {cap(u.last_name)}{isMe ? " (You)" : ""}
+                    </div>
+                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{(u.total_xp || 0).toLocaleString()} XP</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+                    <span style={{ fontSize: 16 }}>{levelTierIcon(u.current_level || 1)}</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>
+                      Lv {u.current_level || 1}{u.prestige_count > 0 ? ` · P${u.prestige_count}` : ""}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4411,6 +4459,7 @@ const api = {
   async getRewards() { const r = await fetch('/api/rewards', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async equipReward(reward_type, reward_key) { const r = await fetch('/api/rewards/equip', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reward_type, reward_key }) }); return r.ok ? r.json() : null; },
   async prestige() { const r = await fetch('/api/xp/prestige', { method: 'POST', credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async getLeaderboard() { const r = await fetch('/api/leaderboard', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
 };
 
 
@@ -4895,9 +4944,17 @@ function App() {
       function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
     const becomingDone = status === "Done" && task?.status !== "Done";
+    const leavingDone = task?.status === "Done" && status !== "Done";
     const wasFrog = task?.isFrog;
     updateTasks(ts => {
-      const updated = ts.map(t => t.id === id ? { ...t, status, completedAt: status === "Done" && !t.completedAt ? new Date().toISOString() : t.completedAt } : t);
+      const updated = ts.map(t => t.id === id ? {
+        ...t,
+        status,
+        completedAt: status === "Done" && !t.completedAt ? new Date().toISOString() : (leavingDone ? null : t.completedAt),
+        // A star rating only makes sense for a task that's actually Done —
+        // dragging it back out shouldn't leave a stale rating behind.
+        happiness: leavingDone ? null : t.happiness,
+      } : t);
       if (authUser) {
         const updatedTask = updated.find(t => t.id === id);
         if (updatedTask) {
@@ -5153,12 +5210,18 @@ function App() {
     if (!dragging) return;
     const draggedTask = tasks.find(t => t.id === dragging);
     const becomingDone = targetStatus === 'Done' && draggedTask?.status !== 'Done';
+    const leavingDone = draggedTask?.status === 'Done' && targetStatus !== 'Done';
     const wasFrog = draggedTask?.isFrog;
     updateTasks(ts => {
       const arr = [...ts];
       const fromIdx = arr.findIndex(t => t.id === dragging);
       const toIdx = targetId ? arr.findIndex(t => t.id === targetId) : -1;
-      const task = { ...arr[fromIdx], status: targetStatus, completedAt: targetStatus === 'Done' && !arr[fromIdx].completedAt ? new Date().toISOString() : arr[fromIdx].completedAt };
+      const task = {
+        ...arr[fromIdx],
+        status: targetStatus,
+        completedAt: targetStatus === 'Done' && !arr[fromIdx].completedAt ? new Date().toISOString() : (leavingDone ? null : arr[fromIdx].completedAt),
+        happiness: leavingDone ? null : arr[fromIdx].happiness,
+      };
       arr.splice(fromIdx, 1);
       if (toIdx >= 0) arr.splice(toIdx, 0, task);
       else arr.push(task);
@@ -5537,7 +5600,7 @@ function App() {
         {view === "board" && boardView === "list" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {STATUS_COLS.map(col => {
-              const colTasks = filteredTasks.filter(t => t.status === col);
+              const colTasks = filteredTasks.filter(t => t.status === col).sort(sortByDueDate);
               if (colTasks.length === 0) return null;
               const colDotColor2 = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
               return (
@@ -5583,7 +5646,7 @@ function App() {
         {view === "board" && boardView === "kanban" && (
           <div className="board-grid">
             {STATUS_COLS.map(col => {
-              const allColTasks = filteredTasks.filter(t => t.status === col);
+              const allColTasks = filteredTasks.filter(t => t.status === col).sort(sortByDueDate);
               const DONE_CAP = 5;
               const recentCutoff = daysAgo(6);
               const recentDone = col === "Done"
@@ -5657,7 +5720,7 @@ function App() {
         {view === "collab" && <CollabBoardView teams={teams} />}
 
         {view === "teams" && <TeamsView teams={teams} setTeams={setTeams} notifications={notifications} setNotifications={setNotifications} authUser={authUser} notifTrigger={notifTrigger} />}
-        {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} rewards={rewards} onEquip={handleEquipReward} onXpChange={setXp} />}
+        {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} rewards={rewards} onEquip={handleEquipReward} onXpChange={setXp} authUid={authUser?.id} />}
 
         {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} />}
       </div>
