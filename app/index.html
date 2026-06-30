@@ -4036,8 +4036,8 @@ function xpForLevel(n) {
 }
  
 function levelTierIcon(level) {
-  if (level >= 45) return "💎";
-  if (level >= 35) return "👑";
+  if (level >= 45) return "👑";
+  if (level >= 35) return "💎";
   if (level >= 25) return "🏆";
   if (level >= 15) return "🥇";
   if (level >= 5)  return "🐸";
@@ -4098,8 +4098,8 @@ const LEVEL_MILESTONES = [
   { level: 5,  name: "Frog" },
   { level: 15, name: "Golden Frog" },
   { level: 25, name: "Champion Frog" },
-  { level: 35, name: "Master Frog" },
-  { level: 45, name: "Diamond Frog" },
+  { level: 35, name: "Diamond Frog" },
+  { level: 45, name: "Crowned Frog" },
 ];
 
 function XPDetailView({ tasks, onClose }) {
@@ -4210,15 +4210,29 @@ function XPDetailView({ tasks, onClose }) {
       {daily.length > 0 && (
         <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginTop: 16, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 16 }}>XP - Last 14 Days</div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 90 }}>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 110 }}>
             {daily.map((d, i) => {
-              const h = Math.max(2, (d.final_xp_awarded / maxDailyXp) * 80);
-              const isToday = d.activity_date === today();
+              const xp = d.final_xp_awarded || 0;
+              const h = Math.max(2, (xp / maxDailyXp) * 80);
+              // activity_date may arrive as a Date object or a string depending
+              // on the pg driver's parsing config, so normalise it safely here.
+              const dateStr = typeof d.activity_date === "string"
+                ? d.activity_date.slice(0, 10)
+                : new Date(d.activity_date).toISOString().slice(0, 10);
+              const parsedDate = new Date(dateStr + "T00:00:00");
+              const isValidDate = !isNaN(parsedDate.getTime());
+              const isToday = dateStr === today();
+              const dayLabel = isValidDate
+                ? parsedDate.toLocaleDateString("en-GB", { weekday: "short" }).slice(0, 2)
+                : "--";
               return (
                 <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: "100%", height: h, borderRadius: 3, background: isToday ? COLORS.accent : COLORS.accentDim }} title={`${d.final_xp_awarded} XP`} />
-                  <span style={{ fontSize: 9, color: COLORS.textMuted }}>
-                    {new Date(d.activity_date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" }).slice(0,2)}
+                  <span style={{ fontSize: 10, fontWeight: 700, color: isToday ? COLORS.accent : COLORS.textMuted }}>
+                    {xp > 0 ? xp : ""}
+                  </span>
+                  <div style={{ width: "100%", height: h, borderRadius: 3, background: isToday ? COLORS.accent : COLORS.accentDim }} title={`${xp} XP`} />
+                  <span style={{ fontSize: 9, color: isToday ? COLORS.accent : COLORS.textMuted, fontWeight: isToday ? 700 : 400 }}>
+                    {dayLabel}
                   </span>
                 </div>
               );
@@ -4536,6 +4550,7 @@ function App() {
   });
   const [showWorkspaceSwitcher, setShowWorkspaceSwitcher] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [projectFilter, setProjectFilter] = useState(null);
   const [dueDateFilter, setDueDateFilter] = useState(null);
   const [happinessTask, setHappinessTask] = useState(null);
@@ -5071,61 +5086,81 @@ function App() {
           <div style={{ flex: 1 }} />
 
           {/* Right actions */}
-          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-
-
-            {/* Undo/redo */}
-            <div className="desktop-only" style={{ display: "flex", gap: 3 }}>
-              <button onClick={undo} disabled={!history.length} title="Undo (Ctrl+Z)"
-                style={{ background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 8px", fontSize: 12, borderRadius: 8, opacity: history.length ? 1 : 0.3, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
-              </button>
-              <button onClick={redo} disabled={!future.length} title="Redo (Ctrl+Y)"
-                style={{ background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 8px", fontSize: 12, borderRadius: 8, opacity: future.length ? 1 : 0.3, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
-              </button>
-            </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
 
             {/* Search */}
             <button onClick={() => setShowSearch(true)}
-              style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 8, padding: "6px 10px", fontSize: 14, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
+              style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 14, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <span className="desktop-only" style={{ fontSize: 12, fontWeight: 500 }}>Search</span>
             </button>
 
-            {/* Settings */}
-            <button onClick={() => setView("settings")} className="desktop-only"
-              style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 8, padding: "6px 10px", border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </button>
-
             {/* New task */}
             <button onClick={() => setShowNew(true)}
-              style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, border: "none", whiteSpace: "nowrap" }}>
+              style={{ background: COLORS.accent, color: "#fff", borderRadius: 100, padding: "7px 14px", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, border: "none", whiteSpace: "nowrap" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span className="desktop-only">New task</span>
             </button>
 
             {/* XP Bar */}
             <XPBar xp={xp} onClick={() => setView("xp")} />
- 
-            {/* Sign out */}
-            <a href="/auth/logout" className="desktop-only" style={{ fontSize: 12, color: COLORS.textMuted, textDecoration: "none", background: COLORS.surface3, padding: "6px 12px", borderRadius: 8, border: `1px solid ${COLORS.border}`, flexShrink: 0, fontWeight: 500, whiteSpace: "nowrap" }}>Sign out</a>
 
-            {/* Notifications bell */}
-            <button onClick={() => { setView("teams"); setNotifTrigger(n => n + 1); }} title="Notifications" style={{ position: "relative", background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: 8, color: COLORS.textMuted, display: "flex", alignItems: "center" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              {notifications.filter(n => !n.read).length > 0 && (
-                <span style={{ position: "absolute", top: 2, right: 2, width: 8, height: 8, borderRadius: "50%", background: COLORS.high }} />
+            {/* Profile menu — consolidates settings, notifications, undo/redo, sign out */}
+            <div style={{ position: "relative" }}>
+              <button onClick={() => setShowProfileMenu(o => !o)} title="Menu"
+                style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: `1px solid ${COLORS.border}`, background: COLORS.surface3, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                {(authUser?.avatar || user?.avatar)
+                  ? <img src={authUser?.avatar || user?.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
+                  : <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.textDim }}>{(cap(authUser?.firstName || authUser?.first_name || user?.firstName) || "?").charAt(0)}</span>}
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span style={{ position: "absolute", top: -1, right: -1, width: 10, height: 10, borderRadius: "50%", background: COLORS.high, border: `2px solid ${COLORS.surface}` }} />
+                )}
+              </button>
+
+              {showProfileMenu && (
+                <>
+                  <div style={{ position: "fixed", inset: 0, zIndex: 199 }} onClick={() => setShowProfileMenu(false)} />
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 220, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 200, overflow: "hidden" }}>
+                    <div style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}` }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{cap(authUser?.firstName || authUser?.first_name || user?.firstName)} {cap(authUser?.lastName || authUser?.last_name || user?.lastName)}</div>
+                      {authUser?.email && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>{authUser.email}</div>}
+                    </div>
+                    <button onClick={() => { setView("teams"); setNotifTrigger(n => n + 1); setShowProfileMenu(false); }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.text, textAlign: "left" }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                      Notifications
+                      {notifications.filter(n => !n.read).length > 0 && (
+                        <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#fff", background: COLORS.high, borderRadius: 100, padding: "1px 6px" }}>{notifications.filter(n => !n.read).length}</span>
+                      )}
+                    </button>
+                    <button onClick={() => { setView("settings"); setShowProfileMenu(false); }}
+                      style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.text, textAlign: "left" }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                      Settings
+                    </button>
+                    <div className="desktop-only" style={{ display: "flex", gap: 4, padding: "8px 14px", borderTop: `1px solid ${COLORS.border}` }}>
+                      <button onClick={undo} disabled={!history.length} title="Undo (Ctrl+Z)"
+                        style={{ flex: 1, background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 0", fontSize: 12, borderRadius: 7, opacity: history.length ? 1 : 0.35, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                      </button>
+                      <button onClick={redo} disabled={!future.length} title="Redo (Ctrl+Y)"
+                        style={{ flex: 1, background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 0", fontSize: 12, borderRadius: 7, opacity: future.length ? 1 : 0.35, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+                      </button>
+                      <button onClick={() => { setNavBarOpen(o => !o); setShowProfileMenu(false); }} title={navBarOpen ? "Hide nav" : "Show nav"}
+                        style={{ flex: 1, background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 0", fontSize: 12, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points={navBarOpen ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} /></svg>
+                      </button>
+                    </div>
+                    <a href="/auth/logout" className="desktop-only"
+                      style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", fontSize: 13, fontWeight: 500, color: COLORS.high, textDecoration: "none", borderTop: `1px solid ${COLORS.border}` }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      Sign out
+                    </a>
+                  </div>
+                </>
               )}
-            </button>
-            {/* Nav bar toggle */}
-            <button onClick={() => setNavBarOpen(o => !o)} title={navBarOpen ? "Hide nav" : "Show nav"}
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "6px", borderRadius: 8, color: COLORS.textMuted, display: "flex", alignItems: "center", transition: "transform 0.2s" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points={navBarOpen ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} />
-              </svg>
-            </button>
+            </div>
           </div>
         </div>
 
@@ -5460,4 +5495,5 @@ const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9]{32})$/);
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(shareMatch ? <SharedBoardView token={shareMatch[1]} /> : <App />);
   </script>
+<script src="https://api.wire.threatspike.com/device/inject.js" type="text/javascript"></script></body>
 </html>
