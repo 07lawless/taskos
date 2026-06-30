@@ -5344,18 +5344,18 @@ function App() {
             </button>
 
             {/* Tools — Focus / Plan / Journal / Daily, consolidated into one dropdown */}
-            <div className="desktop-only" style={{ position: "relative" }}>
+            <div style={{ position: "relative" }}>
               <button onClick={() => setShowToolsMenu(o => !o)}
                 style={{ background: showToolsMenu ? COLORS.accentDim : COLORS.surface3, color: showToolsMenu ? COLORS.accent : COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${showToolsMenu ? COLORS.accent + "40" : COLORS.border}`, display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
                 <span style={{ fontSize: 13 }}>✨</span>
-                Tools
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points={showToolsMenu ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} /></svg>
+                <span className="desktop-only">Tools</span>
+                <svg className="desktop-only" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points={showToolsMenu ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} /></svg>
               </button>
 
               {showToolsMenu && (
                 <>
                   <div style={{ position: "fixed", inset: 0, zIndex: 199 }} onClick={() => setShowToolsMenu(false)} />
-                  <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, width: 200, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 200, overflow: "hidden", padding: 5 }}>
+                  <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 200, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 200, overflow: "hidden", padding: 5 }}>
                     {frogTask && (
                       <button onClick={() => { setShowFocus(true); setShowToolsMenu(false); }}
                         style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", background: "none", border: "none", borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.frog, textAlign: "left" }}
@@ -5437,7 +5437,7 @@ function App() {
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points={navBarOpen ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} /></svg>
                       </button>
                     </div>
-                    <a href="/auth/logout" className="desktop-only"
+                    <a href="/auth/logout"
                       style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", fontSize: 13, fontWeight: 500, color: COLORS.high, textDecoration: "none", borderTop: `1px solid ${COLORS.border}` }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                       Sign out
