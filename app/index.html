@@ -34,6 +34,12 @@
   <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+  <!-- CKEditor 5, used for the Notes rich-text editor (bold, links, image
+       resize, tables). Loaded under the free GPL license — self-hosted-
+       compatible, no account/API key required, shows a small "Powered by
+       CKEditor" credit in the editor UI. -->
+  <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/45.2.1/ckeditor5.css">
+  <script src="https://cdn.ckeditor.com/ckeditor5/45.2.1/ckeditor5.umd.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -3627,68 +3633,6 @@ function stripHtml(html) {
   div.innerHTML = html;
   return div.textContent || div.innerText || "";
 }
-// Walks a contentEditable element's text nodes and wraps bare URLs in real
-// <a> tags — deliberately DOM-based (via TreeWalker) rather than a regex
-// over the raw HTML string, so it can't corrupt existing tags (like a
-// pasted <img>) and correctly skips text that's already inside a link.
-function linkifyTextNodes(container) {
-  if (!container) return;
-  const urlRegex = /(https?:\/\/[^\s<]+)/g;
-  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      let parent = node.parentElement;
-      while (parent && parent !== container) {
-        if (parent.tagName === "A") return NodeFilter.FILTER_REJECT;
-        parent = parent.parentElement;
-      }
-      urlRegex.lastIndex = 0;
-      return urlRegex.test(node.textContent) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-    }
-  });
-  const nodes = [];
-  let n;
-  while ((n = walker.nextNode())) nodes.push(n);
-  nodes.forEach(textNode => {
-    const text = textNode.textContent;
-    urlRegex.lastIndex = 0;
-    const frag = document.createDocumentFragment();
-    let lastIndex = 0, match;
-    while ((match = urlRegex.exec(text))) {
-      if (match.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
-      const a = document.createElement("a");
-      a.href = match[0];
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.style.color = "inherit";
-      a.style.textDecoration = "underline";
-      a.textContent = match[0];
-      frag.appendChild(a);
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-    textNode.parentNode.replaceChild(frag, textNode);
-  });
-}
-// Downscales a pasted image before embedding it as a base64 data URL —
-// screenshots pasted at full resolution would otherwise bloat the note's
-// stored content considerably. Caps at 1000px wide, exports as JPEG.
-function compressImageToDataUrl(file, callback) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, 1000 / img.width);
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      callback(canvas.toDataURL("image/jpeg", 0.82));
-    };
-    img.src = reader.result;
-  };
-  reader.readAsDataURL(file);
-}
 
 // ── Add Bookmark Modal ────────────────────────────────────────────────────────
 function AddBookmarkModal({ onSave, onClose }) {
@@ -4053,79 +3997,58 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
 function NoteModal({ note, onSave, onClose, onDelete }) {
   const [title, setTitle] = useState(note?.title || "");
   const [noteDate, setNoteDate] = useState(note?.note_date || note?.noteDate || today());
-  const editorRef = useRef(null);
-  const contentRef = useRef(note?.content || ""); // uncontrolled — avoids fighting the caret on every keystroke
+  const editorElRef = useRef(null);       // the DOM node CKEditor mounts into
+  const editorInstanceRef = useRef(null); // the live CKEditor instance
+  const contentRef = useRef(note?.content || "");
 
   useEffect(() => {
-    if (editorRef.current) editorRef.current.innerHTML = note?.content || "";
-  }, []); // set once on mount only
+    let cancelled = false;
+    const CK = window.CKEDITOR;
+    if (!CK) { console.error("CKEditor failed to load — check network/ad-blocker."); return; }
+    const {
+      ClassicEditor, Essentials, Paragraph, Heading,
+      Bold, Italic, Underline, Strikethrough,
+      Link, List,
+      Image, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
+      Table, TableToolbar, TableColumnResize,
+    } = CK;
 
-  function syncContent() {
-    if (editorRef.current) contentRef.current = editorRef.current.innerHTML;
-  }
+    ClassicEditor.create(editorElRef.current, {
+      licenseKey: "GPL",
+      plugins: [
+        Essentials, Paragraph, Heading,
+        Bold, Italic, Underline, Strikethrough,
+        Link, List,
+        Image, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
+        Table, TableToolbar, TableColumnResize,
+      ],
+      toolbar: [
+        "undo", "redo", "|",
+        "heading", "|",
+        "bold", "italic", "underline", "strikethrough", "|",
+        "bulletedList", "numberedList", "|",
+        "link", "insertImage", "insertTable",
+      ],
+      image: { toolbar: ["imageStyle:inline", "imageStyle:block", "imageStyle:side", "|", "toggleImageCaption"] },
+      table: { contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"] },
+    }).then(editor => {
+      if (cancelled) { editor.destroy().catch(() => {}); return; }
+      editorInstanceRef.current = editor;
+      if (note?.content) editor.setData(note.content);
+      editor.model.document.on("change:data", () => { contentRef.current = editor.getData(); });
+    }).catch(err => console.error("CKEditor init error:", err));
 
-  function handlePaste(e) {
-    const items = e.clipboardData?.items;
-    if (items) {
-      for (const item of items) {
-        if (item.type.startsWith("image/")) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          if (!file) continue;
-          compressImageToDataUrl(file, dataUrl => {
-            // contenteditable="false" makes this an atomic "island" inside the
-            // editable region — clicks inside it (the remove button, the
-            // native resize handle) work normally instead of being treated
-            // as text editing, and Backspace/Delete removes it as one unit.
-            const wrapperHtml =
-              `<span contenteditable="false" class="note-img-wrap" style="position:relative; display:block; margin:10px 0; width:min(420px, 100%);">` +
-                `<div class="note-img-resize" style="resize:both; overflow:hidden; width:100%; height:260px; min-width:120px; min-height:80px; max-width:100%; border-radius:8px; background:${COLORS.surface3};">` +
-                  `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:contain; display:block;" />` +
-                `</div>` +
-                `<button type="button" class="note-img-remove" title="Remove image" style="position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(0,0,0,0.55); color:#fff; font-size:12px; line-height:22px; text-align:center; cursor:pointer; padding:0;">✕</button>` +
-              `</span><br>`;
-            document.execCommand("insertHTML", false, wrapperHtml);
-            syncContent();
-          });
-          return;
-        }
+    return () => {
+      cancelled = true;
+      if (editorInstanceRef.current) {
+        editorInstanceRef.current.destroy().catch(() => {});
+        editorInstanceRef.current = null;
       }
-    }
-    const text = e.clipboardData?.getData("text/plain");
-    if (text) {
-      e.preventDefault();
-      document.execCommand("insertText", false, text);
-      setTimeout(() => { linkifyTextNodes(editorRef.current); syncContent(); }, 0);
-    }
-  }
-
-  function handleEditorClick(e) {
-    // Remove an image via its ✕ button
-    if (e.target.classList?.contains("note-img-remove")) {
-      e.preventDefault();
-      const wrap = e.target.closest(".note-img-wrap");
-      if (wrap) wrap.remove();
-      syncContent();
-      return;
-    }
-    // Links inside a contentEditable region don't navigate on a plain click
-    // by design — browsers need that click free to just place your cursor
-    // for editing. Cmd/Ctrl+Click opens it, same as most code/note editors.
-    const link = e.target.closest("a");
-    if (link && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      window.open(link.href, "_blank", "noopener,noreferrer");
-    }
-  }
-
-  function handleBlur() {
-    linkifyTextNodes(editorRef.current);
-    syncContent();
-  }
+    };
+  }, []); // mount once — CKEditor manages its own DOM/state after that
 
   function handleSave() {
-    syncContent();
-    const content = contentRef.current;
+    const content = editorInstanceRef.current ? editorInstanceRef.current.getData() : contentRef.current;
     if (!title.trim() && !stripHtml(content).trim()) { onClose(); return; }
     onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, noteDate, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
   }
@@ -4159,23 +4082,18 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
         <div style={{ maxWidth: 1200, margin: "0 auto", paddingLeft: "max(28px, env(safe-area-inset-left))", paddingRight: "max(28px, env(safe-area-inset-right))" }}>
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title…" autoFocus
             style={{ fontSize: 26, fontWeight: 800, border: "none", background: "none", padding: "4px 0", marginBottom: 16, boxShadow: "none", width: "100%", fontFamily: "'DM Sans', system-ui, sans-serif" }} />
-          <div
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning
-            onInput={syncContent}
-            onPaste={handlePaste}
-            onBlur={handleBlur}
-            onClick={handleEditorClick}
-            data-placeholder="Write your notes here… paste images or links directly."
-            style={{ minHeight: "60vh", outline: "none", padding: "4px 0", fontSize: 15, lineHeight: 1.8, color: COLORS.text, wordBreak: "break-word" }}
-          />
-          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 1.6 }}>
-            💡 Cmd/Ctrl+Click a link to open it · drag an image's bottom-right corner to resize · tap ✕ on an image to remove it
-          </div>
+          <div ref={editorElRef} />
         </div>
       </div>
-      <style>{`[contenteditable]:empty:before { content: attr(data-placeholder); color: ${COLORS.textMuted}; pointer-events: none; }`}</style>
+      {/* Light-touch styling so CKEditor's toolbar/content area sit closer to
+          the app's look — not a full re-theme, and CKEditor's own light skin
+          will look mismatched in dark mode for now. Worth a proper follow-up
+          if dark-mode note editing turns out to matter in practice. */}
+      <style>{`
+        .ck.ck-toolbar { border-color: ${COLORS.border} !important; border-radius: 10px 10px 0 0 !important; background: ${COLORS.surface2} !important; }
+        .ck.ck-editor__editable { border-color: ${COLORS.border} !important; border-radius: 0 0 10px 10px !important; min-height: 55vh; font-size: 15px; line-height: 1.8; padding: 16px !important; }
+        .ck.ck-editor__editable:focus { box-shadow: none !important; }
+      `}</style>
     </div>
   );
 }
