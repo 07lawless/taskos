@@ -4102,19 +4102,24 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: COLORS.bg, zIndex: 3000, display: "flex", flexDirection: "column" }}>
-      {/* Top bar — safe-area aware so it clears the notch/Dynamic Island on iOS */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", padding: "max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left))", borderBottom: `1px solid ${COLORS.border}`, flexShrink: 0, background: COLORS.surface }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1, flexShrink: 0 }}>tl</div>
-          <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.border}`, flexShrink: 0 }}>← Done</button>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
-            style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }} />
-          {note && onDelete && (
-            <button onClick={() => { onDelete(note.id); onClose(); }}
-              style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 12px", fontSize: 13, fontWeight: 600, border: "none" }}>✕</button>
-          )}
+      {/* Top bar — safe-area aware so it clears the notch/Dynamic Island on iOS.
+          Outer bar stays full-width for the background/border; inner content
+          is constrained to the same 1144px column as the writing area below,
+          so the controls line up with it instead of stretching edge to edge. */}
+      <div style={{ borderBottom: `1px solid ${COLORS.border}`, flexShrink: 0, background: COLORS.surface, paddingTop: "max(16px, env(safe-area-inset-top))" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", paddingLeft: "max(28px, env(safe-area-inset-left))", paddingRight: "max(28px, env(safe-area-inset-right))", paddingBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1, flexShrink: 0 }}>tl</div>
+            <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.border}`, flexShrink: 0 }}>← Done</button>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
+              style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }} />
+            {note && onDelete && (
+              <button onClick={() => { onDelete(note.id); onClose(); }}
+                style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 12px", fontSize: 13, fontWeight: 600, border: "none" }}>✕</button>
+            )}
+          </div>
         </div>
       </div>
 
