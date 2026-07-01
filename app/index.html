@@ -4073,7 +4073,18 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
           const file = item.getAsFile();
           if (!file) continue;
           compressImageToDataUrl(file, dataUrl => {
-            document.execCommand("insertHTML", false, `<img src="${dataUrl}" style="max-width:100%;border-radius:8px;margin:8px 0;display:block;" />`);
+            // contenteditable="false" makes this an atomic "island" inside the
+            // editable region — clicks inside it (the remove button, the
+            // native resize handle) work normally instead of being treated
+            // as text editing, and Backspace/Delete removes it as one unit.
+            const wrapperHtml =
+              `<span contenteditable="false" class="note-img-wrap" style="position:relative; display:block; margin:10px 0; width:min(420px, 100%);">` +
+                `<div class="note-img-resize" style="resize:both; overflow:hidden; width:100%; height:260px; min-width:120px; min-height:80px; max-width:100%; border-radius:8px; background:${COLORS.surface3};">` +
+                  `<img src="${dataUrl}" style="width:100%; height:100%; object-fit:contain; display:block;" />` +
+                `</div>` +
+                `<button type="button" class="note-img-remove" title="Remove image" style="position:absolute; top:6px; right:6px; width:22px; height:22px; border-radius:50%; border:none; background:rgba(0,0,0,0.55); color:#fff; font-size:12px; line-height:22px; text-align:center; cursor:pointer; padding:0;">✕</button>` +
+              `</span><br>`;
+            document.execCommand("insertHTML", false, wrapperHtml);
             syncContent();
           });
           return;
@@ -4085,6 +4096,25 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
       e.preventDefault();
       document.execCommand("insertText", false, text);
       setTimeout(() => { linkifyTextNodes(editorRef.current); syncContent(); }, 0);
+    }
+  }
+
+  function handleEditorClick(e) {
+    // Remove an image via its ✕ button
+    if (e.target.classList?.contains("note-img-remove")) {
+      e.preventDefault();
+      const wrap = e.target.closest(".note-img-wrap");
+      if (wrap) wrap.remove();
+      syncContent();
+      return;
+    }
+    // Links inside a contentEditable region don't navigate on a plain click
+    // by design — browsers need that click free to just place your cursor
+    // for editing. Cmd/Ctrl+Click opens it, same as most code/note editors.
+    const link = e.target.closest("a");
+    if (link && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      window.open(link.href, "_blank", "noopener,noreferrer");
     }
   }
 
@@ -4136,9 +4166,13 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
             onInput={syncContent}
             onPaste={handlePaste}
             onBlur={handleBlur}
+            onClick={handleEditorClick}
             data-placeholder="Write your notes here… paste images or links directly."
             style={{ minHeight: "60vh", outline: "none", padding: "4px 0", fontSize: 15, lineHeight: 1.8, color: COLORS.text, wordBreak: "break-word" }}
           />
+          <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 14, lineHeight: 1.6 }}>
+            💡 Cmd/Ctrl+Click a link to open it · drag an image's bottom-right corner to resize · tap ✕ on an image to remove it
+          </div>
         </div>
       </div>
       <style>{`[contenteditable]:empty:before { content: attr(data-placeholder); color: ${COLORS.textMuted}; pointer-events: none; }`}</style>
