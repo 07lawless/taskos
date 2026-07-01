@@ -4112,11 +4112,15 @@ function XPBar({ xp, onClick }) {
   const pct = xpNeeded ? Math.min(100, Math.round((currentLevelXp / xpNeeded) * 100)) : 0;
  
   return (
-    <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 100, padding: "5px 14px 5px 6px", cursor: onClick ? "pointer" : "default" }}>
+    <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 100, padding: "5px 5px", cursor: onClick ? "pointer" : "default" }}>
       <div style={{ width: 28, height: 28, borderRadius: "50%", background: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, flexShrink: 0, boxShadow: `0 0 0 2px ${COLORS.surface}` }}>
         {levelTierIcon(level)}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 110 }}>
+      {/* Level text, streak badge, and progress bar are desktop-only — on
+          mobile they were forcing a fixed 110px-wide block that pushed
+          other header items (like the avatar) off the edge of narrow
+          viewports. The icon alone still opens the full XP page. */}
+      <div className="desktop-only" style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 110, paddingRight: 9 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.text }}>
             Lv {level}{prestige > 0 ? ` · P${prestige}` : ""}
@@ -5787,5 +5791,4 @@ const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9]{32})$/);
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(shareMatch ? <SharedBoardView token={shareMatch[1]} /> : <App />);
   </script>
-<script src="https://api.wire.threatspike.com/device/inject.js" type="text/javascript"></script></body>
 </html>
