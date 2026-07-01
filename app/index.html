@@ -4014,8 +4014,8 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
     const {
       ClassicEditor, Essentials, Paragraph, Heading,
       Bold, Italic, Underline, Strikethrough,
-      Link, List,
-      Image, ImageUpload, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
+      Link, LinkUI, List,
+      Image, ImageUpload, ImageInsertUI, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
       Table, TableToolbar, TableColumnResize, TableProperties, TableCellProperties,
     } = CK;
 
@@ -4025,8 +4025,8 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
       plugins: [
         Essentials, Paragraph, Heading,
         Bold, Italic, Underline, Strikethrough,
-        Link, List,
-        Image, ImageUpload, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
+        Link, LinkUI, List,
+        Image, ImageUpload, ImageInsertUI, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
         Table, TableToolbar, TableColumnResize, TableProperties, TableCellProperties,
       ],
       toolbar: [
@@ -4036,8 +4036,14 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
         "bulletedList", "numberedList", "|",
         "link", "insertImage", "insertTable",
       ],
-      image: { toolbar: ["imageStyle:inline", "imageStyle:block", "imageStyle:side", "|", "toggleImageCaption"] },
-      table: { contentToolbar: ["tableColumn", "tableRow", "mergeTableCells", "tableProperties", "tableCellProperties"] },
+      image: {
+        insert: { integrations: ["upload"] },
+        toolbar: ["imageStyle:inline", "imageStyle:block", "imageStyle:side", "|", "toggleImageCaption"],
+      },
+      table: {
+        contentToolbar: ["tableColumn", "tableRow", "mergeTableCells", "tableProperties", "tableCellProperties"],
+        tableToolbar: ["tableProperties", "tableCellProperties"],
+      },
     }).then(editor => {
       if (cancelled) { editor.destroy().catch(() => {}); return; }
       editorInstanceRef.current = editor;
