@@ -3962,7 +3962,11 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
         {preview || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>No content yet</span>}
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
-        <span style={{ fontSize: 11, color: COLORS.textMuted }}>{bmFmtDate(note.updated_at || note.updatedAt || note.created_at || note.createdAt)}</span>
+        <span style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600 }}>
+          {(note.note_date || note.noteDate)
+            ? new Date((note.note_date || note.noteDate) + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : bmFmtDate(note.updated_at || note.updatedAt || note.created_at || note.createdAt)}
+        </span>
         <div style={{ marginLeft: "auto" }}>
           <button onClick={e => { e.stopPropagation(); onDelete(note.id); }}
             style={{ width: 22, height: 22, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.surface2, color: COLORS.textMuted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>✕</button>
@@ -3973,30 +3977,38 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
 }
 
 // ── NoteModal ──────────────────────────────────────────────────────────────────
-function NoteModal({ note, onSave, onClose }) {
+function NoteModal({ note, onSave, onClose, onDelete }) {
   const [title, setTitle] = useState(note?.title || "");
   const [content, setContent] = useState(note?.content || "");
+  const [noteDate, setNoteDate] = useState(note?.note_date || note?.noteDate || today());
 
   function handleSave() {
     if (!title.trim() && !content.trim()) { onClose(); return; }
-    onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
+    onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, noteDate, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
   }
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && handleSave()}>
-      <div style={{ background: COLORS.surface, borderRadius: 18, width: "100%", maxWidth: 560, maxHeight: "90vh", overflow: "auto", padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", border: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700 }}>{note ? "Edit Note" : "New Note"}</h2>
-          <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "6px 12px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>✕ Close</button>
+    <div style={{ position: "fixed", inset: 0, background: COLORS.bg, zIndex: 3000, display: "flex", flexDirection: "column" }}>
+      {/* Top bar — safe-area aware so it clears the notch/Dynamic Island on iOS */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", padding: "max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left))", borderBottom: `1px solid ${COLORS.border}`, flexShrink: 0, background: COLORS.surface }}>
+        <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.border}`, flexShrink: 0 }}>← Done</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
+            style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }} />
+          {note && onDelete && (
+            <button onClick={() => { onDelete(note.id); onClose(); }}
+              style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 12px", fontSize: 13, fontWeight: 600, border: "none" }}>✕</button>
+          )}
         </div>
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title…" autoFocus
-          style={{ fontSize: 16, fontWeight: 700, border: "none", background: "none", padding: "4px 0", marginBottom: 12, boxShadow: "none" }} />
-        <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your notes here…"
-          style={{ minHeight: 320, border: "none", background: "none", padding: "4px 0", fontSize: 14, lineHeight: 1.7, boxShadow: "none", resize: "vertical" }} />
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
-          <button onClick={handleSave} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600 }}>
-            {note ? "Save Changes" : "Create Note"}
-          </button>
+      </div>
+
+      {/* Writing area */}
+      <div style={{ flex: 1, overflow: "auto", padding: "24px max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left))" }}>
+        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title…" autoFocus
+            style={{ fontSize: 26, fontWeight: 800, border: "none", background: "none", padding: "4px 0", marginBottom: 16, boxShadow: "none", width: "100%", fontFamily: "'DM Sans', system-ui, sans-serif" }} />
+          <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your notes here…"
+            style={{ minHeight: "60vh", border: "none", background: "none", padding: "4px 0", fontSize: 15, lineHeight: 1.8, boxShadow: "none", resize: "none", width: "100%" }} />
         </div>
       </div>
     </div>
@@ -5943,7 +5955,7 @@ function App() {
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
       {editingBookmark && <EditBookmarkModal bm={editingBookmark} onSave={saveEditedBookmark} onClose={() => setEditingBookmark(null)} />}
-      {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} />}
+      {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} onDelete={deleteNote} />}
       {showWorkspaceSwitcher && <WorkspaceSwitcher workspaces={workspaces} activeWorkspace={activeWorkspace} onSwitch={switchWorkspace} onCreate={createWorkspace} onDelete={deleteWorkspace} onClose={() => setShowWorkspaceSwitcher(false)} />}
       {touchMoveTask && <TouchMoveModal task={touchMoveTask} onMove={setStatus} onClose={() => setTouchMoveTask(null)} />}
       {showJournal && <AIJournalModal user={user} tasks={tasks} workHours={workHours} onSaveWorkHours={saveWorkHours} onClose={() => setShowJournal(false)} />}
