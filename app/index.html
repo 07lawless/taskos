@@ -4111,6 +4111,16 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
         .ck.ck-toolbar { border-color: ${COLORS.border} !important; border-radius: 10px 10px 0 0 !important; background: ${COLORS.surface2} !important; }
         .ck.ck-editor__editable { border-color: ${COLORS.border} !important; border-radius: 0 0 10px 10px !important; min-height: 55vh; font-size: 15px; line-height: 1.8; padding: 16px !important; }
         .ck.ck-editor__editable:focus { box-shadow: none !important; }
+        /* CKEditor's balloon popups (table properties, link editor, etc.)
+           render by appending to document.body with their own default
+           z-index scale, which sits far below this modal's zIndex:3000 —
+           they were opening but invisibly, hidden behind the modal.
+           This is CKEditor's own documented fix pattern for exactly this
+           class of "editor inside a high-z-index modal" integration issue. */
+        :root {
+          --ck-z-default: 3001;
+          --ck-z-panel: calc(var(--ck-z-default) + 999);
+        }
       `}</style>
     </div>
   );
