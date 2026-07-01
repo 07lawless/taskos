@@ -5427,7 +5427,15 @@ function App() {
     });
     setEditingNote(null); setShowNewNote(false);
     if (authUser) {
-      try { await api.saveNote(noteWithWs); } catch(e) { console.error(e); }
+      try {
+        const result = await api.saveNote(noteWithWs);
+        if (!result) {
+          window.alert("This note couldn't be saved to the server — it may contain an image that's too large, or your connection dropped. It's showing locally for now, but will be lost if you refresh or switch devices before it saves successfully.");
+        }
+      } catch(e) {
+        console.error(e);
+        window.alert("This note couldn't be saved to the server. It's showing locally for now, but will be lost if you refresh or switch devices.");
+      }
     }
   }
   function deleteNote(id) {
