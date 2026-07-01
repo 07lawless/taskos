@@ -3617,6 +3617,79 @@ function bmFmtDate(d) {
   return date.toLocaleDateString('en-GB', { day:'numeric', month:'short' });
 }
 
+// ── Notes rich-content helpers ──────────────────────────────────────────────────
+// Notes store rich HTML (images, links) in their content field. This strips
+// tags down to plain text for card previews, so a snippet doesn't show raw
+// markup or a broken-looking wall of an embedded image's data URL.
+function stripHtml(html) {
+  if (!html) return "";
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
+}
+// Walks a contentEditable element's text nodes and wraps bare URLs in real
+// <a> tags — deliberately DOM-based (via TreeWalker) rather than a regex
+// over the raw HTML string, so it can't corrupt existing tags (like a
+// pasted <img>) and correctly skips text that's already inside a link.
+function linkifyTextNodes(container) {
+  if (!container) return;
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      let parent = node.parentElement;
+      while (parent && parent !== container) {
+        if (parent.tagName === "A") return NodeFilter.FILTER_REJECT;
+        parent = parent.parentElement;
+      }
+      urlRegex.lastIndex = 0;
+      return urlRegex.test(node.textContent) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+    }
+  });
+  const nodes = [];
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(textNode => {
+    const text = textNode.textContent;
+    urlRegex.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIndex = 0, match;
+    while ((match = urlRegex.exec(text))) {
+      if (match.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      const a = document.createElement("a");
+      a.href = match[0];
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.style.color = "inherit";
+      a.style.textDecoration = "underline";
+      a.textContent = match[0];
+      frag.appendChild(a);
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    textNode.parentNode.replaceChild(frag, textNode);
+  });
+}
+// Downscales a pasted image before embedding it as a base64 data URL —
+// screenshots pasted at full resolution would otherwise bloat the note's
+// stored content considerably. Caps at 1000px wide, exports as JPEG.
+function compressImageToDataUrl(file, callback) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1000 / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      callback(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 // ── Add Bookmark Modal ────────────────────────────────────────────────────────
 function AddBookmarkModal({ onSave, onClose }) {
   const [url, setUrl] = useState('');
@@ -3943,7 +4016,7 @@ function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead,
 
 // ── NoteCard ───────────────────────────────────────────────────────────────────
 function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
-  const preview = (note.content || "").trim();
+  const preview = stripHtml(note.content).trim();
   return (
     <div onClick={() => onEdit(note)}
       style={{ background: COLORS.surface, border: `1px solid ${note.pinned ? COLORS.accent + "50" : COLORS.border}`, borderRadius: 14, padding: "16px 16px 12px", cursor: "pointer", transition: "box-shadow 0.15s, transform 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
@@ -3979,11 +4052,51 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
 // ── NoteModal ──────────────────────────────────────────────────────────────────
 function NoteModal({ note, onSave, onClose, onDelete }) {
   const [title, setTitle] = useState(note?.title || "");
-  const [content, setContent] = useState(note?.content || "");
   const [noteDate, setNoteDate] = useState(note?.note_date || note?.noteDate || today());
+  const editorRef = useRef(null);
+  const contentRef = useRef(note?.content || ""); // uncontrolled — avoids fighting the caret on every keystroke
+
+  useEffect(() => {
+    if (editorRef.current) editorRef.current.innerHTML = note?.content || "";
+  }, []); // set once on mount only
+
+  function syncContent() {
+    if (editorRef.current) contentRef.current = editorRef.current.innerHTML;
+  }
+
+  function handlePaste(e) {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (!file) continue;
+          compressImageToDataUrl(file, dataUrl => {
+            document.execCommand("insertHTML", false, `<img src="${dataUrl}" style="max-width:100%;border-radius:8px;margin:8px 0;display:block;" />`);
+            syncContent();
+          });
+          return;
+        }
+      }
+    }
+    const text = e.clipboardData?.getData("text/plain");
+    if (text) {
+      e.preventDefault();
+      document.execCommand("insertText", false, text);
+      setTimeout(() => { linkifyTextNodes(editorRef.current); syncContent(); }, 0);
+    }
+  }
+
+  function handleBlur() {
+    linkifyTextNodes(editorRef.current);
+    syncContent();
+  }
 
   function handleSave() {
-    if (!title.trim() && !content.trim()) { onClose(); return; }
+    syncContent();
+    const content = contentRef.current;
+    if (!title.trim() && !stripHtml(content).trim()) { onClose(); return; }
     onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, noteDate, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
   }
 
@@ -3991,7 +4104,10 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
     <div style={{ position: "fixed", inset: 0, background: COLORS.bg, zIndex: 3000, display: "flex", flexDirection: "column" }}>
       {/* Top bar — safe-area aware so it clears the notch/Dynamic Island on iOS */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap", padding: "max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 14px max(20px, env(safe-area-inset-left))", borderBottom: `1px solid ${COLORS.border}`, flexShrink: 0, background: COLORS.surface }}>
-        <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.border}`, flexShrink: 0 }}>← Done</button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1, flexShrink: 0 }}>tl</div>
+          <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.border}`, flexShrink: 0 }}>← Done</button>
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
             style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }} />
@@ -4002,15 +4118,25 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
         </div>
       </div>
 
-      {/* Writing area */}
-      <div style={{ flex: 1, overflow: "auto", padding: "24px max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left))" }}>
-        <div style={{ maxWidth: 720, margin: "0 auto" }}>
+      {/* Writing area — matches the app's standard page-pad width (1200px
+          max-width minus 28px padding each side = 1144px effective content) */}
+      <div style={{ flex: 1, overflow: "auto", padding: "24px 0" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", paddingLeft: "max(28px, env(safe-area-inset-left))", paddingRight: "max(28px, env(safe-area-inset-right))" }}>
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title…" autoFocus
             style={{ fontSize: 26, fontWeight: 800, border: "none", background: "none", padding: "4px 0", marginBottom: 16, boxShadow: "none", width: "100%", fontFamily: "'DM Sans', system-ui, sans-serif" }} />
-          <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your notes here…"
-            style={{ minHeight: "60vh", border: "none", background: "none", padding: "4px 0", fontSize: 15, lineHeight: 1.8, boxShadow: "none", resize: "none", width: "100%" }} />
+          <div
+            ref={editorRef}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={syncContent}
+            onPaste={handlePaste}
+            onBlur={handleBlur}
+            data-placeholder="Write your notes here… paste images or links directly."
+            style={{ minHeight: "60vh", outline: "none", padding: "4px 0", fontSize: 15, lineHeight: 1.8, color: COLORS.text, wordBreak: "break-word" }}
+          />
         </div>
       </div>
+      <style>{`[contenteditable]:empty:before { content: attr(data-placeholder); color: ${COLORS.textMuted}; pointer-events: none; }`}</style>
     </div>
   );
 }
