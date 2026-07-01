@@ -4018,7 +4018,8 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
       Table, TableToolbar, TableColumnResize,
     } = CK;
 
-    ClassicEditor.create(editorElRef.current, {
+    ClassicEditor.create({
+      attachTo: editorElRef.current,
       licenseKey: "GPL",
       plugins: [
         Essentials, Paragraph, Heading,
