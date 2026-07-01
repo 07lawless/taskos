@@ -4015,8 +4015,8 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
       ClassicEditor, Essentials, Paragraph, Heading,
       Bold, Italic, Underline, Strikethrough,
       Link, List,
-      Image, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
-      Table, TableToolbar, TableColumnResize,
+      Image, ImageUpload, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
+      Table, TableToolbar, TableColumnResize, TableProperties, TableCellProperties,
     } = CK;
 
     ClassicEditor.create({
@@ -4026,8 +4026,8 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
         Essentials, Paragraph, Heading,
         Bold, Italic, Underline, Strikethrough,
         Link, List,
-        Image, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
-        Table, TableToolbar, TableColumnResize,
+        Image, ImageUpload, ImageToolbar, ImageResize, ImageStyle, ImageCaption, Base64UploadAdapter,
+        Table, TableToolbar, TableColumnResize, TableProperties, TableCellProperties,
       ],
       toolbar: [
         "undo", "redo", "|",
@@ -4037,7 +4037,7 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
         "link", "insertImage", "insertTable",
       ],
       image: { toolbar: ["imageStyle:inline", "imageStyle:block", "imageStyle:side", "|", "toggleImageCaption"] },
-      table: { contentToolbar: ["tableColumn", "tableRow", "mergeTableCells"] },
+      table: { contentToolbar: ["tableColumn", "tableRow", "mergeTableCells", "tableProperties", "tableCellProperties"] },
     }).then(editor => {
       if (cancelled) { editor.destroy().catch(() => {}); return; }
       editorInstanceRef.current = editor;
