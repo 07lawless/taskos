@@ -3986,7 +3986,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
             : bmFmtDate(note.updated_at || note.updatedAt || note.created_at || note.createdAt)}
         </span>
         <div style={{ marginLeft: "auto" }}>
-          <button onClick={e => { e.stopPropagation(); onDelete(note.id); }}
+          <button onClick={e => { e.stopPropagation(); if (window.confirm(`Delete "${note.title || "this note"}"? This can't be undone.`)) onDelete(note.id); }}
             style={{ width: 22, height: 22, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.surface2, color: COLORS.textMuted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>✕</button>
         </div>
       </div>
@@ -4082,7 +4082,7 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
             <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
               style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }} />
             {note && onDelete && (
-              <button onClick={() => { onDelete(note.id); onClose(); }}
+              <button onClick={() => { if (window.confirm(`Delete "${title || "this note"}"? This can't be undone.`)) { onDelete(note.id); onClose(); } }}
                 style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 12px", fontSize: 13, fontWeight: 600, border: "none" }}>✕</button>
             )}
           </div>
@@ -4715,7 +4715,7 @@ const api = {
   async deleteBookmark(id) { await fetch('/api/bookmarks/' + id, { method: 'DELETE', credentials: 'include' }); },
   async getNotes(wsId) { const r = await fetch('/api/notes?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveNote(n) { const r = await fetch('/api/notes', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) }); return r.ok ? r.json() : null; },
-  async deleteNote(id) { await fetch('/api/notes/' + id, { method: 'DELETE', credentials: 'include' }); },
+  async deleteNote(id) { const r = await fetch('/api/notes/' + id, { method: 'DELETE', credentials: 'include' }); return r.ok; },
   async fetchMeta(url) { const r = await fetch('/api/fetch-meta?url=' + encodeURIComponent(url), { credentials: 'include' }); if (!r.ok) return {}; return r.json(); },
   async getXp() { const r = await fetch('/api/xp', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async getXpHistory() { const r = await fetch('/api/xp/history', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
@@ -5419,8 +5419,19 @@ function App() {
     }
   }
   function deleteNote(id) {
+    const previousNotes = notes; // snapshot for rollback if the server delete fails
     setNotes(prev => prev.filter(n => n.id !== id));
-    if (authUser) api.deleteNote(id).catch(console.error);
+    if (authUser) {
+      api.deleteNote(id).then(ok => {
+        if (!ok) {
+          setNotes(previousNotes);
+          window.alert("Couldn't delete that note — please check your connection and try again.");
+        }
+      }).catch(() => {
+        setNotes(previousNotes);
+        window.alert("Couldn't delete that note — please check your connection and try again.");
+      });
+    }
   }
   function toggleNotePin(id) {
     setNotes(prev => {
