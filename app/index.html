@@ -3941,6 +3941,130 @@ function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead,
   );
 }
 
+// ── NoteCard ───────────────────────────────────────────────────────────────────
+function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
+  const preview = (note.content || "").trim();
+  return (
+    <div onClick={() => onEdit(note)}
+      style={{ background: COLORS.surface, border: `1px solid ${note.pinned ? COLORS.accent + "50" : COLORS.border}`, borderRadius: 14, padding: "16px 16px 12px", cursor: "pointer", transition: "box-shadow 0.15s, transform 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
+      onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.08)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; e.currentTarget.style.transform = "none"; }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+        <div style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 700, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {note.title || "Untitled note"}
+        </div>
+        <button onClick={e => { e.stopPropagation(); onTogglePin(note.id); }} title={note.pinned ? "Unpin" : "Pin"}
+          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 15, flexShrink: 0, color: note.pinned ? COLORS.accent : COLORS.textMuted, padding: 2 }}>
+          {note.pinned ? "📌" : "📍"}
+        </button>
+      </div>
+      <div style={{ fontSize: 12, color: COLORS.textDim, lineHeight: 1.6, minHeight: 38, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        {preview || <span style={{ color: COLORS.textMuted, fontStyle: "italic" }}>No content yet</span>}
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
+        <span style={{ fontSize: 11, color: COLORS.textMuted }}>{bmFmtDate(note.updated_at || note.updatedAt || note.created_at || note.createdAt)}</span>
+        <div style={{ marginLeft: "auto" }}>
+          <button onClick={e => { e.stopPropagation(); onDelete(note.id); }}
+            style={{ width: 22, height: 22, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.surface2, color: COLORS.textMuted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>✕</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── NoteModal ──────────────────────────────────────────────────────────────────
+function NoteModal({ note, onSave, onClose }) {
+  const [title, setTitle] = useState(note?.title || "");
+  const [content, setContent] = useState(note?.content || "");
+
+  function handleSave() {
+    if (!title.trim() && !content.trim()) { onClose(); return; }
+    onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && handleSave()}>
+      <div style={{ background: COLORS.surface, borderRadius: 18, width: "100%", maxWidth: 560, maxHeight: "90vh", overflow: "auto", padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", border: `1px solid ${COLORS.border}`, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700 }}>{note ? "Edit Note" : "New Note"}</h2>
+          <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "6px 12px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>✕ Close</button>
+        </div>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Note title…" autoFocus
+          style={{ fontSize: 16, fontWeight: 700, border: "none", background: "none", padding: "4px 0", marginBottom: 12, boxShadow: "none" }} />
+        <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Write your notes here…"
+          style={{ minHeight: 320, border: "none", background: "none", padding: "4px 0", fontSize: 14, lineHeight: 1.7, boxShadow: "none", resize: "vertical" }} />
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
+          <button onClick={handleSave} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "10px 20px", fontSize: 13, fontWeight: 600 }}>
+            {note ? "Save Changes" : "Create Note"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── NotesView ──────────────────────────────────────────────────────────────────
+function NotesView({ notes, onNew, setEditingNote, onDelete, onTogglePin }) {
+  const [query, setQuery] = useState("");
+
+  const filtered = (() => {
+    let res = [...notes];
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      res = res.filter(n => (n.title || "").toLowerCase().includes(q) || (n.content || "").toLowerCase().includes(q));
+    }
+    return res.sort((a, b) => {
+      if (Boolean(a.pinned) !== Boolean(b.pinned)) return b.pinned ? 1 : -1;
+      const aDate = new Date(a.updated_at || a.updatedAt || a.created_at || a.createdAt || 0).getTime();
+      const bDate = new Date(b.updated_at || b.updatedAt || b.created_at || b.createdAt || 0).getTime();
+      return bDate - aDate;
+    });
+  })();
+
+  return (
+    <div style={{ paddingBottom: 40 }}>
+      <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
+          {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+        </div>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <h1 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>
+            Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>notes</em>
+          </h1>
+          <button onClick={onNew} style={{ background: COLORS.accent, color: "#fff", borderRadius: 9, padding: "8px 16px", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New note
+          </button>
+        </div>
+      </div>
+
+      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: COLORS.textMuted, flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search notes…"
+          style={{ flex: 1, border: "none", background: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: COLORS.text, boxShadow: "none", padding: 0 }} />
+      </div>
+
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "50px 20px", color: COLORS.textMuted }}>
+          <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.3 }}>🗒️</div>
+          <div style={{ fontWeight: 600, fontSize: 15, color: COLORS.textDim, marginBottom: 6 }}>
+            {notes.length === 0 ? "No notes yet" : "No notes match your search"}
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.6 }}>
+            {notes.length === 0 ? "Jot down meeting notes, ideas, or anything worth keeping." : "Try a different search term."}
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 14 }}>
+          {filtered.map(note => (
+            <NoteCard key={note.id} note={note} onEdit={setEditingNote} onDelete={onDelete} onTogglePin={onTogglePin} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── TouchMoveModal ────────────────────────────────────────────────────────────
 function TouchMoveModal({ task, onMove, onClose }) {
   const STATUS_COLS = ["To Do", "In Progress", "Done"];
@@ -4466,6 +4590,9 @@ const api = {
   async getBookmarks(wsId) { const r = await fetch('/api/bookmarks?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveBookmark(b) { const r = await fetch('/api/bookmarks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.ok ? r.json() : null; },
   async deleteBookmark(id) { await fetch('/api/bookmarks/' + id, { method: 'DELETE', credentials: 'include' }); },
+  async getNotes(wsId) { const r = await fetch('/api/notes?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async saveNote(n) { const r = await fetch('/api/notes', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) }); return r.ok ? r.json() : null; },
+  async deleteNote(id) { await fetch('/api/notes/' + id, { method: 'DELETE', credentials: 'include' }); },
   async fetchMeta(url) { const r = await fetch('/api/fetch-meta?url=' + encodeURIComponent(url), { credentials: 'include' }); if (!r.ok) return {}; return r.json(); },
   async getXp() { const r = await fetch('/api/xp', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async getXpHistory() { const r = await fetch('/api/xp/history', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
@@ -4704,6 +4831,9 @@ function App() {
   const [showArchivedDone, setShowArchivedDone] = useState(false);
   const [bookmarks, setBookmarks] = useState([]);
   const [editingBookmark, setEditingBookmark] = useState(null);
+  const [notes, setNotes] = useState([]);
+  const [editingNote, setEditingNote] = useState(null);
+  const [showNewNote, setShowNewNote] = useState(false);
   const [workspaces, setWorkspaces] = useState([]);
   const [activeWorkspace, setActiveWorkspace] = useState(() => {
     try { return JSON.parse(localStorage.getItem('vtm_workspace') || 'null'); } catch { return null; }
@@ -4778,8 +4908,8 @@ function App() {
       }
       const wsId = activeWs?.id;
 
-          const [tasksData, checkinsData, projectsData, settingsData, bookmarksData, xpData, rewardsData] = await Promise.all([
-        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId), api.getXp(), api.getRewards()
+          const [tasksData, checkinsData, projectsData, settingsData, bookmarksData, xpData, rewardsData, notesData] = await Promise.all([
+        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId), api.getXp(), api.getRewards(), api.getNotes(wsId)
       ]);
       if (xpData) setXp(xpData);
       if (rewardsData) {
@@ -4789,6 +4919,7 @@ function App() {
           applyAccentOverride(entry?.preview);
         }
       }
+      if (notesData) setNotes(notesData);
 
       if (tasksData && tasksData.length > 0) {
         setTasks(tasksData
@@ -5061,9 +5192,10 @@ function App() {
     setTasks([]);
     setProjects([]);
     setBookmarks([]);
+    setNotes([]);
     try {
-      const [tasksData, projectsData, bookmarksData] = await Promise.all([
-        api.getTasks(ws.id), api.getProjects(ws.id), api.getBookmarks(ws.id)
+      const [tasksData, projectsData, bookmarksData, notesData] = await Promise.all([
+        api.getTasks(ws.id), api.getProjects(ws.id), api.getBookmarks(ws.id), api.getNotes(ws.id)
       ]);
       if (tasksData) setTasks(tasksData
         .sort((a, b) => (a.position ?? 999999) - (b.position ?? 999999))
@@ -5076,6 +5208,7 @@ function App() {
       })));
       if (projectsData) setProjects(projectsData.map(p => ({ ...p, colorId: p.color_id })));
       if (bookmarksData) setBookmarks(bookmarksData.map(b => ({ ...b, tags: Array.isArray(b.tags) ? b.tags : [] })));
+      if (notesData) setNotes(notesData);
     } catch(e) { console.error('switchWorkspace error:', e); }
   }
 
@@ -5140,6 +5273,34 @@ function App() {
     if (authUser) {
       try { await api.saveBookmark(updated); } catch(e) { console.error(e); }
     }
+  }
+
+  async function saveNote(note) {
+    const noteWithWs = { ...note, id: note.id || generateId(), workspaceId: activeWorkspace?.id };
+    setNotes(prev => {
+      const idx = prev.findIndex(n => n.id === noteWithWs.id);
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = noteWithWs; return copy; }
+      return [noteWithWs, ...prev];
+    });
+    setEditingNote(null); setShowNewNote(false);
+    if (authUser) {
+      try { await api.saveNote(noteWithWs); } catch(e) { console.error(e); }
+    }
+  }
+  function deleteNote(id) {
+    setNotes(prev => prev.filter(n => n.id !== id));
+    if (authUser) api.deleteNote(id).catch(console.error);
+  }
+  function toggleNotePin(id) {
+    setNotes(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n);
+      if (authUser) {
+        const note = updated.find(n => n.id === id);
+        if (note) api.saveNote({ ...note, workspaceId: activeWorkspace?.id }).catch(console.error);
+      }
+      // Keep pinned notes on top, most-recently-touched first within each group
+      return [...updated].sort((a, b) => (b.pinned - a.pinned) || 0);
+    });
   }
 
   function saveProject(project) {
@@ -5303,10 +5464,11 @@ function App() {
     wellbeing: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>,
     analytics: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
     bookmarks: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>,
+    notes: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>,
     collab: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
     teams: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
   };
-  const views = [["board","Board"],["calendar","Calendar"],["wellbeing","Wellbeing"],["analytics","Analytics"],["bookmarks","Bookmarks"],
+  const views = [["board","Board"],["calendar","Calendar"],["wellbeing","Wellbeing"],["analytics","Analytics"],["bookmarks","Bookmarks"],["notes","Notes"],
     ...(teams.length > 0 ? [["collab","Collaborate"]] : []),
     ["teams","Teams"]];
 
@@ -5491,7 +5653,7 @@ function App() {
           </button>
         ))}
         <button className="bottom-nav-item" onClick={() => setShowMoreMenu(true)}
-          style={{ color: ["wellbeing","analytics","bookmarks","settings"].includes(view) ? COLORS.accent : COLORS.textMuted }}>
+          style={{ color: ["wellbeing","analytics","bookmarks","notes","settings"].includes(view) ? COLORS.accent : COLORS.textMuted }}>
           <span className="icon" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 24, height: 24 }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
           </span>
@@ -5507,6 +5669,7 @@ function App() {
               { v: "wellbeing", label: "Wellbeing", svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> },
               { v: "analytics", label: "Stats", svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
               { v: "bookmarks", label: "Saved", svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> },
+              { v: "notes", label: "Notes", svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg> },
               { v: "settings", label: "Settings", svg: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> },
             ].map(({ v, label, svg }) => (
               <button key={v} onClick={() => { setView(v); setShowMoreMenu(false); }}
@@ -5756,6 +5919,7 @@ function App() {
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
         {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} />}
+        {view === "notes" && <NotesView notes={notes} onNew={() => setShowNewNote(true)} setEditingNote={setEditingNote} onDelete={deleteNote} onTogglePin={toggleNotePin} />}
         {view === "collab" && <CollabBoardView teams={teams} />}
 
         {view === "teams" && <TeamsView teams={teams} setTeams={setTeams} notifications={notifications} setNotifications={setNotifications} authUser={authUser} notifTrigger={notifTrigger} />}
@@ -5779,6 +5943,7 @@ function App() {
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
       {editingBookmark && <EditBookmarkModal bm={editingBookmark} onSave={saveEditedBookmark} onClose={() => setEditingBookmark(null)} />}
+      {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} />}
       {showWorkspaceSwitcher && <WorkspaceSwitcher workspaces={workspaces} activeWorkspace={activeWorkspace} onSwitch={switchWorkspace} onCreate={createWorkspace} onDelete={deleteWorkspace} onClose={() => setShowWorkspaceSwitcher(false)} />}
       {touchMoveTask && <TouchMoveModal task={touchMoveTask} onMove={setStatus} onClose={() => setTouchMoveTask(null)} />}
       {showJournal && <AIJournalModal user={user} tasks={tasks} workHours={workHours} onSaveWorkHours={saveWorkHours} onClose={() => setShowJournal(false)} />}
