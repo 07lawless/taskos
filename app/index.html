@@ -295,88 +295,408 @@ const css = `
   .wellbeing-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
   .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
   .page-pad { max-width: 1200px; margin: 0 auto; padding: 24px 28px 0; padding-left: max(28px, env(safe-area-inset-left)); padding-right: max(28px, env(safe-area-inset-right)); }
-  .mobile-only-flex { display: none; }
+  .board-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin: 0 0 24px;
+  }
+  .board-stat {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 13px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    color: var(--c-text);
+  }
+  .board-stat-num {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.3px;
+  }
+  .board-stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+    margin-top: 6px;
+  }
+  .board-stat.acc .board-stat-num { color: var(--c-accent); }
+  .board-stat.frog .board-stat-num { color: var(--c-frog); }
+  .board-stat.late .board-stat-num { color: var(--c-high); }
 
-  /* ── Sidebar (desktop navigation) ─────────────────────────────── */
-  :root { --sidebar-w: 240px; --sidebar-w-collapsed: 72px; }
-  .app-sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0;
-    width: var(--sidebar-w);
+  /* Sidebar shell */
+  .app-shell {
+    min-height: 100dvh;
+    background: var(--c-bg);
+  }
+  .tl-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w, 240px);
     background: var(--c-surface);
     border-right: 1px solid var(--c-border);
-    display: flex; flex-direction: column;
-    transition: width 0.22s cubic-bezier(0.4,0,0.2,1);
-    overflow: hidden; z-index: 120;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 220;
+    transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     padding-top: env(safe-area-inset-top);
   }
-  body.sidebar-collapsed .app-sidebar { width: var(--sidebar-w-collapsed); }
-  .sb-head { display: flex; align-items: center; gap: 10px; padding: 16px 16px 14px; flex-shrink: 0; }
-  body.sidebar-collapsed .sb-head { flex-direction: column; gap: 12px; }
-  .sb-brand { font-weight: 800; font-size: 15px; letter-spacing: -0.3px; white-space: nowrap; color: var(--c-text); }
-  body.sidebar-collapsed .sb-brand { display: none; }
-  .sb-collapse {
-    margin-left: auto; width: 26px; height: 26px; border-radius: 7px;
-    border: 1px solid var(--c-border); background: var(--c-surface2); color: var(--c-text-muted);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s;
+  .app-shell.sidebar-collapsed .tl-sidebar {
+    width: var(--sidebar-w-collapsed, 72px);
   }
-  .sb-collapse:hover { border-color: var(--c-accent); color: var(--c-accent); background: var(--c-accent-dim); }
-  .sb-collapse svg { transition: transform 0.22s; }
-  body.sidebar-collapsed .sb-collapse { margin-left: 0; }
-  body.sidebar-collapsed .sb-collapse svg { transform: rotate(180deg); }
-  .sb-scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 12px 12px; }
-  .sb-scroll::-webkit-scrollbar { width: 0; }
-  .sb-section { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--c-text-muted); padding: 14px 10px 6px; white-space: nowrap; }
-  body.sidebar-collapsed .sb-section { font-size: 0; padding: 0; height: 1px; background: var(--c-border); margin: 10px 14px; }
-  .sb-item {
-    display: flex; align-items: center; gap: 11px; width: 100%;
-    padding: 9px 10px; border: none; background: none; border-radius: 9px;
-    font-size: 13.5px; font-weight: 600; color: var(--c-text-dim);
-    white-space: nowrap; transition: background 0.12s, color 0.12s;
-    position: relative; cursor: pointer; font-family: inherit; text-align: left;
+  .tl-main {
+    min-height: 100dvh;
+    margin-left: var(--sidebar-w, 240px);
+    transition: margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sb-item:hover { background: var(--c-surface3); color: var(--c-text); }
-  .sb-item.active { background: var(--c-accent-dim); color: var(--c-accent); }
-  .sb-item.active::before { content: ""; position: absolute; left: -12px; top: 7px; bottom: 7px; width: 3px; border-radius: 0 3px 3px 0; background: var(--c-accent); }
-  .sb-item svg { flex-shrink: 0; width: 17px; height: 17px; }
-  body.sidebar-collapsed .sb-item .sb-label { display: none; }
-  body.sidebar-collapsed .sb-item { justify-content: center; padding: 9px 0; }
-  .sb-badge { margin-left: auto; font-size: 10.5px; font-weight: 700; background: var(--c-high-dim); color: var(--c-high); padding: 1px 7px; border-radius: 100px; }
-  body.sidebar-collapsed .sb-badge { display: none; }
-  body.sidebar-collapsed .sb-item.has-badge::after { content: ""; position: absolute; top: 7px; right: 18px; width: 7px; height: 7px; border-radius: 50%; background: var(--c-high); border: 2px solid var(--c-surface); }
-  .sb-tip { position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%); background: var(--c-text); color: var(--c-surface); font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 7px; opacity: 0; pointer-events: none; transition: opacity 0.12s; white-space: nowrap; z-index: 200; }
-  body:not(.sidebar-collapsed) .sb-tip { display: none; }
-  body.sidebar-collapsed .sb-item:hover .sb-tip { opacity: 1; }
-  .sb-foot { flex-shrink: 0; padding: 12px; border-top: 1px solid var(--c-border); }
-  .sb-ws { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: 1px solid var(--c-border); background: var(--c-surface2); border-radius: 10px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
-  .sb-ws:hover { border-color: var(--c-accent); background: var(--c-accent-dim); }
-  body.sidebar-collapsed .sb-ws { justify-content: center; padding: 9px 0; }
-  .sb-ws-meta { text-align: left; overflow: hidden; }
-  body.sidebar-collapsed .sb-ws-meta { display: none; }
+  .app-shell.sidebar-collapsed .tl-main {
+    margin-left: var(--sidebar-w-collapsed, 72px);
+  }
+  .sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px 16px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: var(--c-accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .sidebar-brand {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+    color: var(--c-text);
+    white-space: nowrap;
+  }
+  .sidebar-brand em {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--c-accent);
+  }
+  .sidebar-collapse-btn {
+    margin-left: auto;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--c-border);
+    background: var(--c-surface2);
+    color: var(--c-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .sidebar-collapse-btn:hover {
+    border-color: var(--c-accent);
+    color: var(--c-accent);
+    background: var(--c-accent-dim);
+  }
+  .sidebar-collapse-btn svg {
+    transition: transform 0.22s;
+  }
+  .app-shell.sidebar-collapsed .sidebar-head {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .app-shell.sidebar-collapsed .sidebar-brand {
+    display: none;
+  }
+  .app-shell.sidebar-collapsed .sidebar-collapse-btn {
+    margin-left: 0;
+  }
+  .app-shell.sidebar-collapsed .sidebar-collapse-btn svg {
+    transform: rotate(180deg);
+  }
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 12px 12px;
+    scrollbar-width: none;
+  }
+  .sidebar-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+    padding: 14px 10px 6px;
+    white-space: nowrap;
+  }
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    padding: 9px 10px;
+    border: none;
+    background: none;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--c-text-dim);
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+    position: relative;
+    font-family: inherit;
+    text-align: left;
+  }
+  .sidebar-nav-item:hover {
+    background: var(--c-surface3);
+    color: var(--c-text);
+  }
+  .sidebar-nav-item.active {
+    background: var(--c-accent-dim);
+    color: var(--c-accent);
+  }
+  .sidebar-nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 7px;
+    bottom: 7px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--c-accent);
+  }
+  .sidebar-nav-item svg {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+  }
+  .sidebar-nav-item .badge {
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: var(--c-high-dim);
+    color: var(--c-high);
+    border-radius: 99px;
+    padding: 1px 6px;
+  }
+  .sidebar-nav-item .tip {
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--c-text);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 9px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s;
+    z-index: 300;
+  }
+  .app-shell.sidebar-collapsed .nav-section-label {
+    font-size: 0;
+    padding: 0;
+    height: 1px;
+    background: var(--c-border);
+    margin: 10px 14px;
+  }
+  .app-shell.sidebar-collapsed .sidebar-nav-item {
+    justify-content: center;
+    padding: 9px 0;
+  }
+  .app-shell.sidebar-collapsed .sidebar-nav-item .label,
+  .app-shell.sidebar-collapsed .sidebar-nav-item .badge {
+    display: none;
+  }
+  .app-shell.sidebar-collapsed .sidebar-nav-item.has-badge::after {
+    content: "";
+    position: absolute;
+    top: 7px;
+    right: 18px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-high);
+    border: 2px solid var(--c-surface);
+  }
+  .app-shell.sidebar-collapsed .sidebar-nav-item:hover .tip {
+    opacity: 1;
+  }
+  .sidebar-foot {
+    flex-shrink: 0; padding: 12px;
+    border-top: 1px solid var(--c-border);
+  }
+  .ws-pill {
+    display: flex; align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--c-border); background: var(--c-surface2); border-radius: 10px;
+    transition: all 0.15s;
+  }
+  .ws-pill:hover {
+    border-color: var(--c-accent);
+    background: var(--c-accent-dim);
+  }
+  .ws-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .ws-meta {
+    text-align: left;
+    overflow: hidden;
+  }
+  .app-shell.sidebar-collapsed .ws-meta {
+    display: none;
+  }
+  .app-shell.sidebar-collapsed .ws-pill {
+    justify-content: center;
+    padding: 9px 0;
+  }
+  .ws-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--c-text);
+    white-space: nowrap;
+  }
+  .ws-hint {
+    font-size: 10.5px;
+    color: var(--c-text-muted);
+    white-space: nowrap;
+  }
 
-  /* Main content shifts to make room for the sidebar on desktop */
-  .app-main { margin-left: var(--sidebar-w); transition: margin-left 0.22s cubic-bezier(0.4,0,0.2,1); min-height: 100vh; }
-  body.sidebar-collapsed .app-main { margin-left: var(--sidebar-w-collapsed); }
-
-  /* Header */
-  .app-header {
-    background: var(--c-surface);
+  .xp-strip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--c-surface2);
+    border: 1px solid var(--c-border);
+    cursor: pointer;
+  }
+  .xp-orb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .xp-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .app-shell.sidebar-collapsed .xp-meta {
+    display: none;
+  }
+  .app-shell.sidebar-collapsed .xp-strip {
+    justify-content: center;
+    padding: 8px 0;
+    border: none;
+    background: none;
+  }
+  .xp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+  .xp-row span:last-child {
+    color: var(--c-frog);
+  }
+  .xp-bar {
+    height: 4px;
+    background: var(--c-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .xp-bar > div {
+    height: 100%;
+    width: 62%;
+    background: var(--c-accent);
+    border-radius: 2px;
+  }
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: max(14px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) 14px max(24px, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--c-bg) 88%, transparent);
     border-bottom: 1px solid var(--c-border);
-    position: sticky; top: 0; z-index: 100;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding-top: env(safe-area-inset-top);
   }
-  .header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
-  .nav-bar { border-top: 1px solid var(--c-border); overflow-x: auto; scrollbar-width: none; background: color-mix(in srgb, var(--c-surface) 96%, transparent); }
-  .nav-bar-inner { max-width: 1200px; margin: 0 auto; padding: 4px max(20px, env(safe-area-inset-right)) 4px max(20px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 2px; }
-  .nav-bar::-webkit-scrollbar { display: none; }
-  .nav-bar-btn { display: flex; align-items: center; gap: 6px; padding: 9px 10px 7px; border-radius: 0; border: none; border-bottom: 2px solid transparent; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; transition: all 0.12s; background: transparent; color: var(--c-text-dim); }
-  .nav-bar-btn:hover { color: var(--c-text); }
-  .nav-bar-btn.active { color: var(--c-accent); font-weight: 700; border-bottom-color: var(--c-accent); }
-  .nav-tool-btn { display: flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 100px; border: none; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; transition: all 0.12s; background: transparent; color: var(--c-text-dim); }
-  .nav-tool-btn:hover { background: var(--c-surface); color: var(--c-text); }
-  .nav-bar-divider { width: 1px; height: 18px; background: var(--c-border); margin: 0 6px; flex-shrink: 0; }
-  
+  .topbar-title {
+    min-width: 0;
+    flex: 1;
+  }
+  .topbar-title h1 {
+    margin: 0;
+    color: var(--c-text);
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+  .topbar-title p {
+    margin: 1px 0 0;
+    color: var(--c-text-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mobile-original-header {
+    display: none;
+  }
+  .sidebar-collapse-btn:focus-visible,
+  .sidebar-nav-item:focus-visible,
+  .ws-pill:focus-visible,
+  .xp-strip:focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+  .nav-bar,
+  .nav-bar-inner,
+  .nav-bar-btn,
+  .nav-tool-btn,
+  .nav-bar-divider {
+    display: none;
+  }
+
   /* View toggle */
   .view-toggle {
     display: flex; gap: 1px;
@@ -491,6 +811,7 @@ const css = `
     .wellbeing-metrics { grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .form-grid-3 { grid-template-columns: 1fr; }
     .time-grid { grid-template-columns: 1fr !important; }
+    .board-stats { display: none; }
     .page-pad { padding: 16px 16px 90px; }
     /* Without this, the workspace switcher button's position depends on
        whether it happens to wrap onto its own line — which depends on the
@@ -501,12 +822,32 @@ const css = `
     .greeting-banner-row > button { margin-top: 4px; }
     input, textarea, select { font-size: 16px; }
     .desktop-only { display: none !important; }
-    .mobile-only-flex { display: flex !important; }
-    /* Sidebar is a desktop-only concept — on mobile it's hidden entirely
-       and the layout falls back to the existing header + bottom-nav. */
-    .app-sidebar { display: none; }
-    .app-main { margin-left: 0 !important; }
-    .header-inner { height: 56px; padding: 0 14px; }
+    .tl-sidebar { display: none; }
+    .tl-main { margin-left: 0; }
+    .app-topbar {
+      display: none;
+    }
+    .mobile-original-header {
+      display: block;
+      background: var(--c-surface);
+      border-bottom: 1px solid var(--c-border);
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding-top: env(safe-area-inset-top);
+    }
+    .mobile-original-header .header-inner {
+      height: 56px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-title { display: none; }
+    .topbar-actions {
+      margin-left: auto;
+      gap: 8px;
+    }
     .bottom-nav {
       display: flex;
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -4466,11 +4807,6 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
 function xpForLevel(n) {
   return Math.round((60 + n * 26 + Math.pow(n, 1.1) * 5) / 2);
 }
-function xpBarPct(xp) {
-  if (!xp) return 0;
-  const needed = xpForLevel(xp.current_level || 1);
-  return needed ? Math.min(100, Math.round(((xp.current_level_xp || 0) / needed) * 100)) : 0;
-}
  
 function levelTierIcon(level) {
   if (level >= 45) return "👑";
@@ -5630,13 +5966,7 @@ function App() {
 
   // ── Touch long press → move task picker ────────────────────
   const [touchMoveTask, setTouchMoveTask] = React.useState(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(() => {
-    try { return localStorage.getItem('tl_sidebar_collapsed') === '1'; } catch(e) { return false; }
-  });
-  React.useEffect(() => {
-    document.body.classList.toggle('sidebar-collapsed', sidebarCollapsed);
-    try { localStorage.setItem('tl_sidebar_collapsed', sidebarCollapsed ? '1' : '0'); } catch(e) {}
-  }, [sidebarCollapsed]);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(() => localStorage.getItem("tl_sidebar_collapsed") === "1");
   const [teams, setTeams] = React.useState([]);
   const [notifications, setNotifications] = React.useState([]);
   const [notifTrigger, setNotifTrigger] = React.useState(0);
@@ -5744,144 +6074,214 @@ function App() {
     notes: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>,
     collab: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
     teams: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-    notifications: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-    settings: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+    xp: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+    focus: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+    plan: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M18 2v4"/><path d="M22 6h-4"/></svg>,
+    journal: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"/></svg>,
+    daily: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+    settings: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
   };
   const views = [["board","Board"],["calendar","Calendar"],["wellbeing","Wellbeing"],["analytics","Analytics"],["bookmarks","Bookmarks"],["notes","Notes"],
     ...(teams.length > 0 ? [["collab","Collaborate"]] : []),
     ["teams","Teams"]];
+  const sidebarSections = [
+    { label: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"]] },
+    { label: "Insights", items: [["wellbeing","Wellbeing"],["analytics","Analytics"],["xp","Levels & Rewards"]] },
+    { label: "Together", items: [...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["teams","Teams"]] },
+    { label: "Tools", items: [["focus","Focus"],["journal","Journal"],["plan","Plan"],["daily","Daily"],["settings","Settings"]] },
+  ];
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const sidebarXpLevel = xp?.current_level || 1;
+  const sidebarXpNeeded = xpForLevel(sidebarXpLevel);
+  const sidebarXpProgress = sidebarXpNeeded ? Math.min(100, Math.round(((xp?.current_level_xp || 0) / sidebarXpNeeded) * 100)) : 0;
+  const sidebarXpStreak = xp?.current_streak || 0;
+  const focusTask = frogTask || tasks.find(t => t.status !== "Done") || tasks[0] || null;
+  const boardOpenCount = tasks.filter(t => t.status !== "Done").length;
+  const boardInProgressCount = tasks.filter(t => t.status === "In Progress").length;
+  const boardDoneThisWeekCount = tasks.filter(t => t.status === "Done" && t.completedAt && t.completedAt.split("T")[0] >= daysAgo(6)).length;
+  const boardOverdueCount = tasks.filter(t => t.due && t.due < today() && t.status !== "Done").length;
+  const currentViewLabel = (
+    [...views, ["xp", "Levels & Rewards"], ["settings", "Settings"]].find(([v]) => v === view)?.[1] || "Tasklist"
+  );
+  function handleSidebarItem(v) {
+    if (v === "focus") {
+      if (focusTask) setShowFocus(true);
+      else setShowNew(true);
+      return;
+    }
+    if (v === "journal") { setShowJournal(true); return; }
+    if (v === "plan") { setShowDailyPlan(true); return; }
+    if (v === "daily") { setShowDaily(true); return; }
+    setView(v);
+    if (v === "teams") setNotifTrigger(n => n + 1);
+  }
+  function toggleSidebar() {
+    setSidebarCollapsed(v => {
+      const next = !v;
+      localStorage.setItem("tl_sidebar_collapsed", next ? "1" : "0");
+      return next;
+    });
+  }
 
   return (
-    <div style={{ minHeight: "100dvh", background: COLORS.bg }}>
+    <div className={"app-shell" + (sidebarCollapsed ? " sidebar-collapsed" : "")} style={{ "--sidebar-w": "240px", "--sidebar-w-collapsed": "72px", minHeight: "100dvh", background: COLORS.bg }}>
       <style>{css}</style>
 
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
       {levelUpInfo && <LevelUpToast newLevel={levelUpInfo} onDone={() => setLevelUpInfo(null)} />}
 
-      {showFocus && frogTask && <FocusMode task={frogTask} onClose={() => setShowFocus(false)} />}
+      {showFocus && focusTask && <FocusMode task={focusTask} onClose={() => setShowFocus(false)} />}
 
-      {/* ── Desktop sidebar navigation ─────────────────────────────── */}
-      <aside className="app-sidebar desktop-only">
-        <div className="sb-head">
-          <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1, flexShrink: 0 }}>tl</div>
-          <span className="sb-brand">Tasklist.uk</span>
-          <button className="sb-collapse" onClick={() => setSidebarCollapsed(c => !c)} title={sidebarCollapsed ? "Expand" : "Collapse"} aria-label="Toggle sidebar">
+      <aside className="tl-sidebar" aria-label="Primary navigation">
+        <div className="sidebar-head">
+          <a href="https://tasklist.uk" className="sidebar-logo" aria-label="Tasklist home">tl</a>
+          <div className="sidebar-brand">task<em>list</em></div>
+          <button className="sidebar-collapse-btn" onClick={toggleSidebar} title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"} aria-label="Toggle sidebar">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
           </button>
         </div>
 
-        <nav className="sb-scroll">
-          {[
-            { section: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"]] },
-            { section: "Insights", items: [["wellbeing","Wellbeing"],["analytics","Analytics"],["xp","Levels & Rewards"]] },
-            { section: "Together", items: [...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["teams","Teams"], ["notifications","Notifications"]] },
-            { section: "Tools", items: [["settings","Settings"]] },
-          ].map(group => (
-            <div key={group.section}>
-              <div className="sb-section">{group.section}</div>
-              {group.items.map(([v, label]) => {
-                const unread = v === "notifications" ? notifications.filter(n => !n.read).length : 0;
-                const targetView = v === "notifications" ? "teams" : v;
+        <nav className="sidebar-nav">
+          {sidebarSections.map(section => (
+            <React.Fragment key={section.label}>
+              <div className="nav-section-label">{section.label}</div>
+              {section.items.map(([v, label]) => {
+                const badge = v === "teams" ? unreadCount : 0;
                 return (
-                  <button key={v} className={"sb-item" + (view === targetView && v !== "notifications" ? " active" : "") + (unread > 0 ? " has-badge" : "")}
-                    onClick={() => { setView(targetView); if (v === "notifications") setNotifTrigger(n => n + 1); }}>
-                    {NAV_ICONS[v] || NAV_ICONS.board}
-                    <span className="sb-label">{label}</span>
-                    {unread > 0 && <span className="sb-badge">{unread}</span>}
-                    <span className="sb-tip">{label}</span>
+                  <button key={v} className={"sidebar-nav-item" + (view === v ? " active" : "") + (badge ? " has-badge" : "")} onClick={() => handleSidebarItem(v)}>
+                    {NAV_ICONS[v]}
+                    <span className="label">{label}</span>
+                    {badge > 0 && <span className="badge">{badge}</span>}
+                    <span className="tip">{label}</span>
                   </button>
                 );
               })}
-            </div>
+            </React.Fragment>
           ))}
-          {/* Tools that open modals rather than switch views */}
-          <div>
-            <div className="sb-section">Quick tools</div>
-            {frogTask && (
-              <button className="sb-item" onClick={() => setShowFocus(true)} style={{ color: COLORS.frog }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span className="sb-label">Focus</span><span className="sb-tip">Focus</span>
-              </button>
-            )}
-            <button className="sb-item" onClick={() => setShowDailyPlan(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M18 2v4"/><path d="M22 6h-4"/></svg>
-              <span className="sb-label">Plan</span><span className="sb-tip">Plan</span>
-            </button>
-            <button className="sb-item" onClick={() => setShowJournal(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"/></svg>
-              <span className="sb-label">Journal</span><span className="sb-tip">Journal</span>
-            </button>
-            <button className="sb-item" onClick={() => setShowDaily(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              <span className="sb-label">Daily</span><span className="sb-tip">Daily</span>
-            </button>
-          </div>
         </nav>
 
-        <div className="sb-foot">
-          <button className="sb-ws" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
-            <span style={{ fontSize: 16, flexShrink: 0 }}>{activeWorkspace ? workspaceIcon(activeWorkspace) : "🗂"}</span>
-            <span className="sb-ws-meta">
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.text, whiteSpace: "nowrap" }}>{activeWorkspace?.name || "Workspace"}</div>
-              <div style={{ fontSize: 10.5, color: COLORS.textMuted, whiteSpace: "nowrap" }}>Switch workspace</div>
+        <div className="sidebar-foot">
+          <button className="ws-pill" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
+            <span className="ws-icon">{"\uD83D\uDCBC"}</span>
+            <span className="ws-meta">
+              <div className="ws-name">{activeWorkspace?.name || "Personal"}</div>
+              <div className="ws-hint">Switch workspace</div>
             </span>
           </button>
-          <div onClick={() => setView("xp")} className="sb-ws" style={{ marginTop: 8, cursor: "pointer" }} title="Levels & rewards">
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: COLORS.accent, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>{levelTierIcon((xp?.current_level) || 1)}</div>
-            <span className="sb-ws-meta" style={{ flex: 1 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700, marginBottom: 4, whiteSpace: "nowrap" }}>
-                <span style={{ color: COLORS.text }}>Lv {(xp?.current_level) || 1}</span>
-                {(xp?.current_streak) > 0 && <span style={{ color: COLORS.frog }}>🔥 {xp.current_streak}</span>}
-              </div>
-              <div style={{ height: 4, background: COLORS.border, borderRadius: 2, overflow: "hidden" }}>
-                <div style={{ height: "100%", background: COLORS.accent, borderRadius: 2, width: `${xpBarPct(xp)}%` }} />
-              </div>
-            </span>
+          <div className="xp-strip" onClick={() => setView("xp")} title={`Level ${sidebarXpLevel} - ${sidebarXpProgress}% to next level`} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setView("xp"); }}>
+            <div className="xp-orb">
+              {levelTierIcon(sidebarXpLevel)}
+            </div>
+            <div className="xp-meta">
+              <div className="xp-row"><span>Lv {sidebarXpLevel}</span><span>{"\uD83D\uDD25"} {sidebarXpStreak}</span></div>
+              <div className="xp-bar"><div style={{ width: `${sidebarXpProgress}%` }} /></div>
+            </div>
           </div>
         </div>
       </aside>
 
-      {/* app-main shifts content to the right of the sidebar on desktop */}
-      <div className="app-main">
+      <main className="tl-main">
+        <div className="mobile-original-header">
+          <div className="header-inner">
+            {/* Logo */}
+            <a href="https://tasklist.uk" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", flexShrink: 0 }}>
+              <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1 }}>tl</div>
+              <span style={{ fontWeight: 700, fontSize: 15, color: COLORS.text, letterSpacing: -0.3 }} className="desktop-only">Tasklist.uk</span>
+            </a>
+            {/* Spacer */}
+            <div style={{ flex: 1 }} />
 
-      {/* Header - Redesigned */}
-      <div className="app-header">
-        <div className="header-inner">
-          {/* Logo — mobile only; on desktop the sidebar carries the brand */}
-          <a href="https://tasklist.uk" className="mobile-only-flex" style={{ alignItems: "center", gap: 8, textDecoration: "none", flexShrink: 0 }}>
-            <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1 }}>tl</div>
-          </a>
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
+            {/* Right actions */}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {/* Search */}
+              <button onClick={() => setShowSearch(true)}
+                style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 14, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <span className="desktop-only" style={{ fontSize: 12, fontWeight: 500 }}>Search</span>
+              </button>
 
-          {/* Right actions */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {/* New task */}
+              <button onClick={() => setShowNew(true)}
+                style={{ background: COLORS.accent, color: "#fff", borderRadius: 100, padding: "7px 14px", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, border: "none", whiteSpace: "nowrap" }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span className="desktop-only">New task</span>
+              </button>
 
-            {/* Search */}
+              {/* XP Bar */}
+              <XPBar xp={xp} onClick={() => setView("xp")} />
+
+              {/* Profile menu */}
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setShowProfileMenu(o => !o)} title="Menu"
+                  style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: `1px solid ${COLORS.border}`, background: COLORS.surface3, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                  {(authUser?.avatar || user?.avatar)
+                    ? <img src={authUser?.avatar || user?.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
+                    : <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.textDim }}>{(cap(authUser?.firstName || authUser?.first_name || user?.firstName) || "?").charAt(0)}</span>}
+                  {notifications.filter(n => !n.read).length > 0 && (
+                    <span style={{ position: "absolute", top: -1, right: -1, width: 10, height: 10, borderRadius: "50%", background: COLORS.high, border: `2px solid ${COLORS.surface}` }} />
+                  )}
+                </button>
+
+                {showProfileMenu && (
+                  <>
+                    <div style={{ position: "fixed", inset: 0, zIndex: 199 }} onClick={() => setShowProfileMenu(false)} />
+                    <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, width: 220, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 200, overflow: "hidden" }}>
+                      <div style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}` }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{cap(authUser?.firstName || authUser?.first_name || user?.firstName)} {cap(authUser?.lastName || authUser?.last_name || user?.lastName)}</div>
+                        {authUser?.email && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>{authUser.email}</div>}
+                      </div>
+                      <button onClick={() => { setView("teams"); setNotifTrigger(n => n + 1); setShowProfileMenu(false); }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.text, textAlign: "left" }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        Notifications
+                        {notifications.filter(n => !n.read).length > 0 && (
+                          <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#fff", background: COLORS.high, borderRadius: 100, padding: "1px 6px" }}>{notifications.filter(n => !n.read).length}</span>
+                        )}
+                      </button>
+                      <button onClick={() => { setView("settings"); setShowProfileMenu(false); }}
+                        style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.text, textAlign: "left" }}>
+                        {NAV_ICONS.settings}
+                        Settings
+                      </button>
+                      <a href="/auth/logout"
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", fontSize: 13, fontWeight: 500, color: COLORS.high, textDecoration: "none", borderTop: `1px solid ${COLORS.border}` }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Sign out
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="app-topbar">
+          <div className="topbar-title">
+            <h1>{currentViewLabel}</h1>
+            <p>{activeWorkspace?.name || "Personal"} workspace</p>
+          </div>
+
+          <div className="topbar-actions">
             <button onClick={() => setShowSearch(true)}
               style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 14, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <span className="desktop-only" style={{ fontSize: 12, fontWeight: 500 }}>Search</span>
             </button>
 
-            {/* New task */}
             <button onClick={() => setShowNew(true)}
               style={{ background: COLORS.accent, color: "#fff", borderRadius: 100, padding: "7px 14px", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, border: "none", whiteSpace: "nowrap" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span className="desktop-only">New task</span>
             </button>
 
-            {/* XP Bar */}
-            <XPBar xp={xp} onClick={() => setView("xp")} />
-
-            {/* Profile menu — consolidates settings, notifications, undo/redo, sign out */}
             <div style={{ position: "relative" }}>
               <button onClick={() => setShowProfileMenu(o => !o)} title="Menu"
                 style={{ position: "relative", width: 34, height: 34, borderRadius: "50%", border: `1px solid ${COLORS.border}`, background: COLORS.surface3, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
                 {(authUser?.avatar || user?.avatar)
                   ? <img src={authUser?.avatar || user?.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
                   : <span style={{ fontSize: 12, fontWeight: 700, color: COLORS.textDim }}>{(cap(authUser?.firstName || authUser?.first_name || user?.firstName) || "?").charAt(0)}</span>}
-                {notifications.filter(n => !n.read).length > 0 && (
+                {unreadCount > 0 && (
                   <span style={{ position: "absolute", top: -1, right: -1, width: 10, height: 10, borderRadius: "50%", background: COLORS.high, border: `2px solid ${COLORS.surface}` }} />
                 )}
               </button>
@@ -5898,13 +6298,13 @@ function App() {
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.text, textAlign: "left" }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                       Notifications
-                      {notifications.filter(n => !n.read).length > 0 && (
-                        <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#fff", background: COLORS.high, borderRadius: 100, padding: "1px 6px" }}>{notifications.filter(n => !n.read).length}</span>
+                      {unreadCount > 0 && (
+                        <span style={{ marginLeft: "auto", fontSize: 10, fontWeight: 700, color: "#fff", background: COLORS.high, borderRadius: 100, padding: "1px 6px" }}>{unreadCount}</span>
                       )}
                     </button>
                     <button onClick={() => { setView("settings"); setShowProfileMenu(false); }}
                       style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, color: COLORS.text, textAlign: "left" }}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                      {NAV_ICONS.settings}
                       Settings
                     </button>
                     <div className="desktop-only" style={{ display: "flex", gap: 4, padding: "8px 14px", borderTop: `1px solid ${COLORS.border}` }}>
@@ -5915,10 +6315,6 @@ function App() {
                       <button onClick={redo} disabled={!future.length} title="Redo (Ctrl+Y)"
                         style={{ flex: 1, background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 0", fontSize: 12, borderRadius: 7, opacity: future.length ? 1 : 0.35, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
-                      </button>
-                      <button onClick={() => { setSidebarCollapsed(o => !o); setShowProfileMenu(false); }} title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                        style={{ flex: 1, background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, padding: "6px 0", fontSize: 12, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points={sidebarCollapsed ? "9 18 15 12 9 6" : "15 18 9 12 15 6"} /></svg>
                       </button>
                     </div>
                     <a href="/auth/logout"
@@ -5932,8 +6328,6 @@ function App() {
             </div>
           </div>
         </div>
-
-      </div>
 
       {/* Mobile quick-add */}
       {(view === "board" || view === "calendar") && (
@@ -6012,32 +6406,28 @@ function App() {
       )}
 
       <div className="page-pad">
-        {(authUser || user) && ["board", "calendar", "collab", "teams"].includes(view) && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} hideSwitcher={["collab", "teams"].includes(view)} />}
+        {(authUser || user) && view === "board" && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} hideSwitcher={false} />}
 
-        {/* At-a-glance stats — board only */}
-        {view === "board" && (() => {
-          const now = new Date();
-          const todayStr = today();
-          const weekAgo = new Date(Date.now() - 7 * 86400000);
-          const openCount = tasks.filter(t => t.status !== "Done").length;
-          const inProgCount = tasks.filter(t => t.status === "In Progress").length;
-          const doneWeek = tasks.filter(t => t.status === "Done" && t.completedAt && new Date(t.completedAt) >= weekAgo).length;
-          const overdueCount = tasks.filter(t => t.status !== "Done" && t.due && t.due < todayStr).length;
-          const stat = (num, label, color) => (
-            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 13, padding: "14px 18px", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-              <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1, color: color || COLORS.text }}>{num}</div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.6, textTransform: "uppercase", color: COLORS.textMuted, marginTop: 6 }}>{label}</div>
+        {view === "board" && (
+          <div className="board-stats">
+            <div className="board-stat">
+              <div className="board-stat-num">{boardOpenCount}</div>
+              <div className="board-stat-label">Open tasks</div>
             </div>
-          );
-          return (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 22 }} className="stats-grid-4">
-              {stat(openCount, "Open tasks")}
-              {stat(inProgCount, "In progress", COLORS.accent)}
-              {stat(doneWeek, "Done this week", COLORS.frog)}
-              {stat(overdueCount, "Overdue", overdueCount > 0 ? COLORS.high : COLORS.text)}
+            <div className="board-stat acc">
+              <div className="board-stat-num">{boardInProgressCount}</div>
+              <div className="board-stat-label">In progress</div>
             </div>
-          );
-        })()}
+            <div className="board-stat frog">
+              <div className="board-stat-num">{boardDoneThisWeekCount}</div>
+              <div className="board-stat-label">Done this week</div>
+            </div>
+            <div className="board-stat late">
+              <div className="board-stat-num">{boardOverdueCount}</div>
+              <div className="board-stat-label">Overdue</div>
+            </div>
+          </div>
+        )}
 
         {/* Filter bar — due date + project */}
         {view === "board" && (
@@ -6256,7 +6646,8 @@ function App() {
 
         {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} />}
       </div>
-      </div>{/* /.app-main */}
+
+      </main>
 
       {!authUser && !user && <OnboardingModal onComplete={({ user, workHours: wh }) => {
         saveUser(user);
