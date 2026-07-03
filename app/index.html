@@ -3561,7 +3561,7 @@ function OnboardingModal({ onComplete }) {
 }
 
 // ── Greeting Banner ────────────────────────────────────────────────────────────
-function GreetingBanner({ user, tasks, activeWorkspace, onOpenWorkspaceSwitcher }) {
+function GreetingBanner({ user, tasks, activeWorkspace, onOpenWorkspaceSwitcher, hideSwitcher }) {
   const todayStr = today();
   const dueTodayCount = tasks.filter(t => t.due === todayStr && t.status !== "Done").length;
   const overdueCount = tasks.filter(t => t.due && t.due < todayStr && t.status !== "Done").length;
@@ -3598,7 +3598,7 @@ function GreetingBanner({ user, tasks, activeWorkspace, onOpenWorkspaceSwitcher 
             )}
           </div>
         </div>
-        {activeWorkspace && (
+        {activeWorkspace && !hideSwitcher && (
           <button onClick={onOpenWorkspaceSwitcher}
             style={{ display:'flex', alignItems:'center', gap:6, background:COLORS.surface3, border:`1px solid ${COLORS.border}`, borderRadius:8, padding:'5px 12px', cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s', flexShrink:0 }}
             onMouseEnter={e => { e.currentTarget.style.borderColor=COLORS.accent; e.currentTarget.style.background=COLORS.accentDim; }}
@@ -5909,7 +5909,7 @@ function App() {
       )}
 
       <div className="page-pad">
-        {(authUser || user) && ["board", "calendar", "collab", "teams"].includes(view) && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} />}
+        {(authUser || user) && ["board", "calendar", "collab", "teams"].includes(view) && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} hideSwitcher={["collab", "teams"].includes(view)} />}
 
         {/* Filter bar — due date + project */}
         {view === "board" && (
