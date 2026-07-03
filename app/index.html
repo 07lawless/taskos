@@ -326,13 +326,6 @@ const css = `
   .board-stat.acc .board-stat-num { color: var(--c-accent); }
   .board-stat.frog .board-stat-num { color: var(--c-frog); }
   .board-stat.late .board-stat-num { color: var(--c-high); }
-  .admin-task-row {
-    display: grid;
-    grid-template-columns: minmax(180px, 1.5fr) minmax(110px, 0.8fr) 100px 90px minmax(100px, 0.7fr);
-    gap: 12px;
-    align-items: center;
-    padding: 12px 14px;
-  }
 
   /* Sidebar shell */
   .app-shell {
@@ -814,7 +807,6 @@ const css = `
     .form-grid-3 { grid-template-columns: 1fr; }
     .time-grid { grid-template-columns: 1fr !important; }
     .board-stats { display: none; }
-    .admin-task-row { grid-template-columns: 1fr; align-items: flex-start; gap: 6px; }
     .page-pad { padding: 16px 16px 90px; }
     /* Without this, the workspace switcher button's position depends on
        whether it happens to wrap onto its own line — which depends on the
@@ -1628,7 +1620,7 @@ function CollabTaskCard({ task, team, onEdit, onDelete, onStatusChange, onDragSt
 // ── CollabTaskModal ────────────────────────────────────────────────────────────
 function CollabTaskModal({ task, team, onSave, onClose }) {
   const [form, setForm] = useState(() => {
-    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], assigned_to: null, created_at: new Date().toISOString(), completed_at: null };
+    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], assigned_to: null };
     return Array.isArray(base.subtasks) ? base : { ...base, subtasks: [] };
   });
   const [newSub, setNewSub] = useState("");
@@ -1637,14 +1629,7 @@ function CollabTaskModal({ task, team, onSave, onClose }) {
   function addSub() { if (!newSub.trim()) return; setF("subtasks", [...form.subtasks, { id: generateId(), title: newSub.trim(), done: false }]); setNewSub(""); }
   function handleSave() {
     if (!form.title.trim()) return;
-    const wasNotDone = !task || task.status !== "Done";
-    const nowDone = form.status === "Done";
-    onSave({
-      ...form,
-      id: form.id || generateId(),
-      created_at: form.created_at || form.createdAt || new Date().toISOString(),
-      completed_at: (wasNotDone && nowDone) ? new Date().toISOString() : (nowDone ? (form.completed_at || form.completedAt || null) : null),
-    });
+    onSave({ ...form, id: form.id || generateId() });
   }
 
   return (
@@ -1763,12 +1748,7 @@ function CollabBoardView({ teams }) {
   async function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
-    const leavingDone = task.status === "Done" && status !== "Done";
-    const updated = {
-      ...task,
-      status,
-      completed_at: status === "Done" && !(task.completed_at || task.completedAt) ? new Date().toISOString() : (leavingDone ? null : (task.completed_at || task.completedAt || null)),
-    };
+    const updated = { ...task, status };
     setTasks(ts => ts.map(t => t.id === id ? updated : t));
     await fetch(`/api/teams/${activeTeam.id}/tasks/${id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) }).catch(() => {});
   }
@@ -3320,256 +3300,6 @@ function CorrelationAnalysis({ tasks, checkins }) {
 
 // ── Settings View ─────────────────────────────────────────────────────────────
 // ── TeamsView ─────────────────────────────────────────────────
-function TeamAdminInsights({ adminTeams }) {
-  const [activeTeamId, setActiveTeamId] = React.useState(adminTeams[0]?.id || "");
-  const [tasks, setTasks] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [selectedMember, setSelectedMember] = React.useState("all");
-  const [statusFilter, setStatusFilter] = React.useState("all");
-  const [error, setError] = React.useState("");
-
-  const activeTeam = adminTeams.find(t => String(t.id) === String(activeTeamId)) || adminTeams[0];
-
-  React.useEffect(() => {
-    if (!activeTeamId && adminTeams.length) setActiveTeamId(adminTeams[0].id);
-  }, [adminTeams]);
-
-  React.useEffect(() => {
-    if (!activeTeam) return;
-    loadAdminTasks(activeTeam.id);
-  }, [activeTeam?.id]);
-
-  async function loadAdminTasks(teamId) {
-    setLoading(true);
-    setError("");
-    try {
-      const r = await fetch(`/api/teams/${teamId}/tasks`, { credentials: "include" });
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}));
-        setError(d.error || "Could not load team tasks.");
-        setTasks([]);
-      } else {
-        setTasks(await r.json());
-      }
-    } catch(e) {
-      setError("Could not load team tasks.");
-      setTasks([]);
-    }
-    setLoading(false);
-  }
-
-  function createdAt(t) { return t.created_at || t.createdAt || null; }
-  function completedAt(t) { return t.completed_at || t.completedAt || null; }
-  function memberName(m) { return m ? `${m.first_name || ""} ${m.last_name || ""}`.trim() || m.email || "Unknown" : "Unassigned"; }
-  function memberInitial(m) { return memberName(m).slice(0,1).toUpperCase() || "?"; }
-  function memberForTask(t) {
-    if (!t.assigned_to) return null;
-    return activeTeam?.members?.find(m => String(m.id) === String(t.assigned_to)) || null;
-  }
-  function daysToComplete(t) {
-    const start = createdAt(t);
-    const end = completedAt(t);
-    if (!start || !end) return null;
-    const ms = new Date(end).getTime() - new Date(start).getTime();
-    if (!Number.isFinite(ms) || ms < 0) return null;
-    return ms / 86400000;
-  }
-  function formatDays(days) {
-    if (days === null || days === undefined) return "No data";
-    if (days < 1) return "Same day";
-    return `${days < 10 ? days.toFixed(1) : Math.round(days)} days`;
-  }
-
-  const todayStr = today();
-  const soon = new Date();
-  soon.setDate(soon.getDate() + 3);
-  const soonStr = soon.toISOString().split("T")[0];
-  const members = activeTeam?.members || [];
-
-  function buildMemberStats(member, assigned) {
-    const done = assigned.filter(t => t.status === "Done");
-    const open = assigned.filter(t => t.status !== "Done");
-    const inProgress = assigned.filter(t => t.status === "In Progress");
-    const overdue = open.filter(t => t.due && t.due < todayStr);
-    const dueSoon = open.filter(t => t.due && t.due >= todayStr && t.due <= soonStr);
-    const high = open.filter(t => t.priority === "High");
-    const completedWithDates = done.map(daysToComplete).filter(v => v !== null);
-    const avgDays = completedWithDates.length ? completedWithDates.reduce((a,b) => a + b, 0) / completedWithDates.length : null;
-    const doneWithDue = done.filter(t => t.due && completedAt(t));
-    const onTime = doneWithDue.filter(t => completedAt(t).slice(0,10) <= t.due).length;
-    const subtaskTotal = assigned.reduce((sum, t) => sum + (Array.isArray(t.subtasks) ? t.subtasks.length : 0), 0);
-    const subtaskDone = assigned.reduce((sum, t) => sum + (Array.isArray(t.subtasks) ? t.subtasks.filter(s => s.done).length : 0), 0);
-    return {
-      id: member ? String(member.id) : "unassigned",
-      member,
-      assigned,
-      total: assigned.length,
-      open: open.length,
-      inProgress: inProgress.length,
-      done: done.length,
-      overdue: overdue.length,
-      dueSoon: dueSoon.length,
-      high: high.length,
-      avgDays,
-      onTimeRate: doneWithDue.length ? Math.round((onTime / doneWithDue.length) * 100) : null,
-      subtaskRate: subtaskTotal ? Math.round((subtaskDone / subtaskTotal) * 100) : null,
-    };
-  }
-
-  const memberRows = [
-    ...members.map(member => buildMemberStats(member, tasks.filter(t => String(t.assigned_to) === String(member.id)))),
-    buildMemberStats(null, tasks.filter(t => !t.assigned_to)),
-  ];
-  const activeRows = memberRows.filter(r => r.total > 0 || r.id !== "unassigned");
-  const totals = {
-    assigned: tasks.filter(t => t.assigned_to).length,
-    open: tasks.filter(t => t.status !== "Done").length,
-    done: tasks.filter(t => t.status === "Done").length,
-    overdue: tasks.filter(t => t.due && t.due < todayStr && t.status !== "Done").length,
-  };
-
-  const filteredTasks = tasks
-    .filter(t => selectedMember === "all" ? true : selectedMember === "unassigned" ? !t.assigned_to : String(t.assigned_to) === String(selectedMember))
-    .filter(t => statusFilter === "all" ? true : t.status === statusFilter)
-    .sort((a, b) => {
-      if (a.status === "Done" && b.status !== "Done") return 1;
-      if (a.status !== "Done" && b.status === "Done") return -1;
-      if (a.due && b.due) return a.due.localeCompare(b.due);
-      if (a.due) return -1;
-      if (b.due) return 1;
-      return (b.id || "").toString().localeCompare((a.id || "").toString());
-    });
-
-  if (!adminTeams.length) {
-    return (
-      <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 16, color: COLORS.textDim, fontSize: 13 }}>
-        You need to be an admin of a team to view task insights.
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 4 }}>Admin task list</div>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, letterSpacing: "-0.2px" }}>Team workload insights</h3>
-          <p style={{ fontSize: 13, color: COLORS.textDim, marginTop: 4 }}>See assigned work, completion pace, overdue risk, and current tasks by team member.</p>
-        </div>
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-          {adminTeams.length > 1 && (
-            <select value={activeTeam?.id || ""} onChange={e => { setActiveTeamId(e.target.value); setSelectedMember("all"); }} style={{ fontSize: 13, padding: "8px 12px" }}>
-              {adminTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          )}
-          <button onClick={() => activeTeam && loadAdminTasks(activeTeam.id)} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 12px", fontSize: 12, fontWeight: 700, border: `1px solid ${COLORS.border}`, cursor: "pointer", fontFamily: "inherit" }}>
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {error && <div style={{ marginBottom: 14, background: COLORS.highDim, color: COLORS.high, border: `1px solid ${COLORS.high}30`, borderRadius: 10, padding: "10px 12px", fontSize: 13, fontWeight: 600 }}>{error}</div>}
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 16 }}>
-        {[["Assigned", totals.assigned], ["Open", totals.open], ["Done", totals.done], ["Overdue", totals.overdue]].map(([label, value]) => (
-          <div key={label} style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: label === "Overdue" && value > 0 ? COLORS.high : COLORS.text }}>{value}</div>
-            <div style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 700, marginTop: 2 }}>{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {loading ? (
-        <div style={{ padding: 32, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>Loading team tasks...</div>
-      ) : (
-        <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12, marginBottom: 18 }}>
-            {activeRows.map(row => (
-              <button key={row.id} onClick={() => setSelectedMember(row.id)} style={{ textAlign: "left", background: selectedMember === row.id ? COLORS.accentDim : COLORS.surface, border: `1px solid ${selectedMember === row.id ? COLORS.accent+"55" : COLORS.border}`, borderRadius: 12, padding: 14, cursor: "pointer", fontFamily: "inherit", color: COLORS.text }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                  {row.member?.avatar ? (
-                    <img src={row.member.avatar} alt="" style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0 }} onError={e => e.target.style.display="none"} />
-                  ) : (
-                    <span style={{ width: 34, height: 34, borderRadius: "50%", background: COLORS.accentDim, color: COLORS.accent, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, flexShrink: 0 }}>{memberInitial(row.member)}</span>
-                  )}
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{memberName(row.member)}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{row.open} open - {row.done} done</div>
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 10 }}>
-                  <MiniMetric label="Assigned" value={row.total} />
-                  <MiniMetric label="Progress" value={row.inProgress} />
-                  <MiniMetric label="Late" value={row.overdue} danger={row.overdue > 0} />
-                </div>
-                <div style={{ display: "grid", gap: 6, fontSize: 11, color: COLORS.textDim }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>Due soon</span><strong style={{ color: row.dueSoon > 0 ? COLORS.medium : COLORS.text }}>{row.dueSoon}</strong></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>High priority</span><strong style={{ color: row.high > 0 ? COLORS.high : COLORS.text }}>{row.high}</strong></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>Avg completion</span><strong style={{ color: COLORS.text }}>{formatDays(row.avgDays)}</strong></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>On-time rate</span><strong style={{ color: COLORS.text }}>{row.onTimeRate === null ? "No data" : row.onTimeRate + "%"}</strong></div>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}><span>Subtasks done</span><strong style={{ color: COLORS.text }}>{row.subtaskRate === null ? "No subtasks" : row.subtaskRate + "%"}</strong></div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: 14, borderBottom: `1px solid ${COLORS.border}`, flexWrap: "wrap" }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>Tasks</div>
-                <div style={{ fontSize: 12, color: COLORS.textMuted }}>{filteredTasks.length} task{filteredTasks.length !== 1 ? "s" : ""} shown</div>
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <select value={selectedMember} onChange={e => setSelectedMember(e.target.value)} style={{ fontSize: 12, padding: "7px 10px", minWidth: 150 }}>
-                  <option value="all">All assignees</option>
-                  {members.map(m => <option key={m.id} value={m.id}>{memberName(m)}</option>)}
-                  <option value="unassigned">Unassigned</option>
-                </select>
-                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ fontSize: 12, padding: "7px 10px" }}>
-                  <option value="all">All statuses</option>
-                  {STATUS_COLS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            </div>
-            {filteredTasks.length === 0 ? (
-              <div style={{ padding: 28, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>No tasks match these filters.</div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {filteredTasks.map(t => {
-                  const assignee = memberForTask(t);
-                  const late = t.due && t.due < todayStr && t.status !== "Done";
-                  const doneDays = daysToComplete(t);
-                  return (
-                    <div key={t.id} className="admin-task-row" style={{ borderTop: `1px solid ${COLORS.border}` }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.title}</div>
-                        <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 3 }}>{t.priority || "Medium"} priority</div>
-                      </div>
-                      <div style={{ fontSize: 12, color: COLORS.textDim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{memberName(assignee)}</div>
-                      <span style={{ justifySelf: "start", fontSize: 11, fontWeight: 800, padding: "3px 8px", borderRadius: 100, background: t.status === "Done" ? COLORS.frogDim : COLORS.surface3, color: t.status === "Done" ? COLORS.frog : COLORS.textMuted, border: `1px solid ${t.status === "Done" ? COLORS.frogBorder : COLORS.border}` }}>{t.status}</span>
-                      <span style={{ fontSize: 12, color: late ? COLORS.high : COLORS.textMuted, fontWeight: late ? 800 : 600 }}>{t.due || "No date"}</span>
-                      <span style={{ fontSize: 12, color: COLORS.textDim, fontWeight: 600 }}>{t.status === "Done" ? formatDays(doneDays) : "-"}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function MiniMetric({ label, value, danger }) {
-  return (
-    <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 8px" }}>
-      <div style={{ fontSize: 16, fontWeight: 800, color: danger ? COLORS.high : COLORS.text }}>{value}</div>
-      <div style={{ fontSize: 10, color: COLORS.textMuted, fontWeight: 700 }}>{label}</div>
-    </div>
-  );
-}
-
 function TeamsView({ teams, setTeams, notifications, setNotifications, authUser, notifTrigger }) {
   const [tab, setTab] = React.useState("teams");
 
@@ -3584,11 +3314,6 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const unreadCount = notifications.filter(n => !n.read).length;
-  const adminTeams = teams.filter(t => t.my_role === "admin");
-
-  React.useEffect(() => {
-    if (tab === "insights" && adminTeams.length === 0) setTab("teams");
-  }, [tab, adminTeams.length]);
 
   async function createTeam() {
     if (!newTeamName.trim()) return;
@@ -3670,11 +3395,7 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
       </div>
 
       <div style={{ display: "flex", gap: 4, background: COLORS.surface3, borderRadius: 10, padding: 4, border: `1px solid ${COLORS.border}`, marginBottom: 24, width: "fit-content" }}>
-        {[
-          ["teams", "Teams"],
-          ...(adminTeams.length > 0 ? [["insights", "Task insights"]] : []),
-          ["notifications", `Notifications${unreadCount > 0 ? " (" + unreadCount + ")" : ""}`],
-        ].map(([key, label]) => (
+        {[["teams", "Teams"], ["notifications", `Notifications${unreadCount > 0 ? " (" + unreadCount + ")" : ""}`]].map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             style={{ background: tab === key ? COLORS.surface : "transparent", color: tab === key ? COLORS.text : COLORS.textMuted, borderRadius: 7, padding: "7px 16px", fontSize: 13, fontWeight: tab === key ? 700 : 500, border: "none", cursor: "pointer", fontFamily: "inherit", boxShadow: tab === key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition: "all 0.12s", whiteSpace: "nowrap" }}>
             {label}
@@ -3792,8 +3513,6 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
           ))}
         </div>
       )}
-
-      {tab === "insights" && <TeamAdminInsights adminTeams={adminTeams} />}
 
       {tab === "notifications" && (
         <div>
