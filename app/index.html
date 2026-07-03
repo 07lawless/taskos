@@ -795,11 +795,6 @@ const css = `
     border-radius: 12px;
   }
 
-  /* Task card priority strip — had no base sizing previously, making it
-     effectively invisible regardless of the inline background colour set
-     per-card. */
-  .task-card-priority-line { height: 3px; width: 100%; }
-
   /* Bottom nav */
   .bottom-nav { display: none; }
 
@@ -824,6 +819,8 @@ const css = `
     .desktop-only { display: none !important; }
     .tl-sidebar { display: none; }
     .tl-main { margin-left: 0; }
+    .app-shell.sidebar-collapsed .tl-sidebar { display: none; }
+    .app-shell.sidebar-collapsed .tl-main { margin-left: 0; }
     .app-topbar {
       display: none;
     }
@@ -1388,9 +1385,6 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
       data-task-id={task.id}
       data-col={task.status}
     >
-      {/* Priority colour line at top */}
-      <div className="task-card-priority-line" style={{ background: task.isFrog ? COLORS.frog : pc.line }} />
-
       <div className="task-card-body" style={{ WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}>
         {/* Frog label */}
         {task.isFrog && (
@@ -1583,7 +1577,6 @@ function CollabTaskCard({ task, team, onEdit, onDelete, onStatusChange, onDragSt
       className={`task-card${isDragging ? " is-dragging" : ""}${isOverdue ? " is-overdue" : ""}`}
       style={{ touchAction: 'pan-y', WebkitUserSelect: 'none', userSelect: 'none', WebkitTouchCallout: 'none' }}
     >
-      <div className="task-card-priority-line" style={{ background: pc.line }} />
       <div className="task-card-body">
         <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 10, fontWeight: 700, color: pc.text, background: pc.badge, padding: "2px 7px", borderRadius: 4, letterSpacing: 0.5 }}>
