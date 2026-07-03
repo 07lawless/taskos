@@ -543,93 +543,106 @@ const css = `
     opacity: 1;
   }
   .sidebar-foot {
-    flex-shrink: 0;
-    padding: 12px;
+    flex-shrink: 0; padding: 12px;
     border-top: 1px solid var(--c-border);
-    background: var(--c-surface);
   }
-  .sidebar-ws-pill,
-  .sidebar-xp-strip {
-    width: 100%;
-    display: flex;
-    align-items: center;
+  .ws-pill {
+    display: flex; align-items: center;
     gap: 10px;
-    border: 1px solid var(--c-border);
-    background: var(--c-surface2);
-    border-radius: 8px;
-    padding: 10px 11px;
-    font-family: inherit;
-    color: var(--c-text);
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--c-border); background: var(--c-surface2); border-radius: 10px;
+    transition: all 0.15s;
   }
-  .sidebar-ws-pill {
-    margin-bottom: 8px;
-  }
-  .sidebar-ws-icon {
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .ws-pill:hover {
+    border-color: var(--c-accent);
     background: var(--c-accent-dim);
-    color: var(--c-accent);
-    font-size: 13px;
+  }
+  .ws-icon {
+    font-size: 16px;
     flex-shrink: 0;
   }
-  .sidebar-ws-meta,
-  .sidebar-xp-meta {
-    min-width: 0;
+  .ws-meta {
     text-align: left;
-    flex: 1;
+    overflow: hidden;
   }
-  .sidebar-ws-name,
-  .sidebar-xp-row {
-    font-size: 12px;
+  .app-shell.sidebar-collapsed .ws-meta {
+    display: none;
+  }
+  .app-shell.sidebar-collapsed .ws-pill {
+    justify-content: center;
+    padding: 9px 0;
+  }
+  .ws-name {
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--c-text);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
-  .sidebar-ws-hint {
-    font-size: 11px;
+  .ws-hint {
+    font-size: 10.5px;
     color: var(--c-text-muted);
     white-space: nowrap;
   }
-  .sidebar-xp-strip {
+
+  .xp-strip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--c-surface2);
+    border: 1px solid var(--c-border);
     cursor: pointer;
   }
-  .sidebar-xp-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 5px;
-  }
-  .sidebar-xp-streak {
-    color: var(--c-frog);
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
-  .sidebar-xp-bar {
-    height: 5px;
-    background: var(--c-border);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .sidebar-xp-fill {
-    height: 100%;
+  .xp-orb {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
     background: var(--c-accent);
-    border-radius: inherit;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
   }
-  .app-shell.sidebar-collapsed .sidebar-ws-meta,
-  .app-shell.sidebar-collapsed .sidebar-xp-meta {
+  .xp-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .app-shell.sidebar-collapsed .xp-meta {
     display: none;
   }
-  .app-shell.sidebar-collapsed .sidebar-ws-pill,
-  .app-shell.sidebar-collapsed .sidebar-xp-strip {
+  .app-shell.sidebar-collapsed .xp-strip {
     justify-content: center;
-    padding: 9px 0;
+    padding: 8px 0;
+    border: none;
+    background: none;
+  }
+  .xp-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+  .xp-row span:last-child {
+    color: var(--c-frog);
+  }
+  .xp-bar {
+    height: 4px;
+    background: var(--c-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .xp-bar > div {
+    height: 100%;
+    width: 62%;
+    background: var(--c-accent);
+    border-radius: 2px;
   }
   .app-topbar {
     position: sticky;
@@ -671,8 +684,8 @@ const css = `
   }
   .sidebar-collapse-btn:focus-visible,
   .sidebar-nav-item:focus-visible,
-  .sidebar-ws-pill:focus-visible,
-  .sidebar-xp-strip:focus-visible {
+  .ws-pill:focus-visible,
+  .xp-strip:focus-visible {
     outline: 2px solid var(--c-accent);
     outline-offset: 2px;
   }
@@ -6148,24 +6161,22 @@ function App() {
         </nav>
 
         <div className="sidebar-foot">
-          <button className="sidebar-ws-pill" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
-            <span className="sidebar-ws-icon" style={{ background: "#f5ebe7", color: "#8a4f3d" }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5.8A2.8 2.8 0 0 1 11.8 3h.4A2.8 2.8 0 0 1 15 5.8V7h-2V5.8a.8.8 0 0 0-.8-.8h-.4a.8.8 0 0 0-.8.8V7H9z"/></svg>
-            </span>
-            <span className="sidebar-ws-meta">
-              <span className="sidebar-ws-name">{activeWorkspace?.name || "Personal"}</span>
-              <span className="sidebar-ws-hint">Switch workspace</span>
+          <button className="ws-pill" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
+            <span className="ws-icon">{"\uD83D\uDCBC"}</span>
+            <span className="ws-meta">
+              <div className="ws-name">{activeWorkspace?.name || "Personal"}</div>
+              <div className="ws-hint">Switch workspace</div>
             </span>
           </button>
-          <button className="sidebar-xp-strip" onClick={() => setView("xp")} title="Levels and rewards">
-            <span className="sidebar-ws-icon" style={{ background: COLORS.accent, color: "#fff", fontSize: 14 }}>
+          <div className="xp-strip" onClick={() => setView("xp")} title={`Level ${sidebarXpLevel} - ${sidebarXpProgress}% to next level`} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setView("xp"); }}>
+            <div className="xp-orb">
               {levelTierIcon(sidebarXpLevel)}
-            </span>
-            <span className="sidebar-xp-meta">
-              <span className="sidebar-xp-row"><span>Lv {sidebarXpLevel}</span><span className="sidebar-xp-streak"><span>🔥</span>{sidebarXpStreak}</span></span>
-              <span className="sidebar-xp-bar"><span className="sidebar-xp-fill" style={{ width: `${sidebarXpProgress}%` }} /></span>
-            </span>
-          </button>
+            </div>
+            <div className="xp-meta">
+              <div className="xp-row"><span>Lv {sidebarXpLevel}</span><span>{"\uD83D\uDD25"} {sidebarXpStreak}</span></div>
+              <div className="xp-bar"><div style={{ width: `${sidebarXpProgress}%` }} /></div>
+            </div>
+          </div>
         </div>
       </aside>
 
