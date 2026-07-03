@@ -104,6 +104,14 @@
       font-size: 15px; font-weight: 800; color: white;
       letter-spacing: 1px; font-family: "DM Sans", system-ui, sans-serif;
     }
+    .auth-loader-brand {
+      font-size: 22px; font-weight: 800; letter-spacing: -0.3px;
+      color: #f4f4f6; font-family: "DM Sans", system-ui, sans-serif;
+    }
+    .auth-loader-brand em {
+      font-family: "DM Serif Display", Georgia, serif;
+      font-style: italic; font-weight: 400; color: #7c72f0;
+    }
     .auth-loader-spinner {
       width: 20px; height: 20px;
       border: 2px solid rgba(255,255,255,0.1);
@@ -118,6 +126,7 @@
   <div id="root"></div>
   <div id="auth-loader" class="auth-loader">
     <div class="auth-loader-logo">tl</div>
+    <div class="auth-loader-brand">task<em>list</em></div>
     <div class="auth-loader-spinner"></div>
   </div>
   <div id="login-overlay" class="login-overlay" style="display:none">
@@ -546,6 +555,17 @@ const css = `
     flex-shrink: 0; padding: 12px;
     border-top: 1px solid var(--c-border);
   }
+  .sidebar-doc-link {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 8px 10px; margin-bottom: 8px;
+    border-radius: 9px; text-decoration: none;
+    font-size: 13px; font-weight: 600; color: var(--c-text-dim);
+    transition: background 0.12s, color 0.12s;
+  }
+  .sidebar-doc-link:hover { background: var(--c-surface3); color: var(--c-text); }
+  .sidebar-doc-link svg { flex-shrink: 0; width: 16px; height: 16px; }
+  .app-shell.sidebar-collapsed .sidebar-doc-link .sidebar-doc-label { display: none; }
+  .app-shell.sidebar-collapsed .sidebar-doc-link { justify-content: center; padding: 8px 0; }
   .ws-pill {
     display: flex; align-items: center;
     gap: 10px;
@@ -6154,6 +6174,10 @@ function App() {
         </nav>
 
         <div className="sidebar-foot">
+          <a href="https://tasklist.uk/documentation" target="_blank" rel="noopener noreferrer" className="sidebar-doc-link" title="Documentation">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span className="sidebar-doc-label">Documentation</span>
+          </a>
           <button className="ws-pill" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
             <span className="ws-icon">{"\uD83D\uDCBC"}</span>
             <span className="ws-meta">
