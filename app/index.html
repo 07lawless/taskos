@@ -431,6 +431,13 @@ const css = `
     .form-grid-3 { grid-template-columns: 1fr; }
     .time-grid { grid-template-columns: 1fr !important; }
     .page-pad { padding: 16px 16px 90px; }
+    /* Without this, the workspace switcher button's position depends on
+       whether it happens to wrap onto its own line — which depends on the
+       workspace name's text length ("Personal" wraps, "Work" doesn't),
+       causing it to visually jump between left and right as you switch
+       workspaces. Forcing a stacked layout removes that dependency. */
+    .greeting-banner-row { flex-direction: column; align-items: flex-start !important; }
+    .greeting-banner-row > button { margin-top: 4px; }
     input, textarea, select { font-size: 16px; }
     .desktop-only { display: none !important; }
     .header-inner { height: 56px; padding: 0 14px; }
@@ -3566,7 +3573,7 @@ function GreetingBanner({ user, tasks, activeWorkspace, onOpenWorkspaceSwitcher 
 
   return (
     <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div className="greeting-banner-row" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>{dateStr}</div>
           <h1 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 400, lineHeight: 1.15, letterSpacing: "-0.5px", color: COLORS.text }}>
@@ -3636,12 +3643,13 @@ function stripHtml(html) {
 }
 
 // ── Add Bookmark Modal ────────────────────────────────────────────────────────
-function AddBookmarkModal({ onSave, onClose }) {
+function AddBookmarkModal({ onSave, onClose, workspaces, activeWorkspace }) {
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [col, setCol] = useState('');
   const [tags, setTags] = useState('');
+  const [wsId, setWsId] = useState(activeWorkspace?.id || '');
   const [fetchState, setFetchState] = useState('idle'); // idle | loading | done | error
   const fetchTimer = React.useRef(null);
 
@@ -3672,6 +3680,7 @@ function AddBookmarkModal({ onSave, onClose }) {
       favicon: '🔗', collection: col || null,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       starred: false, unread: true,
+      workspace_id: wsId || null,
       created_at: new Date().toISOString(),
     });
     onClose();
@@ -3718,6 +3727,16 @@ function AddBookmarkModal({ onSave, onClose }) {
           </div>
         </div>
 
+        {workspaces?.length > 0 && (
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:11, fontWeight:700, letterSpacing:0.5, textTransform:'uppercase', color:COLORS.textMuted, display:'block', marginBottom:6 }}>Workspace tag (for filtering only — bookmarks show everywhere)</label>
+            <select value={wsId} onChange={e => setWsId(e.target.value)} style={{ width:'100%', padding:'10px 14px', background:COLORS.surface2, border:`1px solid ${COLORS.border}`, borderRadius:10, fontFamily:'inherit', fontSize:14, color:COLORS.text, outline:'none' }}>
+              <option value="">No workspace</option>
+              {workspaces.map(w => <option key={w.id} value={w.id}>{workspaceIcon(w)} {w.name}</option>)}
+            </select>
+          </div>
+        )}
+
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={onClose} style={{ flex:1, padding:11, borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background:COLORS.surface3, color:COLORS.textDim, border:`1px solid ${COLORS.border}` }}>Cancel</button>
           <button onClick={handleSave} disabled={!url.trim()} style={{ flex:2, padding:11, borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background:url.trim() ? COLORS.accent : COLORS.surface3, color:url.trim() ? '#fff' : COLORS.textMuted, border:'none' }}>Save bookmark</button>
@@ -3728,14 +3747,15 @@ function AddBookmarkModal({ onSave, onClose }) {
 }
 
 // ── Edit Bookmark Modal ───────────────────────────────────────────────────────
-function EditBookmarkModal({ bm, onSave, onClose }) {
+function EditBookmarkModal({ bm, onSave, onClose, workspaces }) {
   const [title, setTitle] = useState(bm.title || '');
   const [desc, setDesc]   = useState(bm.description || '');
   const [col, setCol]     = useState(bm.collection || '');
   const [tags, setTags]   = useState(Array.isArray(bm.tags) ? bm.tags.join(', ') : '');
+  const [wsId, setWsId]   = useState(bm.workspace_id || '');
 
   function handleSave() {
-    onSave({ ...bm, title: title.trim() || bm.domain, description: desc.trim(), collection: col || null, tags: tags.split(',').map(t => t.trim()).filter(Boolean) });
+    onSave({ ...bm, title: title.trim() || bm.domain, description: desc.trim(), collection: col || null, tags: tags.split(',').map(t => t.trim()).filter(Boolean), workspace_id: wsId || null });
     onClose();
   }
 
@@ -3774,6 +3794,15 @@ function EditBookmarkModal({ bm, onSave, onClose }) {
             <input value={tags} onChange={e => setTags(e.target.value)} placeholder="tools, reference…" style={{ width:'100%', padding:'10px 14px', background:COLORS.surface2, border:`1px solid ${COLORS.border}`, borderRadius:10, fontFamily:'inherit', fontSize:14, color:COLORS.text, outline:'none' }} />
           </div>
         </div>
+        {workspaces?.length > 0 && (
+          <div style={{ marginBottom:14 }}>
+            <label style={{ fontSize:11, fontWeight:700, letterSpacing:0.5, textTransform:'uppercase', color:COLORS.textMuted, display:'block', marginBottom:6 }}>Workspace tag (for filtering only — bookmarks show everywhere)</label>
+            <select value={wsId} onChange={e => setWsId(e.target.value)} style={{ width:'100%', padding:'10px 14px', background:COLORS.surface2, border:`1px solid ${COLORS.border}`, borderRadius:10, fontFamily:'inherit', fontSize:14, color:COLORS.text, outline:'none' }}>
+              <option value="">No workspace</option>
+              {workspaces.map(w => <option key={w.id} value={w.id}>{workspaceIcon(w)} {w.name}</option>)}
+            </select>
+          </div>
+        )}
         <div style={{ display:'flex', gap:8 }}>
           <button onClick={onClose} style={{ flex:1, padding:11, borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', background:COLORS.surface3, color:COLORS.textDim, border:`1px solid ${COLORS.border}` }}>Cancel</button>
           <button onClick={handleSave} style={{ flex:2, padding:11, borderRadius:8, fontFamily:'inherit', fontSize:13, fontWeight:700, cursor:'pointer', background:COLORS.accent, color:'#fff', border:'none' }}>Save changes</button>
@@ -3836,8 +3865,9 @@ function BookmarkCard({ bm, onDelete, onToggleStar, onToggleRead, onEdit }) {
 }
 
 // ── BookmarksView ─────────────────────────────────────────────────────────────
-function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead, setEditingBookmark }) {
+function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead, setEditingBookmark, workspaces, activeWorkspace }) {
   const [filter, setFilter] = useState('all');
+  const [wsFilter, setWsFilter] = useState('all');
   const [showAdd, setShowAdd] = useState(false);
   const [quickUrl, setQuickUrl] = useState('');
   const [sortOrder, setSortOrder] = useState('date');
@@ -3847,6 +3877,8 @@ function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead,
     if (filter === 'unread')  res = res.filter(b => b.unread);
     if (filter === 'starred') res = res.filter(b => b.starred);
     if (filter.startsWith('col-')) res = res.filter(b => b.collection === filter.replace('col-',''));
+    if (wsFilter === 'none') res = res.filter(b => !b.workspace_id);
+    else if (wsFilter !== 'all') res = res.filter(b => b.workspace_id === wsFilter);
     if (sortOrder === 'alpha')  res.sort((a,b) => (a.title||'').localeCompare(b.title||''));
     if (sortOrder === 'date')   res.sort((a,b) => new Date(b.created_at||b.date||0) - new Date(a.created_at||a.date||0));
     if (sortOrder === 'domain') res.sort((a,b) => (a.domain||'').localeCompare(b.domain||''));
@@ -3929,11 +3961,19 @@ function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead,
           </button>
         ))}
         <select value={sortOrder} onChange={e => setSortOrder(e.target.value)}
-          style={{ marginLeft:'auto', padding:'5px 12px', borderRadius:8, fontSize:12, fontWeight:600, border:`1px solid ${COLORS.border}`, background:COLORS.surface, color:COLORS.textDim, cursor:'pointer', fontFamily:'inherit' }}>
+          style={{ marginLeft: workspaces?.length > 0 ? 0 : 'auto', padding:'5px 12px', borderRadius:8, fontSize:12, fontWeight:600, border:`1px solid ${COLORS.border}`, background:COLORS.surface, color:COLORS.textDim, cursor:'pointer', fontFamily:'inherit' }}>
           <option value="date">Newest first</option>
           <option value="alpha">A–Z</option>
           <option value="domain">By domain</option>
         </select>
+        {workspaces?.length > 0 && (
+          <select value={wsFilter} onChange={e => setWsFilter(e.target.value)}
+            style={{ marginLeft:'auto', padding:'5px 12px', borderRadius:8, fontSize:12, fontWeight:600, border:`1px solid ${COLORS.border}`, background:COLORS.surface, color:COLORS.textDim, cursor:'pointer', fontFamily:'inherit' }}>
+            <option value="all">All workspaces</option>
+            <option value="none">No workspace</option>
+            {workspaces.map(w => <option key={w.id} value={w.id}>{workspaceIcon(w)} {w.name}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Result count */}
@@ -3954,7 +3994,7 @@ function BookmarksView({ bookmarks, onAdd, onDelete, onToggleStar, onToggleRead,
         </div>
       )}
 
-      {showAdd && <AddBookmarkModal onSave={bm => { onAdd(bm); setShowAdd(false); }} onClose={() => setShowAdd(false)} />}
+      {showAdd && <AddBookmarkModal onSave={bm => { onAdd(bm); setShowAdd(false); }} onClose={() => setShowAdd(false)} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
     </div>
   );
 }
@@ -3995,9 +4035,10 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
 }
 
 // ── NoteModal ──────────────────────────────────────────────────────────────────
-function NoteModal({ note, onSave, onClose, onDelete }) {
+function NoteModal({ note, onSave, onClose, onDelete, workspaces, activeWorkspace }) {
   const [title, setTitle] = useState(note?.title || "");
   const [noteDate, setNoteDate] = useState(note?.note_date || note?.noteDate || today());
+  const [wsId, setWsId] = useState(note ? (note.workspace_id || note.workspaceId || "") : (activeWorkspace?.id || ""));
   const [editorError, setEditorError] = useState(false);
   const editorElRef = useRef(null);       // the DOM node CKEditor mounts into
   const editorInstanceRef = useRef(null); // the live CKEditor instance
@@ -4063,7 +4104,7 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
   function handleSave() {
     const content = editorInstanceRef.current ? editorInstanceRef.current.getData() : contentRef.current;
     if (!title.trim() && !stripHtml(content).trim()) { onClose(); return; }
-    onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, noteDate, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
+    onSave({ ...(note || {}), id: note?.id, title: title.trim(), content, pinned: note?.pinned || false, noteDate, workspaceId: wsId || null, createdAt: note?.createdAt || note?.created_at || new Date().toISOString() });
   }
 
   return (
@@ -4078,7 +4119,14 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
             <div style={{ width: 30, height: 30, background: COLORS.accent, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: "white", letterSpacing: 1, flexShrink: 0 }}>tl</div>
             <button onClick={handleSave} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, border: `1px solid ${COLORS.border}`, flexShrink: 0 }}>← Done</button>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap" }}>
+            {workspaces?.length > 0 && (
+              <select value={wsId} onChange={e => setWsId(e.target.value)} title="Workspace tag — for filtering only, note still shows everywhere"
+                style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }}>
+                <option value="">No workspace</option>
+                {workspaces.map(w => <option key={w.id} value={w.id}>{workspaceIcon(w)} {w.name}</option>)}
+              </select>
+            )}
             <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
               style={{ width: "auto", background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none" }} />
             {note && onDelete && (
@@ -4127,8 +4175,9 @@ function NoteModal({ note, onSave, onClose, onDelete }) {
 }
 
 // ── NotesView ──────────────────────────────────────────────────────────────────
-function NotesView({ notes, onNew, setEditingNote, onDelete, onTogglePin }) {
+function NotesView({ notes, onNew, setEditingNote, onDelete, onTogglePin, workspaces }) {
   const [query, setQuery] = useState("");
+  const [wsFilter, setWsFilter] = useState("all");
 
   const filtered = (() => {
     let res = [...notes];
@@ -4136,6 +4185,8 @@ function NotesView({ notes, onNew, setEditingNote, onDelete, onTogglePin }) {
       const q = query.toLowerCase();
       res = res.filter(n => (n.title || "").toLowerCase().includes(q) || (n.content || "").toLowerCase().includes(q));
     }
+    if (wsFilter === "none") res = res.filter(n => !(n.workspace_id || n.workspaceId));
+    else if (wsFilter !== "all") res = res.filter(n => (n.workspace_id || n.workspaceId) === wsFilter);
     return res.sort((a, b) => {
       if (Boolean(a.pinned) !== Boolean(b.pinned)) return b.pinned ? 1 : -1;
       const aDate = new Date(a.updated_at || a.updatedAt || a.created_at || a.createdAt || 0).getTime();
@@ -4161,10 +4212,20 @@ function NotesView({ notes, onNew, setEditingNote, onDelete, onTogglePin }) {
         </div>
       </div>
 
-      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: COLORS.textMuted, flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search notes…"
-          style={{ flex: 1, border: "none", background: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: COLORS.text, boxShadow: "none", padding: 0 }} />
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 200, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ color: COLORS.textMuted, flexShrink: 0 }}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search notes…"
+            style={{ flex: 1, border: "none", background: "none", outline: "none", fontFamily: "inherit", fontSize: 14, color: COLORS.text, boxShadow: "none", padding: 0 }} />
+        </div>
+        {workspaces?.length > 0 && (
+          <select value={wsFilter} onChange={e => setWsFilter(e.target.value)}
+            style={{ padding: "5px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.border}`, background: COLORS.surface, color: COLORS.textDim, cursor: "pointer", fontFamily: "inherit" }}>
+            <option value="all">All workspaces</option>
+            <option value="none">No workspace</option>
+            {workspaces.map(w => <option key={w.id} value={w.id}>{workspaceIcon(w)} {w.name}</option>)}
+          </select>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -4710,10 +4771,10 @@ const api = {
   async deleteProject(id) { await fetch('/api/projects/' + id, { method: 'DELETE', credentials: 'include' }); },
   async getSettings() { const r = await fetch('/api/settings', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveSettings(s) { await fetch('/api/settings', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) }); },
-  async getBookmarks(wsId) { const r = await fetch('/api/bookmarks?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async getBookmarks() { const r = await fetch('/api/bookmarks', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveBookmark(b) { const r = await fetch('/api/bookmarks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }); return r.ok ? r.json() : null; },
   async deleteBookmark(id) { await fetch('/api/bookmarks/' + id, { method: 'DELETE', credentials: 'include' }); },
-  async getNotes(wsId) { const r = await fetch('/api/notes?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  async getNotes() { const r = await fetch('/api/notes', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveNote(n) { const r = await fetch('/api/notes', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(n) }); return r.ok ? r.json() : null; },
   async deleteNote(id) { const r = await fetch('/api/notes/' + id, { method: 'DELETE', credentials: 'include' }); return r.ok; },
   async fetchMeta(url) { const r = await fetch('/api/fetch-meta?url=' + encodeURIComponent(url), { credentials: 'include' }); if (!r.ok) return {}; return r.json(); },
@@ -5032,7 +5093,7 @@ function App() {
       const wsId = activeWs?.id;
 
           const [tasksData, checkinsData, projectsData, settingsData, bookmarksData, xpData, rewardsData, notesData] = await Promise.all([
-        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(wsId), api.getXp(), api.getRewards(), api.getNotes(wsId)
+        api.getTasks(wsId), api.getCheckins(), api.getProjects(wsId), api.getSettings(), api.getBookmarks(), api.getXp(), api.getRewards(), api.getNotes()
       ]);
       if (xpData) setXp(xpData);
       if (rewardsData) {
@@ -5311,14 +5372,14 @@ function App() {
     setActiveWorkspace(ws);
     localStorage.setItem('vtm_workspace_id', ws.id);
     setShowWorkspaceSwitcher(false);
-    // Re-load data for new workspace
+    // Re-load data for new workspace. Bookmarks and Notes are global now
+    // (workspace_id on them is just an optional filter tag), so they stay
+    // loaded as-is and don't need refetching on a workspace switch.
     setTasks([]);
     setProjects([]);
-    setBookmarks([]);
-    setNotes([]);
     try {
-      const [tasksData, projectsData, bookmarksData, notesData] = await Promise.all([
-        api.getTasks(ws.id), api.getProjects(ws.id), api.getBookmarks(ws.id), api.getNotes(ws.id)
+      const [tasksData, projectsData] = await Promise.all([
+        api.getTasks(ws.id), api.getProjects(ws.id)
       ]);
       if (tasksData) setTasks(tasksData
         .sort((a, b) => (a.position ?? 999999) - (b.position ?? 999999))
@@ -5330,8 +5391,6 @@ function App() {
         subtasks: typeof t.subtasks === 'string' ? JSON.parse(t.subtasks) : (t.subtasks || []),
       })));
       if (projectsData) setProjects(projectsData.map(p => ({ ...p, colorId: p.color_id })));
-      if (bookmarksData) setBookmarks(bookmarksData.map(b => ({ ...b, tags: Array.isArray(b.tags) ? b.tags : [] })));
-      if (notesData) setNotes(notesData);
     } catch(e) { console.error('switchWorkspace error:', e); }
   }
 
@@ -5356,7 +5415,7 @@ function App() {
 
   async function addBookmark(bm) {
     const domain = bm.url.replace(/https?:\/\//, '').split('/')[0];
-    const newBm = { ...bm, domain, workspace_id: activeWorkspace?.id };
+    const newBm = { ...bm, domain };
     setBookmarks(prev => [newBm, ...prev]);
     if (authUser) {
       try {
@@ -5399,16 +5458,16 @@ function App() {
   }
 
   async function saveNote(note) {
-    const noteWithWs = { ...note, id: note.id || generateId(), workspaceId: activeWorkspace?.id };
+    const noteWithId = { ...note, id: note.id || generateId() };
     setNotes(prev => {
-      const idx = prev.findIndex(n => n.id === noteWithWs.id);
-      if (idx >= 0) { const copy = [...prev]; copy[idx] = noteWithWs; return copy; }
-      return [noteWithWs, ...prev];
+      const idx = prev.findIndex(n => n.id === noteWithId.id);
+      if (idx >= 0) { const copy = [...prev]; copy[idx] = noteWithId; return copy; }
+      return [noteWithId, ...prev];
     });
     setEditingNote(null); setShowNewNote(false);
     if (authUser) {
       try {
-        const result = await api.saveNote(noteWithWs);
+        const result = await api.saveNote(noteWithId);
         if (!result) {
           window.alert("This note couldn't be saved to the server — it may contain an image that's too large, or your connection dropped. It's showing locally for now, but will be lost if you refresh or switch devices before it saves successfully.");
         }
@@ -5438,7 +5497,7 @@ function App() {
       const updated = prev.map(n => n.id === id ? { ...n, pinned: !n.pinned } : n);
       if (authUser) {
         const note = updated.find(n => n.id === id);
-        if (note) api.saveNote({ ...note, workspaceId: activeWorkspace?.id }).catch(console.error);
+        if (note) api.saveNote(note).catch(console.error);
       }
       // Keep pinned notes on top, most-recently-touched first within each group
       return [...updated].sort((a, b) => (b.pinned - a.pinned) || 0);
@@ -5850,7 +5909,7 @@ function App() {
       )}
 
       <div className="page-pad">
-        {(authUser || user) && view === "board" && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} />}
+        {(authUser || user) && ["board", "calendar", "collab", "teams"].includes(view) && <GreetingBanner user={authUser || user} tasks={tasks} activeWorkspace={activeWorkspace} onOpenWorkspaceSwitcher={() => setShowWorkspaceSwitcher(true)} />}
 
         {/* Filter bar — due date + project */}
         {view === "board" && (
@@ -6060,8 +6119,8 @@ function App() {
         {view === "calendar" && <CalendarView tasks={tasks} onEdit={setEditingTask} />}
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
-        {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} />}
-        {view === "notes" && <NotesView notes={notes} onNew={() => setShowNewNote(true)} setEditingNote={setEditingNote} onDelete={deleteNote} onTogglePin={toggleNotePin} />}
+        {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
+        {view === "notes" && <NotesView notes={notes} onNew={() => setShowNewNote(true)} setEditingNote={setEditingNote} onDelete={deleteNote} onTogglePin={toggleNotePin} workspaces={workspaces} />}
         {view === "collab" && <CollabBoardView teams={teams} />}
 
         {view === "teams" && <TeamsView teams={teams} setTeams={setTeams} notifications={notifications} setNotifications={setNotifications} authUser={authUser} notifTrigger={notifTrigger} />}
@@ -6084,8 +6143,8 @@ function App() {
       {showCheckin && <WellbeingCheckinModal existing={checkins.find(c => c.date === today())} onSave={saveCheckin} onClose={() => setShowCheckin(false)} />}
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
-      {editingBookmark && <EditBookmarkModal bm={editingBookmark} onSave={saveEditedBookmark} onClose={() => setEditingBookmark(null)} />}
-      {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} onDelete={deleteNote} />}
+      {editingBookmark && <EditBookmarkModal bm={editingBookmark} onSave={saveEditedBookmark} onClose={() => setEditingBookmark(null)} workspaces={workspaces} />}
+      {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} onDelete={deleteNote} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
       {showWorkspaceSwitcher && <WorkspaceSwitcher workspaces={workspaces} activeWorkspace={activeWorkspace} onSwitch={switchWorkspace} onCreate={createWorkspace} onDelete={deleteWorkspace} onClose={() => setShowWorkspaceSwitcher(false)} />}
       {touchMoveTask && <TouchMoveModal task={touchMoveTask} onMove={setStatus} onClose={() => setTouchMoveTask(null)} />}
       {showJournal && <AIJournalModal user={user} tasks={tasks} workHours={workHours} onSaveWorkHours={saveWorkHours} onClose={() => setShowJournal(false)} />}
