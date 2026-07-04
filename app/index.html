@@ -228,10 +228,16 @@ const DARK_COLORS = {
 
 // Mutable COLORS object — updated when theme changes
 let COLORS = localStorage.getItem(THEME_KEY) === "dark" ? {...DARK_COLORS} : {...LIGHT_COLORS};
+// NOTE: color/dim are getters, not plain values — PRIORITY_CONFIG is a
+// module-level constant built once when the script loads, so if these were
+// plain properties they'd freeze whatever COLORS.high/highDim etc. happened
+// to be at that moment (usually the light theme) and never update again
+// when the user toggles dark mode. Getters make sure every read reflects
+// the live, current COLORS object instead of a stale snapshot.
 const PRIORITY_CONFIG = {
-  High: { color: COLORS.high, dim: COLORS.highDim, label: "HIGH" },
-  Medium: { color: COLORS.medium, dim: COLORS.mediumDim, label: "MED" },
-  Low: { color: COLORS.low, dim: COLORS.lowDim, label: "LOW" },
+  High: { get color() { return COLORS.high; }, get dim() { return COLORS.highDim; }, label: "HIGH" },
+  Medium: { get color() { return COLORS.medium; }, get dim() { return COLORS.mediumDim; }, label: "MED" },
+  Low: { get color() { return COLORS.low; }, get dim() { return COLORS.lowDim; }, label: "LOW" },
 };
 const STATUS_COLS = ["To Do", "In Progress", "Done"];
 const MOOD_EMOJIS = ["😞", "😕", "😐", "🙂", "😄"];
