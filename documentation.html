@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#4f46e5" />
-  <title>Tasklist.uk Documentation — Tasks, AI, Wellbeing & More</title>
-  <meta name="description" content="Complete guide to Tasklist.uk — task management, AI breakdowns, frog task method, wellbeing tracking, workspaces, bookmarks and analytics." />
-  <meta name="keywords" content="tasklist, task manager, documentation, eat the frog, AI breakdown, wellbeing tracker, productivity app, workspaces" />
+  <title>Tasklist.uk Documentation - Tasks, AI, Wellbeing & More</title>
+  <meta name="description" content="Complete guide to Tasklist.uk — task management, AI breakdowns, frog task method, wellbeing tracking, workspaces, notes, bookmarks, teams, levels & rewards, and analytics." />
+  <meta name="keywords" content="tasklist, task manager, documentation, eat the frog, AI breakdown, wellbeing tracker, productivity app, workspaces, notes, bookmarks, teams, levels, XP" />
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://tasklist.uk/documentation" />
   <meta property="og:title" content="Tasklist.uk Documentation" />
@@ -98,12 +98,14 @@
     }
     .brand { display: flex; align-items: center; gap: 12px; }
     .logo {
-      width: 32px; height: 32px; border-radius: 8px;
+      width: 34px; height: 34px; border-radius: 11px;
       background: var(--c-accent); display: flex; align-items: center;
-      justify-content: center; font-size: 12px; font-weight: 800;
-      color: #fff; letter-spacing: 1px;
+      justify-content: center; font-size: 15px; font-weight: 600;
+      color: #fff; letter-spacing: 0;
     }
-    .brand-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-title { font-size: 17px; letter-spacing: -0.3px; }
+    .brand-title .logo-task { font-weight: 800; color: var(--c-text); }
+    .brand-title .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--c-accent); }
     .brand-sub { font-size: 11px; color: var(--c-text-muted); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
     .header-actions { display: flex; align-items: center; gap: 8px; }
     .pill-btn {
@@ -314,7 +316,7 @@
       <a class="brand" href="https://tasklist.uk/" aria-label="Tasklist.uk Home">
         <div class="logo">tl</div>
         <div>
-          <div class="brand-title">Tasklist.uk</div>
+          <div class="brand-title"><span class="logo-task">task</span><span class="logo-list">list</span></div>
           <div class="brand-sub">Documentation</div>
         </div>
       </a>
@@ -363,9 +365,11 @@
         <a class="sidebar-link" href="#workspaces"><span class="dot"></span>Workspaces</a>
         <a class="sidebar-link" href="#collab"><span class="dot"></span>Collaboration Board</a>
         <a class="sidebar-link" href="#bookmarks"><span class="dot"></span>Bookmarks</a>
+        <a class="sidebar-link" href="#notes"><span class="dot"></span>Notes</a>
         <a class="sidebar-link" href="#calendar"><span class="dot"></span>Calendar</a>
         <a class="sidebar-link" href="#wellbeing"><span class="dot"></span>Wellbeing</a>
         <a class="sidebar-link" href="#analytics"><span class="dot"></span>Analytics</a>
+        <a class="sidebar-link" href="#rewards"><span class="dot"></span>Levels & Rewards</a>
         <a class="sidebar-link" href="#share"><span class="dot"></span>Share board</a>
         <a class="sidebar-link" href="#data"><span class="dot"></span>Data & sync</a>
         <a class="sidebar-link" href="#faq"><span class="dot"></span>FAQ</a>
@@ -506,7 +510,7 @@ One likely blocker or risk to avoid.</div>
       <section class="section" id="workspaces">
         <div class="section-tag">Workspaces</div>
         <h2 class="section-title">Separate work from <em>personal</em></h2>
-        <p class="section-body">Workspaces give you completely isolated environments within one account. Tasks, projects and bookmarks are scoped per workspace — switching is instant from the workspace pill on the Board tab.</p>
+        <p class="section-body">Workspaces give you completely isolated environments within one account. Tasks and projects are scoped per workspace and switching is instant from the workspace pill on the Board tab — Notes and Bookmarks are shared across every workspace, with an optional tag available purely for filtering.</p>
         <div class="cards">
           <div class="card"><div class="card-icon">🏠</div><div class="card-title">Personal</div><div class="card-body">Created automatically on first login. For personal goals, habits and life admin.</div></div>
           <div class="card"><div class="card-icon">💼</div><div class="card-title">Work</div><div class="card-body">A dedicated space for professional tasks and projects, isolated from personal data.</div></div>
@@ -533,6 +537,12 @@ One likely blocker or risk to avoid.</div>
             <div><div class="feature-row-title">Multiple teams</div><div class="feature-row-body">If you belong to more than one team, a team switcher at the top of the Collaboration Board lets you jump between each team's board.</div></div>
           </div>
         </div>
+        <div class="feature-row">
+          <div class="feature-row-inner">
+            <div class="feature-row-icon">📊</div>
+            <div><div class="feature-row-title">Team Analytics (admins only)</div><div class="feature-row-body">Team admins get an Analytics dashboard for each team: headline stats (total, completed, in progress, overdue, completion rate and average time-to-done), a bar chart of tasks completed per member, an eight-week throughput trend, a status split, and a per-member breakdown table. Average completion time is measured from task creation to completion, so tasks completed before this was introduced show "—".</div></div>
+          </div>
+        </div>
       </section>
 
       <div class="divider"></div>
@@ -541,12 +551,27 @@ One likely blocker or risk to avoid.</div>
       <section class="section" id="bookmarks">
         <div class="section-tag">Bookmarks</div>
         <h2 class="section-title">Save and organise <em>links</em></h2>
-        <p class="section-body">Paste any URL into the bookmarks tab and Tasklist.uk automatically fetches the page title, description and preview image. Bookmarks are scoped to your active workspace.</p>
+        <p class="section-body">Paste any URL into the bookmarks tab and Tasklist.uk automatically fetches the page title, description and preview image. Bookmarks appear in every workspace — an optional workspace tag is available purely for filtering and sorting.</p>
         <div class="cards">
           <div class="card"><div class="card-icon">⚡</div><div class="card-title">Smart fetch</div><div class="card-body">Paste a URL and the app fetches the title, description and image automatically.</div></div>
           <div class="card"><div class="card-icon">🏷️</div><div class="card-title">Star and read</div><div class="card-body">Star important bookmarks and mark items as read to keep your collection organised.</div></div>
           <div class="card"><div class="card-icon">📂</div><div class="card-title">Collections</div><div class="card-body">Group bookmarks into collections — Tools, Reading, Reference and more.</div></div>
           <div class="card"><div class="card-icon">✏️</div><div class="card-title">Edit anytime</div><div class="card-body">Update title, description, collection and tags on any saved bookmark.</div></div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Notes -->
+      <section class="section" id="notes">
+        <div class="section-tag">Notes</div>
+        <h2 class="section-title">Write down <em>anything worth keeping</em></h2>
+        <p class="section-body">A full-page rich-text editor for meeting notes, ideas and daily write-ups. Like Bookmarks, Notes are shared across every workspace, with an optional tag for filtering.</p>
+        <div class="cards cols-3">
+          <div class="card"><div class="card-icon">✍️</div><div class="card-title">Rich formatting</div><div class="card-body">Bold, italic, underline, headings, bullet and numbered lists, links, images and tables.</div></div>
+          <div class="card"><div class="card-icon">🖼️</div><div class="card-title">Paste images & tables</div><div class="card-body">Paste an image directly into a note and resize it, or build a table right in the editor.</div></div>
+          <div class="card"><div class="card-icon">📌</div><div class="card-title">Pin & search</div><div class="card-body">Pin important notes to the top, and search across every note's title and content.</div></div>
+          <div class="card"><div class="card-icon">🗓️</div><div class="card-title">Custom date</div><div class="card-body">Each note carries a date you can set yourself — handy for backdating a meeting write-up.</div></div>
         </div>
       </section>
 
@@ -615,6 +640,23 @@ One likely blocker or risk to avoid.</div>
           <div class="stat-card"><div class="stat-val">248</div><div class="stat-label">Tasks done</div></div>
           <div class="stat-card"><div class="stat-val">4.2★</div><div class="stat-label">Avg happiness</div></div>
           <div class="stat-card"><div class="stat-val">14</div><div class="stat-label">Check-in streak</div></div>
+        </div>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Levels & Rewards -->
+      <section class="section" id="rewards">
+        <div class="section-tag">Levels & Rewards</div>
+        <h2 class="section-title">Progress that <em>feels</em> like progress</h2>
+        <p class="section-body">A light gamification layer that rewards consistent progress. Completing tasks earns XP, which raises your level — up to 50 — with a daily soft cap to keep it healthy.</p>
+        <div class="cards cols-3">
+          <div class="card"><div class="card-icon">⭐</div><div class="card-title">XP & levels</div><div class="card-body">Earn XP for every completed task. Frog tasks, subtasks and streaks all boost the amount earned.</div></div>
+          <div class="card"><div class="card-icon">🔥</div><div class="card-title">Streaks</div><div class="card-body">Completing work on consecutive days builds a streak, which increases your XP bonus.</div></div>
+          <div class="card"><div class="card-icon">🎨</div><div class="card-title">Accent Themes</div><div class="card-body">Unlock colour themes as you level up — Sunset at 7, Ocean at 18, Royal at 30, Inferno at 45 — and equip whichever you like.</div></div>
+          <div class="card"><div class="card-icon">👑</div><div class="card-title">Prestige</div><div class="card-body">Reach level 50 and you can prestige: your level resets to 1, but total XP, streak and unlocked rewards are kept, and your prestige count goes up.</div></div>
+          <div class="card"><div class="card-icon">🏆</div><div class="card-title">Scoreboard</div><div class="card-body">A leaderboard ranks users by prestige, then level, then XP — showing name, avatar and level. Email addresses are never shown.</div></div>
+          <div class="card"><div class="card-icon">📈</div><div class="card-title">XP detail page</div><div class="card-body">A dedicated page shows your level, streaks, a 14-day XP chart, tier milestones and recent XP events.</div></div>
         </div>
       </section>
 
@@ -721,7 +763,7 @@ One likely blocker or risk to avoid.</div>
 
     // Sidebar active state
     (function() {
-      var ids = ['overview','getting-started','tasks','frog','ai','projects','workspaces','collab','bookmarks','calendar','wellbeing','analytics','share','data','faq'];
+      var ids = ['overview','getting-started','tasks','frog','ai','projects','workspaces','collab','bookmarks','notes','calendar','wellbeing','analytics','rewards','share','data','faq'];
       var links = {};
       ids.forEach(function(id) {
         var el = document.querySelector('.sidebar-link[href="#' + id + '"]');
