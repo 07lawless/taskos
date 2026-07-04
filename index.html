@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Favicons -->
-  <link rel="icon" type="image/png" sizes="32x32"  href="/icons/favicon-32.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png" />
-  <link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png" />
-  <link rel="apple-touch-icon"                      href="/icons/favicon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32"  href="/icons/favicon-32.png?v=2" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png?v=2" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png?v=2" />
+  <link rel="shortcut icon" href="/icons/favicon-32.png?v=2" />
+  <link rel="apple-touch-icon"                      href="/icons/favicon-192.png?v=2" />
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFR7JQD884"></script>
@@ -125,11 +126,15 @@
       display: flex; align-items: center; justify-content: space-between;
     }
     .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-    .nav-logo-mark { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: white; letter-spacing: 1px; }
-    .nav-logo-text { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+    .nav-logo-mark { width: 34px; height: 34px; background: var(--accent); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: white; letter-spacing: 0; }
+    .nav-logo-text { font-size: 19px; letter-spacing: -0.3px; }
+    .nav-logo-text .logo-task { font-weight: 800; color: var(--text); }
+    .nav-logo-text .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--accent); }
     .nav-links { display: flex; align-items: center; gap: 8px; }
     .nav-link { font-size: 14px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px; transition: color 0.15s, background 0.15s; }
     .nav-link:hover { color: var(--text); background: var(--surface2); }
+    .nav-link-docs { display: inline-flex; align-items: center; gap: 6px; }
+    .nav-link-docs-icon { display: none; flex-shrink: 0; }
     .nav-cta { background: var(--accent); color: white; font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 8px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
     .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
 
@@ -265,8 +270,10 @@
     footer { border-top: 1px solid var(--border); padding: 40px 24px; }
     .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
     .footer-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-    .footer-logo-mark { width: 24px; height: 24px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: white; }
-    .footer-logo-text { font-size: 14px; font-weight: 700; color: var(--text); }
+    .footer-logo-mark { width: 26px; height: 26px; background: var(--accent); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; }
+    .footer-logo-text { font-size: 15px; letter-spacing: -0.3px; }
+    .footer-logo-text .logo-task { font-weight: 800; color: var(--text); }
+    .footer-logo-text .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--accent); }
     .footer-links { display: flex; align-items: center; gap: 20px; }
     .footer-link { font-size: 13px; color: var(--text-muted); text-decoration: none; }
     .footer-link:hover { color: var(--text); }
@@ -291,6 +298,11 @@
       .features-grid { grid-template-columns: 1fr; }
       .feature-card.featured { grid-column: span 1; }
       .nav-links .nav-link { display: none; }
+      .nav-links .nav-link[href="https://tasklist.uk/documentation"] { display: inline-flex; padding: 8px; }
+      .nav-link-docs-icon { display: inline-block; }
+      .nav-link-docs-text { display: none; }
+      .nav-links { gap: 4px; }
+      .nav-cta { padding: 8px 14px; }
       .mockup-cols { grid-template-columns: 1fr; }
       .mockup-cols > div:not(:first-child) { display: none; }
       .stats-grid { grid-template-columns: 1fr 1fr; }
@@ -315,13 +327,16 @@
     <div class="nav-inner">
       <a href="/" class="nav-logo">
         <div class="nav-logo-mark">tl</div>
-        <span class="nav-logo-text">Tasklist.uk</span>
+        <span class="nav-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
       </a>
       <div class="nav-links">
         <a href="#method" class="nav-link">Method</a>
         <a href="#features" class="nav-link">Features</a>
         <a href="#wellbeing" class="nav-link">Wellbeing</a>
-        <a href="/documentation" class="nav-link">Docs</a>
+        <a href="https://tasklist.uk/documentation" class="nav-link nav-link-docs">
+          <svg class="nav-link-docs-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+          <span class="nav-link-docs-text">Docs</span>
+        </a>
         <a href="https://app.tasklist.uk" class="nav-cta">Open App →</a>
       </div>
     </div>
@@ -652,10 +667,10 @@
     <div class="footer-inner">
       <a href="/" class="footer-logo">
         <div class="footer-logo-mark">tl</div>
-        <span class="footer-logo-text">Tasklist.uk</span>
+        <span class="footer-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
       </a>
       <div class="footer-built">
-        <a href="/documentation" class="footer-link">Documentation</a>
+        <a href="https://tasklist.uk/documentation" class="footer-link">Documentation</a>
         <span>Built with</span>
         <a href="https://groq.com" target="_blank" rel="noopener">Groq</a>
         <a href="https://hetzner.com" target="_blank" rel="noopener">Hetzner</a>
