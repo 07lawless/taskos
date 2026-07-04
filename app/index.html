@@ -2961,18 +2961,27 @@ The date must be today or in the future. High priority = sooner. Consider realis
 
 // ── Project / Tag Colour Palette ───────────────────────────────────────────────
 const PROJECT_COLORS = [
-  { id: "violet",  bg: "#ede9fe", border: "#c4b5fd", text: "#6d28d9" },
-  { id: "blue",    bg: "#dbeafe", border: "#93c5fd", text: "#1d4ed8" },
-  { id: "green",   bg: "#dcfce7", border: "#86efac", text: "#15803d" },
-  { id: "amber",   bg: "#fef3c7", border: "#fcd34d", text: "#b45309" },
-  { id: "red",     bg: "#fee2e2", border: "#fca5a5", text: "#b91c1c" },
-  { id: "pink",    bg: "#fce7f3", border: "#f9a8d4", text: "#be185d" },
-  { id: "cyan",    bg: "#cffafe", border: "#67e8f9", text: "#0e7490" },
-  { id: "slate",   bg: "#f1f5f9", border: "#cbd5e1", text: "#475569" },
+  { id: "violet",  bg: "#ede9fe", border: "#c4b5fd", text: "#6d28d9", darkBg: "#2d2150", darkBorder: "#4c3a82", darkText: "#a78bfa" },
+  { id: "blue",    bg: "#dbeafe", border: "#93c5fd", text: "#1d4ed8", darkBg: "#132a45", darkBorder: "#1e4976", darkText: "#60a5fa" },
+  { id: "green",   bg: "#dcfce7", border: "#86efac", text: "#15803d", darkBg: "#0d3d25", darkBorder: "#1a6640", darkText: "#4ade80" },
+  { id: "amber",   bg: "#fef3c7", border: "#fcd34d", text: "#b45309", darkBg: "#3d2a0d", darkBorder: "#6b4a12", darkText: "#fbbf24" },
+  { id: "red",     bg: "#fee2e2", border: "#fca5a5", text: "#b91c1c", darkBg: "#3d1515", darkBorder: "#6b2323", darkText: "#f87171" },
+  { id: "pink",    bg: "#fce7f3", border: "#f9a8d4", text: "#be185d", darkBg: "#3d1530", darkBorder: "#6b2350", darkText: "#f472b6" },
+  { id: "cyan",    bg: "#cffafe", border: "#67e8f9", text: "#0e7490", darkBg: "#0d3238", darkBorder: "#1a5560", darkText: "#67e8f9" },
+  { id: "slate",   bg: "#f1f5f9", border: "#cbd5e1", text: "#475569", darkBg: "#252535", darkBorder: "#3d3d52", darkText: "#94a3b8" },
 ];
 
+// NOTE: this is theme-aware, not a plain lookup — PROJECT_COLORS' bg/border/text
+// are tuned for light backgrounds (bright pastel chips), which looked fine on
+// light cards but rendered as jarring light patches on dark ones. Rather than
+// freeze a single value the way the old PRIORITY_CONFIG bug did, this checks
+// the live COLORS object on every call and swaps in the dark* variant when
+// the app is actually in dark mode.
 function getProjectColor(colorId) {
-  return PROJECT_COLORS.find(c => c.id === colorId) || PROJECT_COLORS[0];
+  const entry = PROJECT_COLORS.find(c => c.id === colorId) || PROJECT_COLORS[0];
+  const isDark = COLORS.bg === DARK_COLORS.bg;
+  if (isDark) return { id: entry.id, bg: entry.darkBg, border: entry.darkBorder, text: entry.darkText };
+  return entry;
 }
 
 // ── Project Manager Modal ──────────────────────────────────────────────────────
