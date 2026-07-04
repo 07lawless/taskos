@@ -1104,7 +1104,7 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
           <span>Add a bit more detail to this task's description first. The AI breakdown needs something to work from, otherwise it ends up guessing.</span>
         </div>
       )}
-      {hasBreakdown && state !== "loading" && (
+      {hasBreakdown && state !== "loading" && state !== "needs-description" && (
         <div className="ai-fade-in" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {breakdown.summary && (
             <div style={{ background: COLORS.surface, borderRadius: 8, padding: "12px 14px", border: `1px solid ${COLORS.border}`, fontSize: 13, lineHeight: 1.6 }}>
@@ -3169,135 +3169,80 @@ Respond with ONLY this JSON format (no markdown, no extra text):
   );
 }
 
-// ── AI Journal Modal ───────────────────────────────────────────────────────────
-function AIJournalModal({ user, tasks, workHours, onSaveWorkHours, onClose }) {
-  const [step, setStep] = useState("journal"); // journal | response | workhours
-  const [entry, setEntry] = useState("");
-  const [state, setState] = useState("idle");
-  const [reflection, setReflection] = useState(null);
-  const [wStart, setWStart] = useState(workHours?.start || "09:00");
-  const [wEnd, setWEnd] = useState(workHours?.end || "17:30");
-
+// ── End of Day Recap Modal ─────────────────────────────────────────────────────
+// Replaces the old free-text "AI Journal" flow. No writing required: shows a
+// quick recap of what got done today, then lets the user pick tomorrow's
+// frog before signing off, so that decision is already made in the morning.
+function EndOfDayRecapModal({ user, tasks, onSetFrog, onClose }) {
   const completedToday = tasks.filter(t => t.completedAt && t.completedAt.startsWith(today()));
+  const frogEatenToday = completedToday.some(t => t.isFrog);
+  const openTasks = tasks.filter(t => t.status !== "Done");
+  const currentFrog = openTasks.find(t => t.isFrog);
+  const [selectedId, setSelectedId] = useState(currentFrog?.id || openTasks[0]?.id || null);
   const firstName = user?.firstName || "there";
 
-  async function submitJournal() {
-    if (!entry.trim()) return;
-    setState("loading");
-    const doneList = completedToday.map(t => `- ${t.title}${t.happiness ? ` (rated ${t.happiness}/5 stars)` : ""}`).join("\n") || "None";
-
-    const prompt = `You are a warm, thoughtful end-of-day journal companion for ${firstName}.
-
-Today (${today()}):
-- Tasks completed: 
-${doneList}
-- Work hours: ${workHours?.start || "09:00"} to ${workHours?.end || "17:30"}
-
-${firstName}'s journal entry:
-"${entry}"
-
-Respond with a warm, personal reflection. Acknowledge what they shared, celebrate any wins, offer gentle perspective on challenges, and leave them with one encouraging thought for tomorrow. Keep it conversational, genuine and under 150 words. Do NOT use bullet points or headers — just flowing, warm prose.`;
-
-    try {
-      const response = await fetch("/api/ai", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-      const data = await response.json();
-      setReflection(data.text || "");
-      setState("done");
-      setStep("response");
-    } catch(e) { setState("error"); }
+  function confirmFrog() {
+    const task = openTasks.find(t => t.id === selectedId);
+    if (task && !task.isFrog) onSetFrog(task.id);
+    onClose();
   }
-
-  const isEndOfDay = () => {
-    if (!workHours) return true;
-    const now = new Date();
-    const [eh, em] = workHours.end.split(":").map(Number);
-    return now.getHours() > eh || (now.getHours() === eh && now.getMinutes() >= em);
-  };
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: COLORS.surface, borderRadius: 14, width: "100%", maxWidth: 520, maxHeight: "90vh", overflow: "auto", padding: 28, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", border: `1px solid ${COLORS.border}` }}>
+      <div style={{ background: COLORS.surface, borderRadius: 16, width: "100%", maxWidth: 460, maxHeight: "90vh", overflow: "auto", padding: 28, boxShadow: "0 24px 60px rgba(0,0,0,0.2)", border: `1px solid ${COLORS.border}` }}>
 
-        {step === "workhours" ? (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>Work Hours</h2>
-              <button onClick={() => setStep("journal")} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "6px 12px", border: `1px solid ${COLORS.border}` }}>← Back</button>
-            </div>
-            <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 20, lineHeight: 1.6 }}>Set your working hours so the end-of-day journal prompt appears at the right time.</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>START TIME</label>
-                <input type="time" value={wStart} onChange={e => setWStart(e.target.value)} />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>END TIME</label>
-                <input type="time" value={wEnd} onChange={e => setWEnd(e.target.value)} />
-              </div>
-            </div>
-            <button onClick={() => { onSaveWorkHours({ start: wStart, end: wEnd }); setStep("journal"); }}
-              style={{ width: "100%", background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 600 }}>
-              Save Work Hours
-            </button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
+          <button onClick={onClose} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, width: 28, height: 28, border: `1px solid ${COLORS.border}`, fontSize: 13, cursor: "pointer" }}>✕</button>
+        </div>
+
+        <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.frog, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 8 }}>Day Complete</div>
+        <div style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: 24, color: COLORS.text, marginBottom: 6, lineHeight: 1.25 }}>Nice work today, {firstName}.</div>
+        <div style={{ fontSize: 13.5, color: COLORS.textMuted, lineHeight: 1.5, marginBottom: 20 }}>Here's how it went, and one quick thing before you switch off.</div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 18 }}>
+          <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.text }}>{completedToday.length}</div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, textTransform: "uppercase", marginTop: 2 }}>Completed</div>
           </div>
-        ) : step === "journal" ? (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>📝 End of Day Journal</h2>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => setStep("workhours")} style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 8, padding: "6px 10px", fontSize: 12, border: `1px solid ${COLORS.border}` }}>⏰ Hours</button>
-                <button onClick={onClose} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "6px 12px", border: `1px solid ${COLORS.border}` }}>✕</button>
-              </div>
-            </div>
-            <p style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 16 }}>
-              {workHours ? `Work hours: ${workHours.start} – ${workHours.end}` : "No work hours set"}
-            </p>
-
-            {completedToday.length > 0 && (
-              <div style={{ background: COLORS.frogDim, border: `1px solid ${COLORS.frogBorder}`, borderRadius: 10, padding: "10px 14px", marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.frogDark, marginBottom: 6 }}>TODAY'S WINS ({completedToday.length} tasks)</div>
-                {completedToday.map(t => (
-                  <div key={t.id} style={{ fontSize: 12, color: COLORS.frogDark, padding: "2px 0" }}>✓ {t.title}{t.happiness ? ` ${"⭐".repeat(t.happiness)}` : ""}</div>
-                ))}
-              </div>
-            )}
-
-            <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 8 }}>HOW DID TODAY GO?</label>
-            <textarea value={entry} onChange={e => setEntry(e.target.value)}
-              placeholder={`Hey ${firstName}, how was your day? What went well, what was tough, anything on your mind?`}
-              style={{ minHeight: 120, marginBottom: 12 }} />
-
-            {state === "error" && <div style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: 10, fontSize: 13, marginBottom: 12 }}>Something went wrong. Try again.</div>}
-
-            <button onClick={submitJournal} disabled={!entry.trim() || state === "loading"}
-              style={{ width: "100%", background: entry.trim() ? COLORS.accent : COLORS.surface3, color: entry.trim() ? "#fff" : COLORS.textMuted, borderRadius: 8, padding: "12px", fontSize: 14, fontWeight: 600 }}>
-              {state === "loading" ? "Getting your reflection…" : "Get AI Reflection ✨"}
-            </button>
+          <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 14, textAlign: "center" }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: COLORS.text }}>{frogEatenToday ? "🐸" : "—"}</div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600, textTransform: "uppercase", marginTop: 2 }}>Frog eaten</div>
           </div>
+        </div>
+
+        {completedToday.length > 0 && (
+          <div style={{ background: COLORS.frogDim, border: `1px solid ${COLORS.frogBorder}`, borderRadius: 10, padding: "12px 14px", marginBottom: 18 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.frogDark, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Today's wins</div>
+            {completedToday.map(t => (
+              <div key={t.id} style={{ fontSize: 12.5, color: COLORS.frogDark, padding: "2px 0" }}>✓ {t.title}{t.happiness ? ` ${"⭐".repeat(t.happiness)}` : ""}</div>
+            ))}
+          </div>
+        )}
+
+        {openTasks.length > 0 ? (
+          <>
+            <div style={{ height: 1, background: COLORS.border, margin: "20px 0 16px" }} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.frog, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 10 }}>Pick tomorrow's frog</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 18 }}>
+              {openTasks.slice(0, 6).map(t => {
+                const selected = t.id === selectedId;
+                return (
+                  <div key={t.id} onClick={() => setSelectedId(t.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 13px", border: `1.5px solid ${selected ? COLORS.frog : COLORS.border}`, background: selected ? COLORS.frogDim : "transparent", borderRadius: 10, cursor: "pointer", transition: "all 0.15s" }}>
+                    <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${selected ? COLORS.frog : COLORS.borderHover}`, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {selected && <div style={{ width: 9, height: 9, borderRadius: "50%", background: COLORS.frog }} />}
+                    </div>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.text }}>{t.title}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={confirmFrog} style={{ width: "100%", background: COLORS.frog, color: "#fff", borderRadius: 10, padding: 13, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Set frog & finish day →</button>
+            <button onClick={onClose} style={{ width: "100%", background: "none", color: COLORS.textMuted, border: "none", padding: 10, fontSize: 13, fontWeight: 600, marginTop: 4, cursor: "pointer" }}>Skip — just close</button>
+          </>
         ) : (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>✨ Your Reflection</h2>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => setStep("journal")} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600 }}>← Edit</button>
-                <button onClick={onClose} style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "6px 12px", border: `1px solid ${COLORS.border}` }}>✕</button>
-              </div>
-            </div>
-
-            <div style={{ background: COLORS.accentDim, border: `1px solid ${COLORS.accent}30`, borderRadius: 10, padding: "14px 16px", marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 8 }}>YOUR ENTRY</div>
-              <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.6, fontStyle: "italic" }}>"{entry}"</div>
-            </div>
-
-            <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "14px 16px" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 8 }}>AI REFLECTION</div>
-              <div style={{ fontSize: 14, color: COLORS.text, lineHeight: 1.8 }}>{reflection}</div>
-            </div>
-          </div>
+          <button onClick={onClose} style={{ width: "100%", background: COLORS.accent, color: "#fff", borderRadius: 10, padding: 13, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Done for today →</button>
         )}
       </div>
     </div>
@@ -4016,7 +3961,7 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
 
       {/* Work Hours */}
       <Section title="Work Hours">
-        <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>The end-of-day journal will appear automatically at your work end time.</p>
+        <p style={{ fontSize: 13, color: COLORS.textDim, marginBottom: 14, lineHeight: 1.6 }}>Your day recap will appear automatically at your work end time.</p>
         <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 120 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, display: "block", marginBottom: 6 }}>START TIME</label>
@@ -4031,8 +3976,8 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
         <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${COLORS.border}` }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, marginBottom: 2 }}>End-of-day journal prompt</div>
-              <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>Automatically show the journal at your work end time</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, marginBottom: 2 }}>End-of-day recap prompt</div>
+              <div style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 1.5 }}>Automatically show your day recap and tomorrow's frog picker at your work end time</div>
             </div>
             <button
               onClick={() => onSaveEodSetting(workHours?.showEodJournal !== false ? false : true)}
@@ -4052,7 +3997,7 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
             </button>
           </div>
           <div style={{ marginTop: 8, fontSize: 11, color: workHours?.showEodJournal !== false ? COLORS.frog : COLORS.textMuted, fontWeight: 600 }}>
-            {workHours?.showEodJournal !== false ? "✓ Journal prompt is on" : "Journal prompt is off"}
+            {workHours?.showEodJournal !== false ? "✓ Recap prompt is on" : "Recap prompt is off"}
           </div>
         </div>
       </Section>
@@ -4267,7 +4212,7 @@ function OnboardingModal({ onComplete }) {
               <div style={{ fontSize: 42, marginBottom: 10 }}>🕐</div>
               <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>Your Work Hours</h2>
               <p style={{ fontSize: 14, color: COLORS.textDim, lineHeight: 1.6 }}>
-                We'll use these to prompt your end-of-day journal at the right time. You can change this later in Settings.
+                We'll use these to show your day recap at the right time. You can change this later in Settings.
               </p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
@@ -4281,7 +4226,7 @@ function OnboardingModal({ onComplete }) {
               </div>
             </div>
             <div style={{ background: COLORS.accentDim, borderRadius: 10, padding: "10px 14px", marginBottom: 18, fontSize: 13, color: COLORS.accent, lineHeight: 1.5 }}>
-              📝 Your end-of-day journal will appear at <strong>{wEnd}</strong>
+              📊 Your day recap will appear at <strong>{wEnd}</strong>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={() => setStep(1)} style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 8, padding: "12px 16px", fontSize: 14, fontWeight: 600, border: `1px solid ${COLORS.border}` }}>
@@ -4309,7 +4254,7 @@ function OnboardingModal({ onComplete }) {
                 { icon: "🐸", title: "Eat the Frog", desc: "Flag your hardest task as the \"frog\" and tackle it first with Focus Mode." },
                 { icon: "🪄", title: "AI Task Breakdown", desc: "Let AI split any task into clear, actionable subtasks." },
                 { icon: "🗓️", title: "AI Daily Plan", desc: "Get a suggested order for today's tasks based on priority and time." },
-                { icon: "📓", title: "Journal & Wellbeing", desc: "Track mood and energy, and reflect with an end-of-day AI journal prompt." },
+                { icon: "📓", title: "Wellbeing & Day Recap", desc: "Track mood and energy, and get a quick recap of your day with a prompt to set tomorrow's frog." },
               ].map(f => (
                 <div key={f.title} style={{ display: "flex", gap: 12, alignItems: "flex-start", background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "10px 12px" }}>
                   <div style={{ fontSize: 22, lineHeight: 1 }}>{f.icon}</div>
@@ -5534,7 +5479,7 @@ function WorkHoursSetupModal({ onSave, onSkip }) {
           <div style={{ fontSize: 28, marginBottom: 12, textAlign: "center" }}>🕐</div>
           <h2 style={{ fontSize: 20, fontWeight: 800, color: COLORS.text, marginBottom: 8, textAlign: "center", fontFamily: "'DM Sans', system-ui" }}>Set your work hours</h2>
           <p style={{ fontSize: 13, color: COLORS.textMuted, lineHeight: 1.6, marginBottom: 24, textAlign: "center", fontFamily: "'DM Sans', system-ui" }}>
-            We'll use these to prompt your end-of-day journal at the right time. You can change this later in Settings.
+            We'll use these to show your day recap at the right time. You can change this later in Settings.
           </p>
           <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
             <div style={{ flex: 1 }}>
@@ -5547,7 +5492,7 @@ function WorkHoursSetupModal({ onSave, onSkip }) {
             </div>
           </div>
           <div style={{ background: "#eeedfb", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: "#4f46e5", fontFamily: "'DM Sans', system-ui" }}>
-            📝 Your end-of-day journal will appear at <strong>{end}</strong>
+            📊 Your day recap will appear at <strong>{end}</strong>
           </div>
           <button onClick={() => onSave({ start, end })} style={{ width: "100%", background: "#4f46e5", color: "#fff", borderRadius: 10, padding: "13px", fontSize: 14, fontWeight: 700, border: "none", cursor: "pointer", fontFamily: "'DM Sans', system-ui", marginBottom: 10 }}>
             Save & Get Started 🎉
@@ -5742,7 +5687,7 @@ function App() {
   const [showSearch, setShowSearch] = useState(false);
   const [showFocus, setShowFocus] = useState(false);
   const [showDailyPlan, setShowDailyPlan] = useState(false);
-  const [showJournal, setShowJournal] = useState(false);
+  const [showEodRecap, setShowEodRecap] = useState(false);
   const [showProjectManager, setShowProjectManager] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAllDone, setShowAllDone] = useState(false);
@@ -5912,11 +5857,11 @@ function App() {
     return () => clearTimeout(t);
   }, [user]); // re-evaluate when user state changes (i.e. after onboarding)
 
-  // Auto show end-of-day journal prompt
+  // Auto show end-of-day recap prompt
   useEffect(() => {
     function checkTime() {
-      const lastJournal = localStorage.getItem("vtm_journal_shown");
-      if (lastJournal === today()) return; // already shown today
+      const lastShown = localStorage.getItem("vtm_eod_recap_shown");
+      if (lastShown === today()) return; // already shown today
       if (!workHours?.end) return;
       if (workHours?.showEodJournal === false) return; // user turned it off
       const now = new Date();
@@ -5924,8 +5869,8 @@ function App() {
       const endMinutes = eh * 60 + em;
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
       if (nowMinutes >= endMinutes) {
-        setShowJournal(true);
-        localStorage.setItem("vtm_journal_shown", today());
+        setShowEodRecap(true);
+        localStorage.setItem("vtm_eod_recap_shown", today());
       }
     }
     // Check immediately on mount and whenever workHours change
@@ -6406,7 +6351,6 @@ function App() {
     xp: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
     focus: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
     plan: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M18 2v4"/><path d="M22 6h-4"/></svg>,
-    journal: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"/></svg>,
     daily: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
     settings: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
     documentation: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
@@ -6418,7 +6362,7 @@ function App() {
     { label: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"]] },
     { label: "Insights", items: [["wellbeing","Wellbeing"],["analytics","Analytics"],["xp","Levels & Rewards"]] },
     { label: "Together", items: [["teams","Teams"], ...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["notifications","Notifications"]] },
-    { label: "Tools", items: [["focus","Focus"],["journal","Journal"],["plan","Plan"],["daily","Daily"],["documentation","Documentation"],["settings","Settings"]] },
+    { label: "Tools", items: [["focus","Focus"],["plan","Plan"],["daily","Daily"],["documentation","Documentation"],["settings","Settings"]] },
   ];
   const unreadCount = notifications.filter(n => !n.read).length;
   const sidebarXpLevel = xp?.current_level || 1;
@@ -6439,7 +6383,6 @@ function App() {
       else setShowNew(true);
       return;
     }
-    if (v === "journal") { setShowJournal(true); return; }
     if (v === "plan") { setShowDailyPlan(true); return; }
     if (v === "daily") { setShowDaily(true); return; }
     if (v === "notifications") {
@@ -6740,11 +6683,6 @@ function App() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><path d="M18 2v4"/><path d="M22 6h-4"/></svg>
               Plan
             </button>
-            <button onClick={() => { setShowJournal(true); setShowMoreMenu(false); }}
-              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4L18.5 2.5z"/></svg>
-              Journal
-            </button>
             <button onClick={() => { setShowDaily(true); setShowMoreMenu(false); }}
               style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -7004,7 +6942,7 @@ function App() {
       {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} onDelete={deleteNote} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
       {showWorkspaceSwitcher && <WorkspaceSwitcher workspaces={workspaces} activeWorkspace={activeWorkspace} onSwitch={switchWorkspace} onCreate={createWorkspace} onDelete={deleteWorkspace} onClose={() => setShowWorkspaceSwitcher(false)} />}
       {touchMoveTask && <TouchMoveModal task={touchMoveTask} onMove={setStatus} onClose={() => setTouchMoveTask(null)} />}
-      {showJournal && <AIJournalModal user={user} tasks={tasks} workHours={workHours} onSaveWorkHours={saveWorkHours} onClose={() => setShowJournal(false)} />}
+      {showEodRecap && <EndOfDayRecapModal user={user} tasks={tasks} onSetFrog={toggleFrog} onClose={() => setShowEodRecap(false)} />}
       {showProjectManager && <ProjectManagerModal projects={projects} onSave={saveProject} onDelete={deleteProject} onClose={() => setShowProjectManager(false)} />}
     </div>
   );
