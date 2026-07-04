@@ -46,13 +46,17 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     .login-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; inset: 0; height: 100dvh; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .login-backdrop { position: fixed; top: -50px; right: -50px; bottom: -50px; left: -50px; background: rgba(15,15,25,0.55); backdrop-filter: blur(18px) brightness(0.45); -webkit-backdrop-filter: blur(18px) brightness(0.45); }
+    .login-backdrop {
+      position: fixed; inset: -50px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(124,58,237,0.25), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(79,70,229,0.25), transparent 50%),
+        #14141c;
+    }
     @media (max-width: 768px) {
       .login-overlay {
-        background: #0f0f14;
         padding: max(env(safe-area-inset-top), 16px) 16px max(env(safe-area-inset-bottom), 16px);
       }
-      .login-backdrop { background: #0f0f14; backdrop-filter: none; -webkit-backdrop-filter: none; }
     }
     .login-card { position: relative; z-index: 1; background: #ffffff; border-radius: 20px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06); overflow: hidden; max-height: 92vh; overflow-y: auto; }
     .login-gradient { height: 100px; background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 40%, #818cf8 100%); position: relative; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0; }
@@ -92,7 +96,10 @@
 
     .auth-loader {
       position: fixed; inset: 0; z-index: 9998;
-      background: #0f0f14;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(124,58,237,0.25), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(79,70,229,0.25), transparent 50%),
+        #14141c;
       display: flex; align-items: center; justify-content: center;
       flex-direction: column; gap: 16px;
     }
