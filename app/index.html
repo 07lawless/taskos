@@ -3178,7 +3178,12 @@ function EndOfDayRecapModal({ user, tasks, onSetFrog, onClose }) {
   const frogEatenToday = completedToday.some(t => t.isFrog);
   const openTasks = tasks.filter(t => t.status !== "Done");
   const currentFrog = openTasks.find(t => t.isFrog);
-  const [selectedId, setSelectedId] = useState(currentFrog?.id || openTasks[0]?.id || null);
+  // Only ask the user to pick a new frog if today's frog is actually done
+  // (or there wasn't one set). If it's still sitting there incomplete, it
+  // already carries over on its own — re-prompting would just be friction,
+  // and risks tempting someone to demote a task they haven't finished yet.
+  const needsNewFrog = !currentFrog;
+  const [selectedId, setSelectedId] = useState(openTasks[0]?.id || null);
   const firstName = user?.firstName || "there";
 
   function confirmFrog() {
@@ -3220,7 +3225,19 @@ function EndOfDayRecapModal({ user, tasks, onSetFrog, onClose }) {
           </div>
         )}
 
-        {openTasks.length > 0 ? (
+        {!needsNewFrog ? (
+          <>
+            <div style={{ height: 1, background: COLORS.border, margin: "20px 0 16px" }} />
+            <div style={{ background: COLORS.frogDim, border: `1px solid ${COLORS.frogBorder}`, borderRadius: 10, padding: "12px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 16 }}>🐸</span>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.frogDark, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 3 }}>Still your frog for tomorrow</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.frogDark }}>{currentFrog.title}</div>
+              </div>
+            </div>
+            <button onClick={onClose} style={{ width: "100%", background: COLORS.accent, color: "#fff", borderRadius: 10, padding: 13, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Done for today →</button>
+          </>
+        ) : openTasks.length > 0 ? (
           <>
             <div style={{ height: 1, background: COLORS.border, margin: "20px 0 16px" }} />
             <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.frog, textTransform: "uppercase", letterSpacing: 0.6, marginBottom: 10 }}>Pick tomorrow's frog</div>
