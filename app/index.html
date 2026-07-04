@@ -5006,7 +5006,7 @@ function workspaceIcon(ws) {
   return '📋';
 }
 
-function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, onDelete, onClose }) {
+function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, onDelete, onClose, allShareTokens, onGenerateShare, shareLoading }) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newIcon, setNewIcon] = useState('📋');
@@ -5037,6 +5037,19 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
         <div style={{ padding:'10px 12px' }}>
           {workspaces.map(ws => {
             const isActive = ws.id === activeWorkspace?.id;
+            const existingToken = allShareTokens?.find(t => t.workspace_id === ws.id);
+            const [shareCopied, setShareCopied] = React.useState(false);
+            async function handleShare(e) {
+              e.stopPropagation();
+              if (existingToken) {
+                navigator.clipboard.writeText(`https://app.tasklist.uk/share/${existingToken.token}`);
+              } else {
+                const token = await onGenerateShare(ws.id);
+                if (token) navigator.clipboard.writeText(`https://app.tasklist.uk/share/${token}`);
+              }
+              setShareCopied(true);
+              setTimeout(() => setShareCopied(false), 2000);
+            }
             return (
               <div key={ws.id} onClick={() => onSwitch(ws)}
                 style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:10, cursor:'pointer', background:isActive ? COLORS.accentDim : 'transparent', marginBottom:4, transition:'background 0.12s', border:`1px solid ${isActive ? COLORS.accent+'40' : 'transparent'}` }}
@@ -5050,6 +5063,12 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
                   {isActive && <div style={{ fontSize:11, color:COLORS.accent, fontWeight:600 }}>Active</div>}
                 </div>
                 {isActive && <div style={{ width:8, height:8, borderRadius:'50%', background:COLORS.accent }}/>}
+                <button onClick={handleShare} title={existingToken ? "Copy share link" : "Create share link"}
+                  style={{ background:shareCopied ? COLORS.frogDim : COLORS.surface3, border:`1px solid ${shareCopied ? COLORS.frogBorder : COLORS.border}`, color:shareCopied ? COLORS.frog : COLORS.textMuted, cursor:'pointer', padding:'6px 8px', borderRadius:6, fontSize:11, fontWeight:600, fontFamily:'inherit', flexShrink:0, display:'flex', alignItems:'center', gap:4 }}>
+                  {shareCopied ? "✓" : (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  )}
+                </button>
                 {!isActive && workspaces.length > 1 && (
                   <button onClick={e => { e.stopPropagation(); if(window.confirm(`Delete "${ws.name}"? All tasks in this workspace will also be deleted.`)) onDelete(ws.id); }}
                     style={{ background:COLORS.highDim, border:`1px solid ${COLORS.high}30`, color:COLORS.high, cursor:'pointer', padding:'4px 8px', borderRadius:6, fontSize:11, fontWeight:600, fontFamily:'inherit', flexShrink:0 }}>
@@ -6241,8 +6260,13 @@ function App() {
         const filtered = prev.filter(t => !(t.workspace_id === (wsId || null) || (wsId === null && t.workspace_id === null)));
         return [...filtered, { token: d.token, workspace_id: wsId || null }];
       });
-    } catch(e) { console.error(e); }
-    setShareLoading(false);
+      setShareLoading(false);
+      return d.token;
+    } catch(e) {
+      console.error(e);
+      setShareLoading(false);
+      return null;
+    }
   }
 
   async function revokeShare(wsId) {
@@ -6966,7 +6990,7 @@ function App() {
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
       {editingBookmark && <EditBookmarkModal bm={editingBookmark} onSave={saveEditedBookmark} onClose={() => setEditingBookmark(null)} workspaces={workspaces} />}
       {(showNewNote || editingNote) && <NoteModal note={editingNote} onSave={saveNote} onClose={() => { setShowNewNote(false); setEditingNote(null); }} onDelete={deleteNote} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
-      {showWorkspaceSwitcher && <WorkspaceSwitcher workspaces={workspaces} activeWorkspace={activeWorkspace} onSwitch={switchWorkspace} onCreate={createWorkspace} onDelete={deleteWorkspace} onClose={() => setShowWorkspaceSwitcher(false)} />}
+      {showWorkspaceSwitcher && <WorkspaceSwitcher workspaces={workspaces} activeWorkspace={activeWorkspace} onSwitch={switchWorkspace} onCreate={createWorkspace} onDelete={deleteWorkspace} onClose={() => setShowWorkspaceSwitcher(false)} allShareTokens={allShareTokens} onGenerateShare={generateShare} shareLoading={shareLoading} />}
       {touchMoveTask && <TouchMoveModal task={touchMoveTask} onMove={setStatus} onClose={() => setTouchMoveTask(null)} />}
       {showEodRecap && <EndOfDayRecapModal user={user} tasks={tasks} onSetFrog={toggleFrog} onClose={() => setShowEodRecap(false)} />}
       {showProjectManager && <ProjectManagerModal projects={projects} onSave={saveProject} onDelete={deleteProject} onClose={() => setShowProjectManager(false)} />}
