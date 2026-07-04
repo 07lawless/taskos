@@ -5127,9 +5127,9 @@ function xpForLevel(n) {
  
 function levelTierIcon(level) {
   if (level >= 45) return "👑";
-  if (level >= 35) return "💎";
-  if (level >= 25) return "🏆";
-  if (level >= 15) return "🥇";
+  if (level >= 35) return "🎗️";
+  if (level >= 25) return "🏵️";
+  if (level >= 15) return "🎖️";
   if (level >= 5)  return "🐸";
   return "🥚";
 }
@@ -5189,11 +5189,11 @@ function LevelUpToast({ newLevel, onDone }) {
 }
 
 const LEVEL_MILESTONES = [
-  { level: 5,  name: "Frog" },
-  { level: 15, name: "Golden Frog" },
-  { level: 25, name: "Champion Frog" },
-  { level: 35, name: "Diamond Frog" },
-  { level: 45, name: "Crowned Frog" },
+  { level: 5,  name: "Frog Recruit" },
+  { level: 15, name: "Frog Apprentice" },
+  { level: 25, name: "Frog Elite" },
+  { level: 35, name: "Frog Master" },
+  { level: 45, name: "Frog Commander" },
 ];
 
 function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange, authUid }) {
