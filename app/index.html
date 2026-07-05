@@ -253,6 +253,18 @@ const METRIC_CONFIG = {
 function generateId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 function cap(s) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
 function today() { return new Date().toISOString().split("T")[0]; }
+// Defensive: a DATE column coming back from Postgres can arrive as either
+// a plain "YYYY-MM-DD" string or a full ISO datetime string like
+// "2026-07-04T00:00:00.000Z" (node-pg hands back a JS Date object for
+// DATE columns, and JSON.stringify serialises Date objects to full ISO
+// strings). Concatenating "T00:00:00" onto an already-full ISO string
+// produces garbage that new Date() can't parse, which is what was
+// showing as "Invalid date" on notes. Always slicing to the first 10
+// characters normalises either shape down to just the date part.
+function dateOnly(v) {
+  if (!v) return null;
+  return String(v).slice(0, 10);
+}
 function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split("T")[0]; }
 
 const SAMPLE_TASKS = [
@@ -4742,11 +4754,11 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: `1px solid ${COLORS.border}` }}>
         <span style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 600 }}>
           {(note.note_date || note.noteDate)
-            ? new Date((note.note_date || note.noteDate) + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            ? new Date(dateOnly(note.note_date || note.noteDate) + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
             : bmFmtDate(note.updated_at || note.updatedAt || note.created_at || note.createdAt)}
         </span>
         <div style={{ marginLeft: "auto" }}>
-          <button onClick={e => { e.stopPropagation(); if (window.confirm(`Delete "${note.title || "this note"}"? This can't be undone.`)) onDelete(note.id); }}
+          <button onClick={e => { e.stopPropagation(); if (window.confirm(`Move "${note.title || "this note"}" to the bin?`)) onDelete(note.id); }}
             style={{ width: 22, height: 22, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.surface2, color: COLORS.textMuted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>✕</button>
         </div>
       </div>
@@ -4757,7 +4769,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
 // ── NoteModal ──────────────────────────────────────────────────────────────────
 function NoteModal({ note, onSave, onClose, onDelete, workspaces, activeWorkspace }) {
   const [title, setTitle] = useState(note?.title || "");
-  const [noteDate, setNoteDate] = useState(note?.note_date || note?.noteDate || today());
+  const [noteDate, setNoteDate] = useState(dateOnly(note?.note_date || note?.noteDate) || today());
   const [wsId, setWsId] = useState(note ? (note.workspace_id || note.workspaceId || "") : (activeWorkspace?.id || ""));
   const [editorError, setEditorError] = useState(false);
   const editorElRef = useRef(null);       // the DOM node CKEditor mounts into
@@ -4838,11 +4850,18 @@ function NoteModal({ note, onSave, onClose, onDelete, workspaces, activeWorkspac
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
             Done
           </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <div style={{ width: 26, height: 26, borderRadius: 8, background: `linear-gradient(135deg, ${COLORS.accent}, ${COLORS.accentHover})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>tl</div>
+            <span style={{ fontSize: 15, letterSpacing: "-0.2px" }}>
+              <span style={{ fontWeight: 800, color: COLORS.text }}>task</span>
+              <span style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontStyle: "italic", fontWeight: 400, color: COLORS.accent }}>list</span>
+            </span>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, minWidth: 0 }}>
             <input type="date" value={noteDate} onChange={e => setNoteDate(e.target.value)}
               style={{ background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "8px 10px", fontSize: 13, fontWeight: 600, color: COLORS.text, boxShadow: "none", maxWidth: 150, minWidth: 0 }} />
             {note && onDelete && (
-              <button onClick={() => { if (window.confirm(`Delete "${title || "this note"}"? This can't be undone.`)) { onDelete(note.id); onClose(); } }}
+              <button onClick={() => { if (window.confirm(`Move "${title || "this note"}" to the bin?`)) { onDelete(note.id); onClose(); } }}
                 title="Delete note"
                 style={{ background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "9px 12px", fontSize: 14, fontWeight: 600, border: "none", flexShrink: 0, cursor: "pointer" }}>✕</button>
             )}
@@ -5184,6 +5203,32 @@ function LevelUpToast({ newLevel, onDone }) {
         <div style={{ fontSize: 11, color: "#86efac", fontWeight: 700, letterSpacing: 0.8, textTransform: "uppercase" }}>Level Up!</div>
         <div style={{ fontSize: 16, fontWeight: 700 }}>You reached Level {newLevel}</div>
       </div>
+    </div>
+  );
+}
+
+// Small bottom-of-screen confirmation toast — used for things like
+// "Task moved to bin" after a delete, so people get quiet confirmation
+// that something happened (and, implicitly, that it's recoverable)
+// without an intrusive modal getting in the way.
+function MiniToast({ message, onDone }) {
+  const [visible, setVisible] = React.useState(true);
+  React.useEffect(() => {
+    const t = setTimeout(() => { setVisible(false); setTimeout(onDone, 250); }, 2600);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div style={{
+      position: "fixed", bottom: 24, left: "50%",
+      transform: `translateX(-50%) translateY(${visible ? "0" : "10px"})`,
+      opacity: visible ? 1 : 0, transition: "all 0.25s ease", zIndex: 5000,
+      background: COLORS.text, color: COLORS.bg, borderRadius: 10,
+      padding: "10px 18px", boxShadow: "0 12px 32px rgba(0,0,0,0.25)",
+      display: "flex", alignItems: "center", gap: 8, fontSize: 13.5, fontWeight: 600,
+      pointerEvents: "none", maxWidth: "90vw",
+    }}>
+      <span style={{ fontSize: 15 }}>🗑️</span>
+      {message}
     </div>
   );
 }
@@ -5552,7 +5597,7 @@ function timeLeftLabel(deletedAt) {
   return `${mins}m left`;
 }
 
-function TrashView({ onDataRefresh }) {
+function TrashView({ onDataRefresh, workspaces }) {
   const [trash, setTrash] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [restoringId, setRestoringId] = React.useState(null);
@@ -5578,9 +5623,13 @@ function TrashView({ onDataRefresh }) {
   }
 
   async function handleEmptyTrash() {
-    if (!window.confirm("Permanently delete everything in the trash? This can't be undone.")) return;
+    if (!window.confirm("Permanently delete everything in the bin? This can't be undone.")) return;
     await api.emptyTrash();
     await loadTrash();
+  }
+
+  function getWorkspace(id) {
+    return (workspaces || []).find(w => w.id === id) || null;
   }
 
   const sections = trash ? [
@@ -5595,13 +5644,13 @@ function TrashView({ onDataRefresh }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6, flexWrap: "wrap", gap: 12 }}>
         <div>
           <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>
-            <em style={{ fontStyle: "italic", color: COLORS.accent }}>Trash</em>
+            <em style={{ fontStyle: "italic", color: COLORS.accent }}>Bin</em>
           </h2>
           <p style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>Deleted tasks, notes and bookmarks are kept here for 24 hours, then removed for good.</p>
         </div>
         {totalCount > 0 && (
           <button onClick={handleEmptyTrash} style={{ background: COLORS.highDim, color: COLORS.high, border: `1px solid ${COLORS.high}30`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
-            Empty trash now
+            Empty bin now
           </button>
         )}
       </div>
@@ -5611,7 +5660,7 @@ function TrashView({ onDataRefresh }) {
       ) : totalCount === 0 ? (
         <div style={{ textAlign: "center", padding: 60, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, marginTop: 20 }}>
           <div style={{ fontSize: 32, marginBottom: 10 }}>🗑️</div>
-          <div style={{ fontWeight: 600, fontSize: 15, color: COLORS.text, marginBottom: 4 }}>Trash is empty</div>
+          <div style={{ fontWeight: 600, fontSize: 15, color: COLORS.text, marginBottom: 4 }}>Bin is empty</div>
           <div style={{ fontSize: 13, color: COLORS.textMuted }}>Deleted items will show up here for 24 hours.</div>
         </div>
       ) : (
@@ -5622,13 +5671,22 @@ function TrashView({ onDataRefresh }) {
                 <span>{section.icon}</span>{section.label} ({section.items.length})
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {section.items.map(item => (
+                {section.items.map(item => {
+                  const ws = section.key === "tasks" ? getWorkspace(item.workspace_id) : null;
+                  return (
                   <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "12px 14px" }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {item.title || item.name || item.url || "Untitled"}
                       </div>
-                      <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 2 }}>{timeLeftLabel(item.deleted_at)}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 11.5, color: COLORS.textMuted }}>{timeLeftLabel(item.deleted_at)}</span>
+                        {ws && (
+                          <span style={{ fontSize: 11, fontWeight: 600, color: COLORS.accent, background: COLORS.accentDim, borderRadius: 100, padding: "1px 8px", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                            <span>{workspaceIcon(ws)}</span>{ws.name}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button onClick={() => handleRestore(section.key === "tasks" ? "task" : section.key === "notes" ? "note" : "bookmark", item.id)}
                       disabled={restoringId === item.id}
@@ -5636,7 +5694,8 @@ function TrashView({ onDataRefresh }) {
                       {restoringId === item.id ? "Restoring…" : "Restore"}
                     </button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -5902,6 +5961,7 @@ function App() {
   const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
   const [xp, setXp] = React.useState(null);
   const [levelUpInfo, setLevelUpInfo] = React.useState(null);
+  const [toastMsg, setToastMsg] = React.useState(null);
   const [rewards, setRewards] = React.useState(null);
 
 
@@ -6123,7 +6183,7 @@ function App() {
     if (authUser) api.saveTask(taskWithWs).catch(console.error);
   }
 
-  function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); }
+  function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); setToastMsg("Task moved to bin"); }
   function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
       function setStatus(id, status) {
@@ -6289,6 +6349,7 @@ function App() {
     if (authUser && !String(id).startsWith('local-')) {
       try { await api.deleteBookmark(id); } catch(e) { console.error(e); }
     }
+    setToastMsg("Bookmark moved to bin");
   }
 
   function toggleBookmarkStar(id) {
@@ -6337,6 +6398,7 @@ function App() {
   function deleteNote(id) {
     const previousNotes = notes; // snapshot for rollback if the server delete fails
     setNotes(prev => prev.filter(n => n.id !== id));
+    setToastMsg("Note moved to bin");
     if (authUser) {
       api.deleteNote(id).then(ok => {
         if (!ok) {
@@ -6547,7 +6609,7 @@ function App() {
     { label: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"]] },
     { label: "Insights", items: [["wellbeing","Wellbeing"],["analytics","Analytics"],["xp","Levels & Rewards"]] },
     { label: "Together", items: [["teams","Teams"], ...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["notifications","Notifications"]] },
-    { label: "Tools", items: [["focus","Focus"],["plan","Plan"],["daily","Daily"],["trash","Trash"],["documentation","Documentation"],["settings","Settings"]] },
+    { label: "Tools", items: [["focus","Focus"],["plan","Plan"],["daily","Daily"],["trash","Bin"],["documentation","Documentation"],["settings","Settings"]] },
   ];
   const unreadCount = notifications.filter(n => !n.read).length;
   const sidebarXpLevel = xp?.current_level || 1;
@@ -6560,7 +6622,7 @@ function App() {
   const boardDoneThisWeekCount = tasks.filter(t => t.status === "Done" && t.completedAt && t.completedAt.split("T")[0] >= daysAgo(6)).length;
   const boardOverdueCount = tasks.filter(t => t.due && t.due < today() && t.status !== "Done").length;
   const currentViewLabel = (
-    [...views, ["xp", "Levels & Rewards"], ["settings", "Settings"], ["trash", "Trash"]].find(([v]) => v === view)?.[1] || "Tasklist"
+    [...views, ["xp", "Levels & Rewards"], ["settings", "Settings"], ["trash", "Bin"]].find(([v]) => v === view)?.[1] || "Tasklist"
   );
   function handleSidebarItem(v) {
     if (v === "focus") {
@@ -6593,6 +6655,7 @@ function App() {
 
       {confetti && <Confetti onDone={() => setConfetti(false)} />}
       {levelUpInfo && <LevelUpToast newLevel={levelUpInfo} onDone={() => setLevelUpInfo(null)} />}
+      {toastMsg && <MiniToast message={toastMsg} onDone={() => setToastMsg(null)} />}
 
       {showFocus && focusTask && <FocusMode task={focusTask} onClose={() => setShowFocus(false)} />}
 
@@ -6876,7 +6939,7 @@ function App() {
             <button onClick={() => { setView("trash"); setShowMoreMenu(false); }}
               style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-              Trash
+              Bin
             </button>
           </div>
         </div>
@@ -7109,7 +7172,7 @@ function App() {
         {view === "teams" && <TeamsView teams={teams} setTeams={setTeams} notifications={notifications} setNotifications={setNotifications} authUser={authUser} notifTrigger={notifTrigger} initialTab={teamsInitialTab} />}
         {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} rewards={rewards} onEquip={handleEquipReward} onXpChange={setXp} authUid={authUser?.id} />}
 
-        {view === "trash" && <TrashView onDataRefresh={loadUserData} />}
+        {view === "trash" && <TrashView onDataRefresh={loadUserData} workspaces={workspaces} />}
         {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} />}
       </div>
 
