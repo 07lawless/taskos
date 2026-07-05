@@ -2685,6 +2685,25 @@ function CalContextMenu({ x, y, task, onClose, onEdit, onToggleFrog, onSetStatus
   );
 }
 
+// ── Small toggle switch, matching the pill-style switches used in Settings ──────
+function MiniToggle({ checked, onChange }) {
+  return (
+    <button role="switch" aria-checked={checked} onClick={() => onChange(!checked)}
+      style={{
+        width: 36, height: 20, borderRadius: 100, border: "none", cursor: "pointer", flexShrink: 0,
+        background: checked ? COLORS.accent : COLORS.surface3,
+        position: "relative", transition: "background 0.2s",
+        outline: `1.5px solid ${checked ? COLORS.accent : COLORS.border}`, outlineOffset: 1,
+      }}>
+      <div style={{
+        width: 14, height: 14, borderRadius: "50%", background: "#fff",
+        position: "absolute", top: 3, left: checked ? 19 : 3,
+        transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+      }} />
+    </button>
+  );
+}
+
 // ── Main Calendar view ───────────────────────────────────────────────────────────
 function CalendarView({ tasks, projects, onEdit, onCreateWithDate, onSaveTask, onDeleteTask, onToggleFrog, onSetStatus, workHours }) {
   const [viewMode, setViewMode] = useState(() => localStorage.getItem("vtm_cal_view") || "month");
@@ -2702,6 +2721,14 @@ function CalendarView({ tasks, projects, onEdit, onCreateWithDate, onSaveTask, o
   const [dayPopover, setDayPopover] = useState(null); // ymd string, for "+X more"
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const rootRef = useRef(null);
+  const optionsRef = useRef(null);
+
+  useEffect(() => {
+    if (!showOptions) return;
+    function onDocClick(e) { if (optionsRef.current && !optionsRef.current.contains(e.target)) setShowOptions(false); }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [showOptions]);
 
   useEffect(() => {
     function onResize() { setIsMobile(window.innerWidth <= 768); }
@@ -2793,40 +2820,53 @@ function CalendarView({ tasks, projects, onEdit, onCreateWithDate, onSaveTask, o
   }
 
   return (
-    <div ref={rootRef} style={{ paddingBottom: 40, background: fullscreen ? COLORS.bg : "transparent" }}>
+    <div ref={rootRef} style={{ paddingBottom: 40, background: fullscreen ? COLORS.bg : "transparent", maxWidth: 1300, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>
           Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em>
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <button onClick={() => onCreateWithDate(todayYmd)} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>+ New task</button>
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative" }} ref={optionsRef}>
             <button onClick={() => setShowOptions(s => !s)} aria-haspopup="true" aria-expanded={showOptions}
               title="Calendar options"
-              style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 10px", border: `1px solid ${COLORS.border}`, cursor: "pointer", fontSize: 14 }}>⚙</button>
+              style={{ background: showOptions ? COLORS.accentDim : COLORS.surface3, color: showOptions ? COLORS.accent : COLORS.textDim, borderRadius: 8, padding: "8px 10px", border: `1px solid ${showOptions ? COLORS.accent + "50" : COLORS.border}`, cursor: "pointer", fontSize: 14 }}>⚙</button>
             {showOptions && (
-              <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 100, width: 240, padding: 10 }}>
-                <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
-                  UK bank holidays
-                  <input type="checkbox" checked={showHolidays} onChange={e => setShowHolidays(e.target.checked)} />
-                </label>
-                <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
-                  Week starts Monday
-                  <input type="checkbox" checked={weekStartsMonday} onChange={e => setWeekStartsMonday(e.target.checked)} />
-                </label>
-                <div style={{ height: 1, background: COLORS.border, margin: "6px 0" }} />
-                <button onClick={() => { downloadICS(filtered.filter(t => t.due), "tasklist-calendar.ics"); setShowOptions(false); }}
-                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}>
-                  ⬇ Export to .ics
-                </button>
-                <button onClick={() => { toggleFullscreen(); setShowOptions(false); }}
-                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}>
-                  {fullscreen ? "⤢ Exit full screen" : "⤢ Full screen"}
-                </button>
-                <button onClick={() => { window.print(); setShowOptions(false); }}
-                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}>
-                  🖨 Print
-                </button>
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, boxShadow: "0 16px 40px rgba(0,0,0,0.18)", zIndex: 100, width: 260, overflow: "hidden" }}>
+                <div style={{ padding: "12px 16px 10px", fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.6, borderBottom: `1px solid ${COLORS.border}` }}>
+                  Calendar settings
+                </div>
+                <div style={{ padding: "8px 8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                      <span style={{ fontSize: 15 }}>🎌</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>UK bank holidays</span>
+                    </div>
+                    <MiniToggle checked={showHolidays} onChange={setShowHolidays} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                      <span style={{ fontSize: 15 }}>📅</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>Week starts Monday</span>
+                    </div>
+                    <MiniToggle checked={weekStartsMonday} onChange={setWeekStartsMonday} />
+                  </div>
+                </div>
+                <div style={{ height: 1, background: COLORS.border }} />
+                <div style={{ padding: "6px 8px 8px" }}>
+                  {[
+                    { icon: "⬇", label: "Export to .ics", fn: () => downloadICS(filtered.filter(t => t.due), "tasklist-calendar.ics") },
+                    { icon: "⤢", label: fullscreen ? "Exit full screen" : "Full screen", fn: toggleFullscreen },
+                    { icon: "🖨", label: "Print", fn: () => window.print() },
+                  ].map(({ icon, label, fn }) => (
+                    <button key={label} onClick={() => { fn(); setShowOptions(false); }}
+                      style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", background: "none", border: "none", borderRadius: 8, padding: "9px 8px", fontSize: 13, fontWeight: 600, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}
+                      onMouseEnter={e => e.currentTarget.style.background = COLORS.surface2}
+                      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                      <span style={{ fontSize: 14, width: 18, textAlign: "center" }}>{icon}</span>{label}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
