@@ -3906,7 +3906,7 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
   );
 }
 
-function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData, onOpenIE, onShareToken, onAllShareTokens, onShareLoading, onShareCopied, onGenerateShare, onRevokeShare, onCopyShare, onSaveEodSetting, workspaces, shareWorkspaceId }) {
+function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveUser, onSaveWorkHours, onSaveProject, onDeleteProject, onClearData, onOpenIE, onShareToken, onAllShareTokens, onShareLoading, onShareCopied, onGenerateShare, onRevokeShare, onCopyShare, onSaveEodSetting, workspaces, shareWorkspaceId, rewards, onEquip }) {
   const [firstName, setFirstName] = useState(user?.firstName || user?.first_name || "");
   const [lastName, setLastName] = useState(user?.lastName || user?.last_name || "");
   const [wStart, setWStart] = useState(workHours?.start || "09:00");
@@ -3970,6 +3970,43 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
             </button>
           ))}
         </div>
+
+        {rewards && rewards.catalogue && rewards.catalogue.filter(r => r.reward_type === "accent_theme").length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Accent Colour</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 12 }}>Unlocks automatically as you level up — see your progress in Levels & Rewards.</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {rewards.catalogue.filter(r => r.reward_type === "accent_theme").map(item => {
+                const unlocked = rewards.unlocked?.includes(item.reward_key);
+                const isEquipped = rewards.equipped?.accent_theme === item.reward_key;
+                return (
+                  <div key={item.reward_key} style={{
+                    display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10,
+                    background: isEquipped ? COLORS.accentDim : unlocked ? COLORS.surface2 : COLORS.surface3,
+                    border: `1px solid ${isEquipped ? COLORS.accent + "50" : COLORS.border}`,
+                    opacity: unlocked ? 1 : 0.6,
+                  }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, background: COLORS.surface, border: `1px solid ${COLORS.border}` }}>
+                      {unlocked
+                        ? <div style={{ width: 18, height: 18, borderRadius: "50%", background: item.preview?.accent || COLORS.accent }} />
+                        : "🔒"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: unlocked ? COLORS.text : COLORS.textMuted }}>{item.name}</div>
+                      <div style={{ fontSize: 11, color: COLORS.textMuted }}>{unlocked ? item.description : `Unlocks at level ${item.unlock_level}`}</div>
+                    </div>
+                    {unlocked && (
+                      <button onClick={() => onEquip && onEquip("accent_theme", isEquipped ? null : item.reward_key)}
+                        style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 100, flexShrink: 0, border: `1px solid ${isEquipped ? COLORS.accent : COLORS.border}`, background: isEquipped ? COLORS.accent : "transparent", color: isEquipped ? "#fff" : COLORS.textMuted, cursor: "pointer", fontFamily: "inherit" }}>
+                        {isEquipped ? "Equipped" : "Equip"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* Profile */}
@@ -4758,7 +4795,7 @@ function NoteCard({ note, onEdit, onDelete, onTogglePin }) {
             : bmFmtDate(note.updated_at || note.updatedAt || note.created_at || note.createdAt)}
         </span>
         <div style={{ marginLeft: "auto" }}>
-          <button onClick={e => { e.stopPropagation(); if (window.confirm(`Move "${note.title || "this note"}" to the bin?`)) onDelete(note.id); }}
+          <button onClick={e => { e.stopPropagation(); onDelete(note.id); }}
             style={{ width: 22, height: 22, borderRadius: 6, border: `1px solid ${COLORS.border}`, background: COLORS.surface2, color: COLORS.textMuted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>✕</button>
         </div>
       </div>
@@ -5471,38 +5508,13 @@ function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange, authUid })
       </div>
 
       {rewards && rewards.catalogue && rewards.catalogue.length > 0 && (
-        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 4 }}>Accent Themes</div>
-          <div style={{ fontSize: 12, color: COLORS.textMuted, marginBottom: 16 }}>Unlock automatically as you level up. Equip whichever you like.</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {rewards.catalogue.filter(r => r.reward_type === "accent_theme").map(item => {
-              const unlocked = rewards.unlocked?.includes(item.reward_key);
-              const isEquipped = rewards.equipped?.accent_theme === item.reward_key;
-              return (
-                <div key={item.reward_key} style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 10,
-                  background: isEquipped ? COLORS.accentDim : unlocked ? COLORS.surface2 : COLORS.surface3,
-                  border: `1px solid ${isEquipped ? COLORS.accent + "50" : COLORS.border}`,
-                  opacity: unlocked ? 1 : 0.6,
-                }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, background: COLORS.surface, border: `1px solid ${COLORS.border}` }}>
-                    {unlocked
-                      ? <div style={{ width: 18, height: 18, borderRadius: "50%", background: item.preview?.accent || COLORS.accent }} />
-                      : "🔒"}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: unlocked ? COLORS.text : COLORS.textMuted }}>{item.name}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textMuted }}>{unlocked ? item.description : `Unlocks at level ${item.unlock_level}`}</div>
-                  </div>
-                  {unlocked && (
-                    <button onClick={() => onEquip && onEquip("accent_theme", isEquipped ? null : item.reward_key)}
-                      style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 100, flexShrink: 0, border: `1px solid ${isEquipped ? COLORS.accent : COLORS.border}`, background: isEquipped ? COLORS.accent : "transparent", color: isEquipped ? "#fff" : COLORS.textMuted, cursor: "pointer", fontFamily: "inherit" }}>
-                      {isEquipped ? "Equipped" : "Equip"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 20, marginBottom: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.05)", display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, background: COLORS.accentDim }}>🎨</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>Accent Themes</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted }}>
+              {rewards.catalogue.filter(r => r.reward_type === "accent_theme" && rewards.unlocked?.includes(r.reward_key)).length} of {rewards.catalogue.filter(r => r.reward_type === "accent_theme").length} unlocked. Manage and equip in Settings → Appearance.
+            </div>
           </div>
         </div>
       )}
@@ -7216,7 +7228,7 @@ function App() {
         {view === "xp" && <XPDetailView tasks={tasks} onClose={() => setView("board")} rewards={rewards} onEquip={handleEquipReward} onXpChange={setXp} authUid={authUser?.id} />}
 
         {view === "trash" && <TrashView onDataRefresh={loadUserData} workspaces={workspaces} />}
-        {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} />}
+        {view === "settings" && <SettingsView user={authUser || user} workHours={workHours} projects={projects} theme={theme} onToggleTheme={toggleTheme} onSaveUser={saveUser} onSaveWorkHours={saveWorkHours} onSaveProject={saveProject} onDeleteProject={deleteProject} onClearData={clearData} onOpenIE={() => setShowIE(true)} onShareToken={shareToken} onAllShareTokens={allShareTokens} onShareLoading={shareLoading} onShareCopied={shareCopied} onGenerateShare={generateShare} onRevokeShare={revokeShare} onCopyShare={copyShare} onSaveEodSetting={saveEodSetting} workspaces={workspaces} shareWorkspaceId={shareWorkspaceId} rewards={rewards} onEquip={handleEquipReward} />}
       </div>
 
       </main>
