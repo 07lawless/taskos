@@ -2591,12 +2591,12 @@ function MiniCalendar({ cursorDate, onPick, weekStartsMonday, tasksByDate }) {
       <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, marginBottom: 8, textAlign: "center" }}>
         {cursorDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 2, marginBottom: 4 }}>
         {dowLabels.map((d, i) => (
           <div key={i} style={{ fontSize: 9, fontWeight: 700, color: COLORS.textMuted, textAlign: "center" }}>{d}</div>
         ))}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 2 }}>
         {days.map((d, i) => {
           const inMonth = d.getMonth() === cursorDate.getMonth();
           const ds = ymd(d);
@@ -2914,7 +2914,7 @@ function CalendarView({ tasks, projects, onEdit, onCreateWithDate, onSaveTask, o
         </select>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "220px 1fr", gap: 20, alignItems: "start" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "220px minmax(0, 1fr)", gap: 20, alignItems: "start" }}>
 
         {/* Sidebar — hidden on mobile to save space; mobile leans on the agenda-style day/week views instead */}
         {!isMobile && (
@@ -3004,10 +3004,10 @@ function MonthGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, on
 
   return (
     <div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", marginBottom: 4 }}>
         {dowLabels.map(d => <div key={d} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textAlign: "center", padding: "4px 0" }}>{d}</div>)}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "1fr", gap: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gridAutoRows: "1fr", gap: 6 }}>
         {days.map((d, i) => {
           const ds = ymd(d);
           const inMonth = d.getMonth() === cursorDate.getMonth();
@@ -3069,7 +3069,7 @@ function WeekGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, onD
   const todayYmd = ymd(new Date());
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(7, 1fr)", gap: 8 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(7, minmax(0, 1fr))", gap: 8 }}>
       {days.map(d => {
         const ds = ymd(d);
         const isToday = ds === todayYmd;
