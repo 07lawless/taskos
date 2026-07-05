@@ -1531,6 +1531,16 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
               {isDueToday ? "● " : ""}{task.due}
             </span>
           )}
+          {task.dueTime && (
+            <span style={{ fontSize: 10, color: COLORS.accent, padding: "2px 7px", background: COLORS.accentDim, borderRadius: 4, fontWeight: 600 }}>
+              🕐 {task.dueTime}
+            </span>
+          )}
+          {task.recurrenceId && (
+            <span title="Part of a recurring series" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 5px", background: COLORS.surface3, borderRadius: 4 }}>
+              🔁
+            </span>
+          )}
           {isStale && (
             <span title="No edits or status changes in a while — still on your plate?" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 7px", background: COLORS.surface3, borderRadius: 4, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>
               💤 {daysSinceTouch}d untouched
@@ -1578,22 +1588,55 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 }
 
 // ── TaskModal ──────────────────────────────────────────────────────────────────
-function TaskModal({ task, onSave, onClose, projects, prefillDue }) {
+function TaskModal({ task, onSave, onSaveRecurring, onUpdateRecurringSeries, onClose, projects, prefillDue }) {
   const [form, setForm] = useState(() => {
-    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: prefillDue || "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
+    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: prefillDue || "", dueTime: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
     return Array.isArray(base.subtasks) ? base : { ...base, subtasks: [] };
   });
   const [newSub, setNewSub] = useState("");
   const [dueSuggesting, setDueSuggesting] = useState(false);
   const [dueSuggestion, setDueSuggestion] = useState(null);
+  // Repeat rule — only meaningful when creating a brand new task. Editing
+  // an existing recurring occurrence's *pattern* isn't supported here
+  // deliberately (changing "every week" to "every month" after the fact
+  // is a much bigger operation); editing an existing occurrence just
+  // offers applying field changes to this-and-following instead.
+  const [repeat, setRepeat] = useState({ freq: "none", interval: 1, byDay: [], endType: "never", count: 10, until: "" });
+  const [applyToFollowing, setApplyToFollowing] = useState(false);
+  const isRecurringOccurrence = !!(task && task.recurrenceId);
 
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })); }
+  function toggleByDay(code) { setRepeat(r => ({ ...r, byDay: r.byDay.includes(code) ? r.byDay.filter(c => c !== code) : [...r.byDay, code] })); }
   function addSub() { if (!newSub.trim()) return; setF("subtasks", [...form.subtasks, { id: generateId(), title: newSub.trim(), done: false }]); setNewSub(""); }
+
   function handleSave() {
     if (!form.title.trim()) return;
     const wasNotDone = task?.status !== "Done";
     const nowDone = form.status === "Done";
-    onSave({ ...form, id: form.id || generateId(), completedAt: (wasNotDone && nowDone) ? new Date().toISOString() : form.completedAt });
+    const payload = { ...form, id: form.id || generateId(), completedAt: (wasNotDone && nowDone) ? new Date().toISOString() : form.completedAt };
+
+    if (!task && repeat.freq !== "none") {
+      const rule = {
+        freq: repeat.freq,
+        interval: Math.max(1, parseInt(repeat.interval, 10) || 1),
+        ...(repeat.freq === "weekly" && repeat.byDay.length ? { byDay: repeat.byDay } : {}),
+        ...(repeat.endType === "count" ? { count: Math.max(1, parseInt(repeat.count, 10) || 1) } : {}),
+        ...(repeat.endType === "until" && repeat.until ? { until: repeat.until } : {}),
+      };
+      onSaveRecurring(payload, rule);
+      return;
+    }
+
+    if (isRecurringOccurrence && applyToFollowing) {
+      onUpdateRecurringSeries(task.recurrenceId, task.due, {
+        title: payload.title, description: payload.description, priority: payload.priority,
+        due_time: payload.dueTime || null, project_id: payload.projectId, estimated_mins: payload.estimatedMins || null,
+      });
+      onClose();
+      return;
+    }
+
+    onSave(payload);
   }
 
   async function handleSuggestDue() {
@@ -1650,6 +1693,76 @@ function TaskModal({ task, onSave, onClose, projects, prefillDue }) {
               )}
             </div>
           </div>
+
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-end" }}>
+            <div style={{ maxWidth: 160 }}>
+              <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>TIME (OPTIONAL)</label>
+              <input type="time" value={form.dueTime || ""} onChange={e => setF("dueTime", e.target.value || "")} />
+            </div>
+            {!form.dueTime && <div style={{ fontSize: 11, color: COLORS.textMuted, paddingBottom: 10 }}>Leave blank for an all-day task</div>}
+          </div>
+
+          {isRecurringOccurrence ? (
+            <div style={{ background: COLORS.accentDim, border: `1px solid ${COLORS.accent}30`, borderRadius: 10, padding: "12px 14px" }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.accent, marginBottom: 8 }}>🔁 Part of a recurring series</div>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: COLORS.text, cursor: "pointer" }}>
+                <input type="checkbox" checked={applyToFollowing} onChange={e => setApplyToFollowing(e.target.checked)} style={{ width: 15, height: 15, accentColor: COLORS.accent }} />
+                Apply these changes to this and all following occurrences
+              </label>
+            </div>
+          ) : !task && (
+            <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "14px" }}>
+              <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 8 }}>REPEAT</label>
+              <select value={repeat.freq} onChange={e => setRepeat(r => ({ ...r, freq: e.target.value }))} style={{ marginBottom: repeat.freq !== "none" ? 12 : 0 }}>
+                <option value="none">Does not repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+
+              {repeat.freq !== "none" && (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                    <span style={{ fontSize: 13, color: COLORS.text }}>Every</span>
+                    <input type="number" min={1} value={repeat.interval} onChange={e => setRepeat(r => ({ ...r, interval: e.target.value }))} style={{ width: 60 }} />
+                    <span style={{ fontSize: 13, color: COLORS.text }}>{repeat.freq === "daily" ? "day(s)" : repeat.freq === "weekly" ? "week(s)" : "month(s)"}</span>
+                  </div>
+
+                  {repeat.freq === "weekly" && (
+                    <div style={{ display: "flex", gap: 5, marginBottom: 12, flexWrap: "wrap" }}>
+                      {[["MO","M"],["TU","T"],["WE","W"],["TH","T"],["FR","F"],["SA","S"],["SU","S"]].map(([code, label]) => (
+                        <button key={code} type="button" onClick={() => toggleByDay(code)}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                            background: repeat.byDay.includes(code) ? COLORS.accent : COLORS.surface3,
+                            color: repeat.byDay.includes(code) ? "#fff" : COLORS.textDim,
+                          }}>{label}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 8 }}>ENDS</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
+                      <input type="radio" name="repeat-end" checked={repeat.endType === "never"} onChange={() => setRepeat(r => ({ ...r, endType: "never" }))} />
+                      Never
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
+                      <input type="radio" name="repeat-end" checked={repeat.endType === "count"} onChange={() => setRepeat(r => ({ ...r, endType: "count" }))} />
+                      After
+                      <input type="number" min={1} value={repeat.count} onChange={e => setRepeat(r => ({ ...r, count: e.target.value, endType: "count" }))} style={{ width: 60 }} />
+                      occurrences
+                    </label>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
+                      <input type="radio" name="repeat-end" checked={repeat.endType === "until"} onChange={() => setRepeat(r => ({ ...r, endType: "until" }))} />
+                      On date
+                      <input type="date" value={repeat.until} onChange={e => setRepeat(r => ({ ...r, until: e.target.value, endType: "until" }))} />
+                    </label>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
           <div>
             <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 10 }}>SUBTASKS</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -2552,22 +2665,65 @@ function downloadICS(tasksWithDue, filename) {
   const escapeText = s => String(s || "").replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
   const dtStamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Tasklist.uk//Calendar Export//EN", "CALSCALE:GREGORIAN"];
-  tasksWithDue.forEach(t => {
-    const dateOnly = (t.due || "").replace(/-/g, "");
-    if (!dateOnly) return;
-    const nextDay = ymd(addDays(parseYMD(t.due), 1)).replace(/-/g, "");
+
+  function toRRule(rule) {
+    const freqMap = { daily: "DAILY", weekly: "WEEKLY", monthly: "MONTHLY" };
+    const parts = [`FREQ=${freqMap[rule.freq] || "WEEKLY"}`, `INTERVAL=${rule.interval || 1}`];
+    if (rule.byDay?.length) parts.push(`BYDAY=${rule.byDay.join(",")}`);
+    if (rule.count) parts.push(`COUNT=${rule.count}`);
+    if (rule.until) parts.push(`UNTIL=${rule.until.replace(/-/g, "")}T235959Z`);
+    return parts.join(";");
+  }
+  function pushEvent(t, rrule) {
+    const hasTime = !!t.dueTime;
+    let dtStart, dtEnd, dtLines;
+    if (hasTime) {
+      const [hh, mm] = t.dueTime.split(":");
+      const durationMins = t.estimatedMins || 30;
+      const startDate = new Date(parseYMD(t.due));
+      startDate.setHours(Number(hh), Number(mm), 0, 0);
+      const endDate = new Date(startDate.getTime() + durationMins * 60000);
+      const fmt = d => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}${String(d.getMinutes()).padStart(2,"0")}00`;
+      dtLines = [`DTSTART:${fmt(startDate)}`, `DTEND:${fmt(endDate)}`];
+    } else {
+      const dateOnly = t.due.replace(/-/g, "");
+      const nextDay = ymd(addDays(parseYMD(t.due), 1)).replace(/-/g, "");
+      dtLines = [`DTSTART;VALUE=DATE:${dateOnly}`, `DTEND;VALUE=DATE:${nextDay}`];
+    }
     lines.push(
       "BEGIN:VEVENT",
-      `UID:${t.id}@tasklist.uk`,
+      `UID:${t.recurrenceId || t.id}@tasklist.uk`,
       `DTSTAMP:${dtStamp}`,
-      `DTSTART;VALUE=DATE:${dateOnly}`,
-      `DTEND;VALUE=DATE:${nextDay}`,
+      ...dtLines,
+      rrule ? `RRULE:${rrule}` : null,
       `SUMMARY:${escapeText(t.isFrog ? "🐸 " + t.title : t.title)}`,
       t.description ? `DESCRIPTION:${escapeText(t.description)}` : null,
       `CATEGORIES:${escapeText(t.priority || "Medium")}`,
       "END:VEVENT"
     );
+  }
+
+  // Recurring series collapse down to one RRULE-based VEVENT (using the
+  // earliest occurrence present as the anchor), rather than exporting
+  // every materialised occurrence as its own separate event.
+  const seenSeries = new Set();
+  const bySeriesEarliest = {};
+  tasksWithDue.forEach(t => {
+    if (!t.recurrenceId) return;
+    if (!bySeriesEarliest[t.recurrenceId] || t.due < bySeriesEarliest[t.recurrenceId].due) bySeriesEarliest[t.recurrenceId] = t;
   });
+  tasksWithDue.forEach(t => {
+    if (!t.due) return;
+    if (t.recurrenceId) {
+      if (seenSeries.has(t.recurrenceId)) return;
+      seenSeries.add(t.recurrenceId);
+      const anchor = bySeriesEarliest[t.recurrenceId];
+      pushEvent(anchor, anchor.recurrenceRule ? toRRule(anchor.recurrenceRule) : null);
+    } else {
+      pushEvent(t, null);
+    }
+  });
+
   lines.push("END:VCALENDAR");
   const blob = new Blob([lines.filter(Boolean).join("\r\n")], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -2637,8 +2793,8 @@ function CalTaskChip({ task, onEdit, onContextMenu, draggable, onDragStart }) {
       onClick={e => { e.stopPropagation(); onEdit(task); }}
       onContextMenu={e => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, task); }}
       onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEdit(task); } }}
-      title={`${task.title}${task.isFrog ? " (Frog)" : ""} — ${task.priority}${task.status ? " · " + task.status : ""}`}
-      aria-label={`${task.title}, ${task.priority} priority${task.isFrog ? ", frog task" : ""}${isDone ? ", done" : ""}`}
+      title={`${task.title}${task.isFrog ? " (Frog)" : ""} — ${task.priority}${task.status ? " · " + task.status : ""}${task.dueTime ? " · " + task.dueTime : ""}${task.recurrenceId ? " · recurring" : ""}`}
+      aria-label={`${task.title}, ${task.priority} priority${task.isFrog ? ", frog task" : ""}${isDone ? ", done" : ""}${task.dueTime ? ", at " + task.dueTime : ""}${task.recurrenceId ? ", recurring" : ""}`}
       style={{
         background: task.isFrog ? COLORS.frogDim : pc.dim,
         border: `1px solid ${task.isFrog ? COLORS.frogBorder : pc.color + "40"}`,
@@ -2649,7 +2805,7 @@ function CalTaskChip({ task, onEdit, onContextMenu, draggable, onDragStart }) {
         textDecoration: isDone ? "line-through" : "none",
         whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
       }}>
-      {task.isFrog ? "🐸 " : ""}{task.title}
+      {task.isFrog ? "🐸 " : ""}{task.recurrenceId ? "🔁 " : ""}{task.dueTime ? task.dueTime + " " : ""}{task.title}
     </div>
   );
 }
@@ -3106,7 +3262,12 @@ function WeekGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, onD
 // data to justify an hourly grid. ────────────────────────────────────────
 function DayAgenda({ cursorDate, tasksByDate, showHolidays, onDayClick, onEdit, onContextMenu, onSetStatus, onToggleFrog, projects }) {
   const ds = ymd(cursorDate);
-  const dayTasks = tasksByDate[ds] || [];
+  const dayTasks = [...(tasksByDate[ds] || [])].sort((a, b) => {
+    if (a.dueTime && b.dueTime) return a.dueTime < b.dueTime ? -1 : 1;
+    if (a.dueTime) return -1;
+    if (b.dueTime) return 1;
+    return 0;
+  });
   const holiday = showHolidays ? UK_HOLIDAY_MAP[ds] : null;
 
   return (
@@ -3130,8 +3291,8 @@ function DayAgenda({ cursorDate, tasksByDate, showHolidays, onDayClick, onEdit, 
                 style={{ display: "flex", alignItems: "center", gap: 12, background: t.isFrog ? COLORS.frogDim : COLORS.surface, border: `1px solid ${t.isFrog ? COLORS.frogBorder : COLORS.border}`, borderRadius: 10, padding: "12px 14px", cursor: "pointer" }}>
                 <div style={{ width: 4, height: 32, borderRadius: 2, background: t.isFrog ? COLORS.frog : pc.color, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: isDone ? COLORS.textMuted : COLORS.text, textDecoration: isDone ? "line-through" : "none" }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
-                  <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{t.priority}{proj ? ` · ${proj.name}` : ""}{t.estimatedMins ? ` · ${t.estimatedMins}m` : ""}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: isDone ? COLORS.textMuted : COLORS.text, textDecoration: isDone ? "line-through" : "none" }}>{t.isFrog ? "🐸 " : ""}{t.recurrenceId ? "🔁 " : ""}{t.title}</div>
+                  <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{t.dueTime ? `🕐 ${t.dueTime} · ` : ""}{t.priority}{proj ? ` · ${proj.name}` : ""}{t.estimatedMins ? ` · ${t.estimatedMins}m` : ""}</div>
                 </div>
                 <button onClick={e => { e.stopPropagation(); onSetStatus(t.id, isDone ? "To Do" : "Done"); }}
                   aria-label={isDone ? "Reopen task" : "Mark task done"}
@@ -6002,6 +6163,22 @@ const api = {
   async restoreNote(id) { const r = await fetch('/api/notes/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async restoreBookmark(id) { const r = await fetch('/api/bookmarks/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async emptyTrash() { const r = await fetch('/api/trash', { method: 'DELETE', credentials: 'include' }); return r.ok; },
+  // Recurring tasks — see server.js for the full contract. Creation
+  // returns the created occurrences so the caller can merge them
+  // straight into local state without a full refetch.
+  async createRecurringTask(task, rule) {
+    const r = await fetch('/api/tasks/recurring', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, rule }) });
+    if (!r.ok) return null;
+    return r.json();
+  },
+  async updateRecurringSeries(recurrenceId, fromDue, fields) {
+    const r = await fetch('/api/tasks/recurring/' + recurrenceId, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fromDue, fields }) });
+    return r.ok;
+  },
+  async deleteRecurringSeries(recurrenceId, fromDue) {
+    const r = await fetch('/api/tasks/recurring/' + recurrenceId + '?fromDue=' + encodeURIComponent(fromDue), { method: 'DELETE', credentials: 'include' });
+    return r.ok;
+  },
 };
 
 // ── Trash Bin ───────────────────────────────────────────────────────────────────
@@ -6146,6 +6323,23 @@ function TrashView({ onDataRefresh, workspaces }) {
 }
 
 // ── Work Hours Setup Modal ─────────────────────────────────────────────────────
+// ── Recurring task delete scope prompt ───────────────────────────────────────────
+function RecurringDeletePrompt({ onThis, onFollowing, onCancel }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && onCancel()}>
+      <div style={{ background: COLORS.surface, borderRadius: 14, width: "100%", maxWidth: 360, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", border: `1px solid ${COLORS.border}` }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.text, marginBottom: 6 }}>🔁 Delete recurring task</div>
+        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 18, lineHeight: 1.5 }}>This task is part of a recurring series. What would you like to delete?</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button onClick={onThis} style={{ background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 9, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>This occurrence only</button>
+          <button onClick={onFollowing} style={{ background: COLORS.highDim, color: COLORS.high, border: "none", borderRadius: 9, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>This and all following occurrences</button>
+          <button onClick={onCancel} style={{ background: "none", color: COLORS.textMuted, border: "none", padding: "8px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WorkHoursSetupModal({ onSave, onSkip }) {
   const [start, setStart] = React.useState("09:00");
   const [end, setEnd] = React.useState("17:30");
@@ -6625,7 +6819,59 @@ function App() {
     if (authUser) api.saveTask(taskWithWs).catch(console.error);
   }
 
-  function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); setToastMsg("Task moved to bin"); }
+  // Creates every occurrence of a new recurring task in one go. The
+  // backend materialises real, independent task rows (see server.js) —
+  // this just needs to mirror those into local state so the Board/
+  // Calendar/Analytics all see them immediately, same as any other save.
+  async function saveRecurringTask(task, rule) {
+    setShowNew(false); setEditingTask(null);
+    const result = await api.createRecurringTask({ ...task, workspaceId: activeWorkspace?.id }, rule);
+    if (!result || !result.occurrences) { setToastMsg("Couldn't create the recurring task — try again"); return; }
+    const newTasks = result.occurrences.map(occ => ({
+      ...task, id: occ.id, due: occ.due, status: "To Do", completedAt: null,
+      workspaceId: activeWorkspace?.id, recurrenceId: result.recurrenceId, recurrenceRule: rule,
+    }));
+    updateTasks(ts => [...ts, ...newTasks]);
+    setToastMsg(`Created ${result.count} occurrences 🔁`);
+  }
+
+  // "Apply to this and all following" from the task modal — updates the
+  // backend series, then mirrors the same fields onto every matching
+  // local task (same series, due >= fromDue, not yet done).
+  async function updateRecurringSeriesHandler(recurrenceId, fromDue, fields) {
+    setEditingTask(null); setShowNew(false);
+    const ok = await api.updateRecurringSeries(recurrenceId, fromDue, fields);
+    if (!ok) { setToastMsg("Couldn't update the series — try again"); return; }
+    updateTasks(ts => ts.map(t => {
+      if (t.recurrenceId !== recurrenceId || t.due < fromDue || t.status === "Done") return t;
+      return { ...t, title: fields.title, description: fields.description, priority: fields.priority, dueTime: fields.due_time, projectId: fields.project_id, estimatedMins: fields.estimated_mins };
+    }));
+    setToastMsg("Updated this and all following occurrences");
+  }
+
+  const [recurringDeletePrompt, setRecurringDeletePrompt] = useState(null); // { id, recurrenceId, due }
+  function deleteTask(id) {
+    const t = tasks.find(x => x.id === id);
+    if (t && t.recurrenceId) { setRecurringDeletePrompt({ id: t.id, recurrenceId: t.recurrenceId, due: t.due }); return; }
+    updateTasks(ts => ts.filter(t => t.id !== id));
+    if (authUser) api.deleteTask(id).catch(console.error);
+    setToastMsg("Task moved to bin");
+  }
+  function confirmDeleteThisOccurrence() {
+    const { id } = recurringDeletePrompt;
+    updateTasks(ts => ts.filter(t => t.id !== id));
+    if (authUser) api.deleteTask(id).catch(console.error);
+    setRecurringDeletePrompt(null);
+    setToastMsg("Task moved to bin");
+  }
+  async function confirmDeleteFollowingOccurrences() {
+    const { recurrenceId, due } = recurringDeletePrompt;
+    setRecurringDeletePrompt(null);
+    const ok = await api.deleteRecurringSeries(recurrenceId, due);
+    if (!ok) { setToastMsg("Couldn't delete the series — try again"); return; }
+    updateTasks(ts => ts.filter(t => !(t.recurrenceId === recurrenceId && t.due >= due && t.status !== "Done")));
+    setToastMsg("This and all following occurrences moved to bin");
+  }
   function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
       function setStatus(id, status) {
@@ -7627,7 +7873,8 @@ function App() {
         localStorage.setItem("vtm_checkin_shown", today());
       }} />}
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
-      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} prefillDue={newTaskPrefillDue} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); setNewTaskPrefillDue(null); }} />}
+      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} prefillDue={newTaskPrefillDue} onSave={saveTask} onSaveRecurring={saveRecurringTask} onUpdateRecurringSeries={updateRecurringSeriesHandler} onClose={() => { setShowNew(false); setEditingTask(null); setNewTaskPrefillDue(null); }} />}
+      {recurringDeletePrompt && <RecurringDeletePrompt onThis={confirmDeleteThisOccurrence} onFollowing={confirmDeleteFollowingOccurrences} onCancel={() => setRecurringDeletePrompt(null)} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
