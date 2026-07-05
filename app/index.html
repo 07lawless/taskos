@@ -2839,7 +2839,7 @@ function CalendarView({ tasks, projects, onEdit, onCreateWithDate, onSaveTask, o
                 <div style={{ padding: "8px 8px" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 8px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                      <span style={{ fontSize: 15 }}>🎌</span>
+                      <span style={{ fontSize: 15 }}>🇬🇧</span>
                       <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>UK bank holidays</span>
                     </div>
                     <MiniToggle checked={showHolidays} onChange={setShowHolidays} />
@@ -3007,7 +3007,7 @@ function MonthGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, on
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", marginBottom: 4 }}>
         {dowLabels.map(d => <div key={d} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textAlign: "center", padding: "4px 0" }}>{d}</div>)}
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gridAutoRows: "1fr", gap: 6 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gridAutoRows: "minmax(96px, auto)", alignItems: "stretch", gap: 6 }}>
         {days.map((d, i) => {
           const ds = ymd(d);
           const inMonth = d.getMonth() === cursorDate.getMonth();
@@ -3031,7 +3031,7 @@ function MonthGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, on
               }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
                 <span style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? COLORS.accent : COLORS.text }}>{d.getDate()}</span>
-                {holiday && <span title={holiday} style={{ fontSize: 9 }}>🎌</span>}
+                {holiday && <span title={holiday} style={{ fontSize: 9 }}>🇬🇧</span>}
               </div>
               {dayTasks.slice(0, maxChips).map(t => (
                 <CalTaskChip key={t.id} task={t} onEdit={onEdit} onContextMenu={onContextMenu} draggable onDragStart={onDragStart} />
@@ -3069,7 +3069,7 @@ function WeekGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, onD
   const todayYmd = ymd(new Date());
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(7, minmax(0, 1fr))", gap: 8 }}>
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(7, minmax(0, 1fr))", alignItems: "stretch", gap: 8 }}>
       {days.map(d => {
         const ds = ymd(d);
         const isToday = ds === todayYmd;
@@ -3086,7 +3086,7 @@ function WeekGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, onD
             <div style={{ textAlign: "center", marginBottom: 8 }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: isToday ? COLORS.accent : COLORS.textMuted, textTransform: "uppercase" }}>{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
               <div style={{ fontSize: 18, fontWeight: 800, color: isToday ? COLORS.accent : COLORS.text }}>{d.getDate()}</div>
-              {holiday && <div style={{ fontSize: 9, color: COLORS.accent, marginTop: 2 }}>🎌 {holiday}</div>}
+              {holiday && <div style={{ fontSize: 9, color: COLORS.accent, marginTop: 2 }}>🇬🇧 {holiday}</div>}
               {workHours?.start && workHours?.end && (
                 <div style={{ fontSize: 9, color: COLORS.textMuted, marginTop: 2 }}>{workHours.start}–{workHours.end}</div>
               )}
@@ -3112,7 +3112,7 @@ function DayAgenda({ cursorDate, tasksByDate, showHolidays, onDayClick, onEdit, 
   return (
     <div>
       {holiday && (
-        <div style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>🎌 {holiday}</div>
+        <div style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>🇬🇧 {holiday}</div>
       )}
       {dayTasks.length === 0 ? (
         <div style={{ textAlign: "center", padding: 50, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12 }}>
