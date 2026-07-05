@@ -127,6 +127,15 @@
       animation: auth-spin 0.7s linear infinite;
     }
     @keyframes auth-spin { to { transform: rotate(360deg); } }
+
+    /* Print-friendly calendar: hide all app chrome (sidebar, top bar,
+       mobile nav, floating add button) and calendar-only controls that
+       don't make sense on paper (drag handles, context menus, the
+       options dropdown), leaving just the grid itself. */
+    @media print {
+      .tl-sidebar, .app-topbar, .bottom-nav, .fab { display: none !important; }
+      body { background: #fff !important; }
+    }
   </style>
 </head>
 <body>
@@ -1569,9 +1578,9 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 }
 
 // ── TaskModal ──────────────────────────────────────────────────────────────────
-function TaskModal({ task, onSave, onClose, projects }) {
+function TaskModal({ task, onSave, onClose, projects, prefillDue }) {
   const [form, setForm] = useState(() => {
-    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
+    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: prefillDue || "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
     return Array.isArray(base.subtasks) ? base : { ...base, subtasks: [] };
   });
   const [newSub, setNewSub] = useState("");
@@ -2503,261 +2512,597 @@ function SearchBar({ tasks, onSelect, onClose }) {
   );
 }
 
-// ── Calendar View ──────────────────────────────────────────────────────────────
-function CalendarView({ tasks, onEdit }) {
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [dayOffset, setDayOffset] = useState(0); // for mobile day view
+// ── Calendar helpers ────────────────────────────────────────────────────────────
+// Local-time-safe YYYY-MM-DD formatting/parsing. Deliberately avoids
+// toISOString() for this, since that converts to UTC and can shift the
+// date by one day for anyone not in a UTC timezone — exactly the kind of
+// off-by-one bug a calendar can't afford.
+function ymd(d) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, "0"), day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function parseYMD(s) {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+function addMonths(d, n) { const r = new Date(d); r.setMonth(r.getMonth() + n); return r; }
+function isSameDay(a, b) { return ymd(a) === ymd(b); }
+
+// UK bank holidays (England & Wales). Only 2026 is included — future years'
+// exact substitute-day rules aren't reliable to state confidently without a
+// source, so this is deliberately left short rather than guessed. Extend by
+// adding more { date, name } entries in the same "YYYY-MM-DD" format.
+const UK_HOLIDAYS_2026 = [
+  { date: "2026-01-01", name: "New Year's Day" },
+  { date: "2026-04-03", name: "Good Friday" },
+  { date: "2026-04-06", name: "Easter Monday" },
+  { date: "2026-05-04", name: "Early May Bank Holiday" },
+  { date: "2026-05-25", name: "Spring Bank Holiday" },
+  { date: "2026-08-31", name: "Summer Bank Holiday" },
+  { date: "2026-12-25", name: "Christmas Day" },
+  { date: "2026-12-28", name: "Boxing Day (substitute)" },
+];
+const UK_HOLIDAY_MAP = Object.fromEntries(UK_HOLIDAYS_2026.map(h => [h.date, h.name]));
+
+// Builds a minimal but valid .ics file from a list of tasks and triggers a
+// download. Every task becomes an all-day VEVENT on its due date — there's
+// no time-of-day field on tasks today, so a timed event would be guessing.
+function downloadICS(tasksWithDue, filename) {
+  const escapeText = s => String(s || "").replace(/[\\;,]/g, m => "\\" + m).replace(/\n/g, "\\n");
+  const dtStamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Tasklist.uk//Calendar Export//EN", "CALSCALE:GREGORIAN"];
+  tasksWithDue.forEach(t => {
+    const dateOnly = (t.due || "").replace(/-/g, "");
+    if (!dateOnly) return;
+    const nextDay = ymd(addDays(parseYMD(t.due), 1)).replace(/-/g, "");
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:${t.id}@tasklist.uk`,
+      `DTSTAMP:${dtStamp}`,
+      `DTSTART;VALUE=DATE:${dateOnly}`,
+      `DTEND;VALUE=DATE:${nextDay}`,
+      `SUMMARY:${escapeText(t.isFrog ? "🐸 " + t.title : t.title)}`,
+      t.description ? `DESCRIPTION:${escapeText(t.description)}` : null,
+      `CATEGORIES:${escapeText(t.priority || "Medium")}`,
+      "END:VEVENT"
+    );
+  });
+  lines.push("END:VCALENDAR");
+  const blob = new Blob([lines.filter(Boolean).join("\r\n")], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename || "tasklist-calendar.ics";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Mini calendar (sidebar) ──────────────────────────────────────────────────────
+function MiniCalendar({ cursorDate, onPick, weekStartsMonday, tasksByDate }) {
+  const monthStart = new Date(cursorDate.getFullYear(), cursorDate.getMonth(), 1);
+  const firstWeekday = weekStartsMonday ? (monthStart.getDay() + 6) % 7 : monthStart.getDay();
+  const gridStart = addDays(monthStart, -firstWeekday);
+  const days = Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+  const todayYmd = ymd(new Date());
+  const dowLabels = weekStartsMonday ? ["M","T","W","T","F","S","S"] : ["S","M","T","W","T","F","S"];
+
+  return (
+    <div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, marginBottom: 8, textAlign: "center" }}>
+        {cursorDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2, marginBottom: 4 }}>
+        {dowLabels.map((d, i) => (
+          <div key={i} style={{ fontSize: 9, fontWeight: 700, color: COLORS.textMuted, textAlign: "center" }}>{d}</div>
+        ))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 2 }}>
+        {days.map((d, i) => {
+          const inMonth = d.getMonth() === cursorDate.getMonth();
+          const ds = ymd(d);
+          const isToday = ds === todayYmd;
+          const hasTasks = (tasksByDate[ds] || []).length > 0;
+          return (
+            <button key={i} onClick={() => onPick(d)}
+              aria-label={d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+              style={{
+                aspectRatio: "1", border: "none", borderRadius: 6, cursor: "pointer", fontFamily: "inherit",
+                fontSize: 11, fontWeight: isToday ? 800 : 500,
+                color: !inMonth ? COLORS.textMuted : isToday ? "#fff" : COLORS.text,
+                background: isToday ? COLORS.accent : "transparent",
+                opacity: inMonth ? 1 : 0.35,
+                position: "relative",
+              }}>
+              {d.getDate()}
+              {hasTasks && !isToday && (
+                <span style={{ position: "absolute", bottom: 2, left: "50%", transform: "translateX(-50%)", width: 3, height: 3, borderRadius: "50%", background: COLORS.accent }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Task chip (used in month cells) ──────────────────────────────────────────────
+function CalTaskChip({ task, onEdit, onContextMenu, draggable, onDragStart }) {
+  const pc = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.Medium;
+  const isDone = task.status === "Done";
+  return (
+    <div
+      role="button" tabIndex={0}
+      draggable={draggable}
+      onDragStart={draggable ? (e => onDragStart(e, task)) : undefined}
+      onClick={e => { e.stopPropagation(); onEdit(task); }}
+      onContextMenu={e => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, task); }}
+      onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onEdit(task); } }}
+      title={`${task.title}${task.isFrog ? " (Frog)" : ""} — ${task.priority}${task.status ? " · " + task.status : ""}`}
+      aria-label={`${task.title}, ${task.priority} priority${task.isFrog ? ", frog task" : ""}${isDone ? ", done" : ""}`}
+      style={{
+        background: task.isFrog ? COLORS.frogDim : pc.dim,
+        border: `1px solid ${task.isFrog ? COLORS.frogBorder : pc.color + "40"}`,
+        borderRadius: 5, padding: "2px 6px", marginBottom: 3, cursor: "grab",
+        fontSize: 11, fontWeight: 600, lineHeight: 1.4,
+        color: task.isFrog ? COLORS.frogDark : pc.color,
+        opacity: isDone ? 0.55 : 1,
+        textDecoration: isDone ? "line-through" : "none",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      }}>
+      {task.isFrog ? "🐸 " : ""}{task.title}
+    </div>
+  );
+}
+
+// ── Context menu ──────────────────────────────────────────────────────────────
+function CalContextMenu({ x, y, task, onClose, onEdit, onToggleFrog, onSetStatus, onDuplicate, onDelete }) {
+  useEffect(() => {
+    function onDocClick() { onClose(); }
+    document.addEventListener("click", onDocClick);
+    document.addEventListener("contextmenu", onDocClick);
+    return () => { document.removeEventListener("click", onDocClick); document.removeEventListener("contextmenu", onDocClick); };
+  }, []);
+  const item = (label, fn) => (
+    <button onClick={fn} role="menuitem"
+      style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 14px", fontSize: 13, fontWeight: 500, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}
+      onMouseEnter={e => e.currentTarget.style.background = COLORS.surface2}
+      onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+      {label}
+    </button>
+  );
+  // Clamp so the menu can't render off-screen near the right/bottom edges.
+  const left = Math.min(x, window.innerWidth - 190);
+  const top = Math.min(y, window.innerHeight - 220);
+  return (
+    <div role="menu" style={{ position: "fixed", top, left, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.2)", zIndex: 4000, minWidth: 170, padding: "6px 0", fontFamily: "'DM Sans', system-ui" }}>
+      {item("Edit", () => { onEdit(task); onClose(); })}
+      {item(task.isFrog ? "Unset as frog" : "Set as frog 🐸", () => { onToggleFrog(task.id); onClose(); })}
+      {item(task.status === "Done" ? "Reopen" : "Mark done", () => { onSetStatus(task.id, task.status === "Done" ? "To Do" : "Done"); onClose(); })}
+      {item("Duplicate", () => { onDuplicate(task); onClose(); })}
+      <div style={{ height: 1, background: COLORS.border, margin: "4px 0" }} />
+      {item("Delete", () => { onDelete(task.id); onClose(); })}
+    </div>
+  );
+}
+
+// ── Main Calendar view ───────────────────────────────────────────────────────────
+function CalendarView({ tasks, projects, onEdit, onCreateWithDate, onSaveTask, onDeleteTask, onToggleFrog, onSetStatus, workHours }) {
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem("vtm_cal_view") || "month");
+  const [cursorDate, setCursorDate] = useState(new Date());
+  const [search, setSearch] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [projectFilter, setProjectFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active"); // active | done | all
+  const [weekStartsMonday, setWeekStartsMonday] = useState(() => localStorage.getItem("vtm_cal_week_start") === "1");
+  const [showHolidays, setShowHolidays] = useState(() => localStorage.getItem("vtm_cal_holidays") !== "0");
+  const [showOptions, setShowOptions] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, task }
+  const [dragOverDate, setDragOverDate] = useState(null);
+  const [dayPopover, setDayPopover] = useState(null); // ymd string, for "+X more"
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const rootRef = useRef(null);
 
   useEffect(() => {
-    function handleResize() { setIsMobile(window.innerWidth <= 768); }
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    function onResize() { setIsMobile(window.innerWidth <= 768); }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const todayStr = today();
+  useEffect(() => { localStorage.setItem("vtm_cal_view", viewMode); }, [viewMode]);
+  useEffect(() => { localStorage.setItem("vtm_cal_week_start", weekStartsMonday ? "1" : "0"); }, [weekStartsMonday]);
+  useEffect(() => { localStorage.setItem("vtm_cal_holidays", showHolidays ? "1" : "0"); }, [showHolidays]);
 
-  function dateStr(d) { return d.toISOString().split("T")[0]; }
+  // ── Keyboard shortcuts: T = today, N = new task, ← → = navigate.
+  // Ignored while typing anywhere, so they don't fight with search/filters
+  // or any other input on the page.
+  useEffect(() => {
+    function onKeyDown(e) {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.isContentEditable) return;
+      if (e.key === "t" || e.key === "T") { setCursorDate(new Date()); }
+      else if (e.key === "n" || e.key === "N") { onCreateWithDate(ymd(new Date())); }
+      else if (e.key === "ArrowLeft") { navigate(-1); }
+      else if (e.key === "ArrowRight") { navigate(1); }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [viewMode, cursorDate]);
 
-  // Week view helpers (desktop)
-  const weekStart = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() - d.getDay() + 1 + weekOffset * 7);
-    d.setHours(0,0,0,0);
-    return d;
-  })();
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    return d;
-  });
-
-  // Day view helpers (mobile) - shows 3 days centred on selected day
-  const centreDay = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + dayOffset);
-    d.setHours(0,0,0,0);
-    return d;
-  })();
-  const mobileDays = Array.from({ length: 3 }, (_, i) => {
-    const d = new Date(centreDay);
-    d.setDate(centreDay.getDate() - 1 + i);
-    return d;
-  });
-
-  // Selected day detail (mobile taps on a day to see full list)
-  const [selectedDay, setSelectedDay] = useState(todayStr);
-  const selectedTasks = tasks.filter(t => t.due === selectedDay);
-
-  const unscheduled = tasks.filter(t => !t.due && t.status !== "Done");
-
-  function DayCard({ day, fullWidth }) {
-    const ds = dateStr(day);
-    const isToday = ds === todayStr;
-    const isSelected = ds === selectedDay;
-    const dayTasks = tasks.filter(t => t.due === ds);
-    return (
-      <div onClick={() => setSelectedDay(ds)}
-        style={{
-          background: isSelected ? COLORS.accentDim : isToday ? COLORS.surface2 : COLORS.surface,
-          border: `1px solid ${isSelected ? COLORS.accent+"80" : isToday ? COLORS.accent+"30" : COLORS.border}`,
-          borderRadius: 12, padding: fullWidth ? "14px 14px" : "10px 8px",
-          minHeight: fullWidth ? "auto" : 80, cursor: "pointer", transition: "all 0.15s"
-        }}>
-        <div style={{ display: "flex", alignItems: "center", gap: fullWidth ? 12 : 0, flexDirection: fullWidth ? "row" : "column", marginBottom: fullWidth ? 0 : 6, textAlign: fullWidth ? "left" : "center" }}>
-          <div>
-            <div style={{ fontSize: fullWidth ? 11 : 10, color: isSelected ? COLORS.accent : COLORS.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
-              {day.toLocaleDateString("en-GB", { weekday: fullWidth ? "long" : "short" })}
-            </div>
-            <div style={{ fontSize: fullWidth ? 24 : 20, fontWeight: 800, color: isSelected ? COLORS.accent : isToday ? COLORS.accent : COLORS.text, lineHeight: 1.1 }}>
-              {day.getDate()}
-            </div>
-            {fullWidth && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>{day.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</div>}
-          </div>
-          {fullWidth && dayTasks.length > 0 && (
-            <div style={{ marginLeft: "auto", display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end", maxWidth: "60%" }}>
-              {dayTasks.slice(0, 3).map(t => (
-                <span key={t.id} style={{ background: PRIORITY_CONFIG[t.priority].dim, color: PRIORITY_CONFIG[t.priority].color, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4 }}>
-                  {t.isFrog ? "🐸 " : ""}{t.title.slice(0, 16)}{t.title.length > 16 ? "…" : ""}
-                </span>
-              ))}
-              {dayTasks.length > 3 && <span style={{ fontSize: 10, color: COLORS.textMuted }}>+{dayTasks.length - 3}</span>}
-            </div>
-          )}
-          {!fullWidth && (
-            <div style={{ fontSize: 11, fontWeight: 700, color: dayTasks.length > 0 ? COLORS.accent : COLORS.border }}>
-              {dayTasks.length > 0 ? dayTasks.length : "·"}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  function navigate(dir) {
+    if (viewMode === "month") setCursorDate(d => addMonths(d, dir));
+    else if (viewMode === "week") setCursorDate(d => addDays(d, dir * 7));
+    else setCursorDate(d => addDays(d, dir));
   }
 
-  if (isMobile) {
-    return (
-      <div style={{ paddingBottom: 20 }}>
-        {/* Mobile header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => { setDayOffset(0); setSelectedDay(todayStr); }} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 10px", fontSize: 12, fontWeight: 600 }}>Today</button>
-            <button onClick={() => setDayOffset(d => d - 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>←</button>
-            <button onClick={() => setDayOffset(d => d + 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>→</button>
+  function toggleFullscreen() {
+    if (!fullscreen && rootRef.current?.requestFullscreen) rootRef.current.requestFullscreen().catch(() => {});
+    else if (fullscreen && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    setFullscreen(f => !f);
+  }
+
+  // ── Filtering (search + priority/project/status) — date-independent,
+  // applied once and then grouped by date for rendering.
+  const filtered = tasks.filter(t => {
+    if (search.trim() && !t.title.toLowerCase().includes(search.trim().toLowerCase())) return false;
+    if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
+    if (projectFilter !== "all" && String(t.projectId) !== String(projectFilter)) return false;
+    if (statusFilter === "active" && t.status === "Done") return false;
+    if (statusFilter === "done" && t.status !== "Done") return false;
+    return true;
+  });
+
+  const tasksByDate = {};
+  filtered.forEach(t => { if (t.due) { (tasksByDate[t.due] = tasksByDate[t.due] || []).push(t); } });
+  Object.values(tasksByDate).forEach(list => list.sort((a, b) => (a.status === "Done") - (b.status === "Done")));
+
+  const todayYmd = ymd(new Date());
+  const overdueTasks = tasks.filter(t => t.due && t.due < todayYmd && t.status !== "Done").sort((a, b) => a.due < b.due ? -1 : 1);
+  const upcomingTasks = tasks.filter(t => t.due && t.due > todayYmd && t.due <= ymd(addDays(new Date(), 7)) && t.status !== "Done").sort((a, b) => a.due < b.due ? -1 : 1);
+  const todayTasks = (tasksByDate[todayYmd] || []);
+
+  function handleDragStart(e, task) {
+    e.dataTransfer.setData("text/plain", task.id);
+    e.dataTransfer.effectAllowed = "move";
+  }
+  function handleDrop(e, dateStr) {
+    e.preventDefault();
+    setDragOverDate(null);
+    const id = e.dataTransfer.getData("text/plain");
+    const task = tasks.find(t => String(t.id) === String(id));
+    if (task && task.due !== dateStr) onSaveTask({ ...task, due: dateStr });
+  }
+  function handleDuplicate(task) {
+    onSaveTask({ ...task, id: generateId(), title: task.title + " (copy)", status: "To Do", completedAt: null, createdAt: new Date().toISOString() });
+  }
+
+  const periodLabel = viewMode === "month"
+    ? cursorDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+    : viewMode === "week"
+      ? (() => {
+          const start = weekRangeStart(cursorDate, weekStartsMonday);
+          const end = addDays(start, 6);
+          return `${start.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${end.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+        })()
+      : cursorDate.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  function weekRangeStart(d, monday) {
+    const dow = d.getDay();
+    const diff = monday ? (dow === 0 ? 6 : dow - 1) : dow;
+    return addDays(d, -diff);
+  }
+
+  return (
+    <div ref={rootRef} style={{ paddingBottom: 40, background: fullscreen ? COLORS.bg : "transparent" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>
+          Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em>
+        </h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <button onClick={() => onCreateWithDate(todayYmd)} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>+ New task</button>
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setShowOptions(s => !s)} aria-haspopup="true" aria-expanded={showOptions}
+              title="Calendar options"
+              style={{ background: COLORS.surface3, color: COLORS.textDim, borderRadius: 8, padding: "8px 10px", border: `1px solid ${COLORS.border}`, cursor: "pointer", fontSize: 14 }}>⚙</button>
+            {showOptions && (
+              <div style={{ position: "absolute", right: 0, top: "calc(100% + 6px)", background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.15)", zIndex: 100, width: 240, padding: 10 }}>
+                <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
+                  UK bank holidays
+                  <input type="checkbox" checked={showHolidays} onChange={e => setShowHolidays(e.target.checked)} />
+                </label>
+                <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
+                  Week starts Monday
+                  <input type="checkbox" checked={weekStartsMonday} onChange={e => setWeekStartsMonday(e.target.checked)} />
+                </label>
+                <div style={{ height: 1, background: COLORS.border, margin: "6px 0" }} />
+                <button onClick={() => { downloadICS(filtered.filter(t => t.due), "tasklist-calendar.ics"); setShowOptions(false); }}
+                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}>
+                  ⬇ Export to .ics
+                </button>
+                <button onClick={() => { toggleFullscreen(); setShowOptions(false); }}
+                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}>
+                  {fullscreen ? "⤢ Exit full screen" : "⤢ Full screen"}
+                </button>
+                <button onClick={() => { window.print(); setShowOptions(false); }}
+                  style={{ display: "block", width: "100%", textAlign: "left", background: "none", border: "none", padding: "8px 6px", fontSize: 13, color: COLORS.text, cursor: "pointer", fontFamily: "inherit" }}>
+                  🖨 Print
+                </button>
+              </div>
+            )}
           </div>
         </div>
+      </div>
 
-        {/* 3-day strip */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
-          {mobileDays.map(day => <DayCard key={dateStr(day)} day={day} fullWidth={false} />)}
+      {/* Toolbar: view toggle, nav, search, filters */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+        <div role="tablist" aria-label="Calendar view" style={{ display: "flex", background: COLORS.surface3, borderRadius: 8, padding: 3, gap: 2 }}>
+          {["month", "week", "day"].map(v => (
+            <button key={v} role="tab" aria-selected={viewMode === v} onClick={() => setViewMode(v)}
+              style={{ background: viewMode === v ? COLORS.accent : "transparent", color: viewMode === v ? "#fff" : COLORS.textDim, border: "none", borderRadius: 6, padding: "6px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textTransform: "capitalize" }}>
+              {v}
+            </button>
+          ))}
         </div>
+        <button onClick={() => setCursorDate(new Date())} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.accent}30`, cursor: "pointer", fontFamily: "inherit" }}>Today</button>
+        <button onClick={() => navigate(-1)} aria-label="Previous" style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "6px 10px", fontSize: 13, border: `1px solid ${COLORS.border}`, cursor: "pointer" }}>←</button>
+        <button onClick={() => navigate(1)} aria-label="Next" style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "6px 10px", fontSize: 13, border: `1px solid ${COLORS.border}`, cursor: "pointer" }}>→</button>
+        <span style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, minWidth: 140 }}>{periodLabel}</span>
 
-        {/* Selected day full view */}
-        <div style={{ marginBottom: 16 }}>
-          <DayCard day={new Date(selectedDay + "T00:00:00")} fullWidth={true} />
+        <div style={{ flex: 1, minWidth: 140 }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks…" aria-label="Search tasks"
+            style={{ width: "100%", background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 12px", fontSize: 13, color: COLORS.text, fontFamily: "inherit" }} />
         </div>
+        <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} aria-label="Filter by priority"
+          style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 12, color: COLORS.text, fontFamily: "inherit" }}>
+          <option value="all">All priorities</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        {projects && projects.length > 0 && (
+          <select value={projectFilter} onChange={e => setProjectFilter(e.target.value)} aria-label="Filter by project"
+            style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 12, color: COLORS.text, fontFamily: "inherit" }}>
+            <option value="all">All projects</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        )}
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} aria-label="Filter by status"
+          style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 12, color: COLORS.text, fontFamily: "inherit" }}>
+          <option value="active">Active</option>
+          <option value="done">Completed</option>
+          <option value="all">All</option>
+        </select>
+      </div>
 
-        {/* Tasks for selected day */}
-        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
-          <div style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ fontSize: 13, fontWeight: 700 }}>
-              {new Date(selectedDay + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "220px 1fr", gap: 20, alignItems: "start" }}>
+
+        {/* Sidebar — hidden on mobile to save space; mobile leans on the agenda-style day/week views instead */}
+        {!isMobile && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14 }}>
+              <MiniCalendar cursorDate={cursorDate} onPick={d => { setCursorDate(d); setViewMode("day"); }} weekStartsMonday={weekStartsMonday} tasksByDate={tasksByDate} />
             </div>
-            <div style={{ fontSize: 12, color: COLORS.textMuted }}>{selectedTasks.length} task{selectedTasks.length !== 1 ? "s" : ""}</div>
-          </div>
-          {selectedTasks.length === 0 ? (
-            <div style={{ padding: 24, textAlign: "center", color: COLORS.textMuted, fontSize: 13 }}>Nothing due this day.</div>
-          ) : (
-            selectedTasks.map(t => (
-              <div key={t.id} onClick={() => onEdit(t)}
-                style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
-                  {t.description && <div style={{ fontSize: 12, color: COLORS.textMuted }}>{t.description.slice(0, 60)}{t.description.length > 60 ? "…" : ""}</div>}
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
-                  <span style={{ background: PRIORITY_CONFIG[t.priority].dim, color: PRIORITY_CONFIG[t.priority].color, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4 }}>{t.priority.toUpperCase()}</span>
-                  {t.status === "Done" && <span style={{ fontSize: 11, color: COLORS.frog }}>✓ Done</span>}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
 
-        {unscheduled.length > 0 && (
-          <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14, marginTop: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 10 }}>Unscheduled ({unscheduled.length})</div>
-            {unscheduled.map(t => (
-              <div key={t.id} onClick={() => onEdit(t)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer" }}>
-                <span style={{ background: PRIORITY_CONFIG[t.priority].dim, color: PRIORITY_CONFIG[t.priority].color, fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4, flexShrink: 0 }}>{t.priority.slice(0,1)}</span>
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{t.isFrog ? "🐸 " : ""}{t.title}</span>
+            {overdueTasks.length > 0 && (
+              <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.high, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>⚠ Overdue ({overdueTasks.length})</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {overdueTasks.slice(0, 6).map(t => (
+                    <div key={t.id} onClick={() => onEdit(t)} style={{ cursor: "pointer", fontSize: 12, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
+
+            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Today's agenda</div>
+              {todayTasks.length === 0 && <div style={{ fontSize: 12, color: COLORS.textMuted }}>Nothing due today.</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                {todayTasks.map(t => (
+                  <div key={t.id} onClick={() => onEdit(t)} style={{ cursor: "pointer", fontSize: 12, fontWeight: 600, color: t.status === "Done" ? COLORS.textMuted : COLORS.text, textDecoration: t.status === "Done" ? "line-through" : "none" }}>
+                    {t.isFrog ? "🐸 " : ""}{t.title}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Upcoming (7 days)</div>
+              {upcomingTasks.length === 0 && <div style={{ fontSize: 12, color: COLORS.textMuted }}>Nothing coming up.</div>}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {upcomingTasks.slice(0, 8).map(t => (
+                  <div key={t.id} onClick={() => onEdit(t)} style={{ cursor: "pointer" }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: COLORS.textMuted }}>{parseYMD(t.due).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.text }}>{t.title}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
-      </div>
-    );
-  }
 
-  // Desktop 7-day view
-  return (
-    <div style={{ paddingBottom: 40 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={() => setWeekOffset(0)} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.accent}30` }}>Today</button>
-          <button onClick={() => setWeekOffset(w => w-1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>←</button>
-          <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, minWidth: 160, textAlign: "center" }}>
-            {weekStart.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – {weekDays[6].toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-          </span>
-          <button onClick={() => setWeekOffset(w => w+1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>→</button>
+        {/* Main grid */}
+        <div>
+          {viewMode === "month" && (
+            <MonthGrid cursorDate={cursorDate} tasksByDate={tasksByDate} weekStartsMonday={weekStartsMonday} showHolidays={showHolidays}
+              onDayClick={onCreateWithDate} onEdit={onEdit} onContextMenu={(e, t) => setContextMenu({ x: e.clientX, y: e.clientY, task: t })}
+              onDragStart={handleDragStart} onDrop={handleDrop} dragOverDate={dragOverDate} setDragOverDate={setDragOverDate}
+              dayPopover={dayPopover} setDayPopover={setDayPopover} isMobile={isMobile} />
+          )}
+          {viewMode === "week" && (
+            <WeekGrid cursorDate={cursorDate} tasksByDate={tasksByDate} weekStartsMonday={weekStartsMonday} showHolidays={showHolidays}
+              onDayClick={onCreateWithDate} onEdit={onEdit} onContextMenu={(e, t) => setContextMenu({ x: e.clientX, y: e.clientY, task: t })}
+              onDragStart={handleDragStart} onDrop={handleDrop} dragOverDate={dragOverDate} setDragOverDate={setDragOverDate}
+              workHours={workHours} isMobile={isMobile} />
+          )}
+          {viewMode === "day" && (
+            <DayAgenda cursorDate={cursorDate} tasksByDate={tasksByDate} showHolidays={showHolidays}
+              onDayClick={onCreateWithDate} onEdit={onEdit} onContextMenu={(e, t) => setContextMenu({ x: e.clientX, y: e.clientY, task: t })}
+              onSetStatus={onSetStatus} onToggleFrog={onToggleFrog} projects={projects} />
+          )}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, marginBottom: 24 }}>
-        {weekDays.map(day => {
-          const ds = dateStr(day);
-          const isToday = ds === todayStr;
-          const dayTasks = tasks.filter(t => t.due === ds);
+      {contextMenu && (
+        <CalContextMenu x={contextMenu.x} y={contextMenu.y} task={contextMenu.task} onClose={() => setContextMenu(null)}
+          onEdit={onEdit} onToggleFrog={onToggleFrog} onSetStatus={onSetStatus} onDuplicate={handleDuplicate} onDelete={onDeleteTask} />
+      )}
+    </div>
+  );
+}
+
+// ── Month grid ────────────────────────────────────────────────────────────────
+function MonthGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, onDayClick, onEdit, onContextMenu, onDragStart, onDrop, dragOverDate, setDragOverDate, dayPopover, setDayPopover, isMobile }) {
+  const monthStart = new Date(cursorDate.getFullYear(), cursorDate.getMonth(), 1);
+  const firstWeekday = weekStartsMonday ? (monthStart.getDay() + 6) % 7 : monthStart.getDay();
+  const gridStart = addDays(monthStart, -firstWeekday);
+  const numWeeks = Math.ceil((firstWeekday + new Date(cursorDate.getFullYear(), cursorDate.getMonth() + 1, 0).getDate()) / 7);
+  const days = Array.from({ length: numWeeks * 7 }, (_, i) => addDays(gridStart, i));
+  const todayYmd = ymd(new Date());
+  const dowLabels = weekStartsMonday ? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] : ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const maxChips = isMobile ? 2 : 3;
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", marginBottom: 4 }}>
+        {dowLabels.map(d => <div key={d} style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, textAlign: "center", padding: "4px 0" }}>{d}</div>)}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gridAutoRows: "1fr", gap: 6 }}>
+        {days.map((d, i) => {
+          const ds = ymd(d);
+          const inMonth = d.getMonth() === cursorDate.getMonth();
+          const isToday = ds === todayYmd;
+          const dayTasks = tasksByDate[ds] || [];
+          const holiday = showHolidays ? UK_HOLIDAY_MAP[ds] : null;
+          const isDragOver = dragOverDate === ds;
           return (
-            <div key={ds} style={{ background: isToday ? COLORS.accentDim : COLORS.surface, border: `1px solid ${isToday ? COLORS.accent+"60" : COLORS.border}`, borderRadius: 10, padding: "10px 8px", minHeight: 120 }}>
-              <div style={{ marginBottom: 8, textAlign: "center" }}>
-                <div style={{ fontSize: 10, color: isToday ? COLORS.accent : COLORS.textMuted, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                  {day.toLocaleDateString("en-GB", { weekday: "short" })}
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: isToday ? COLORS.accent : COLORS.text, lineHeight: 1.2 }}>
-                  {day.getDate()}
-                </div>
+            <div key={i} role="button" tabIndex={0}
+              aria-label={`${d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}${dayTasks.length ? `, ${dayTasks.length} task${dayTasks.length > 1 ? "s" : ""}` : ""}`}
+              onClick={() => onDayClick(ds)}
+              onKeyDown={e => { if (e.key === "Enter") onDayClick(ds); }}
+              onDragOver={e => { e.preventDefault(); setDragOverDate(ds); }}
+              onDragLeave={() => setDragOverDate(d => d === ds ? null : d)}
+              onDrop={e => onDrop(e, ds)}
+              style={{
+                minHeight: isMobile ? 64 : 96, background: isToday ? COLORS.accentDim : isDragOver ? COLORS.surface2 : COLORS.surface,
+                border: `1px solid ${isToday ? COLORS.accent + "60" : isDragOver ? COLORS.accent : COLORS.border}`,
+                borderRadius: 8, padding: "6px 6px", cursor: "pointer", opacity: inMonth ? 1 : 0.45,
+                display: "flex", flexDirection: "column", transition: "border-color 0.15s, background 0.15s",
+              }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
+                <span style={{ fontSize: 12, fontWeight: isToday ? 800 : 600, color: isToday ? COLORS.accent : COLORS.text }}>{d.getDate()}</span>
+                {holiday && <span title={holiday} style={{ fontSize: 9 }}>🎌</span>}
               </div>
-              {dayTasks.map(t => (
-                <div key={t.id} onClick={() => onEdit(t)}
-                  style={{ background: t.isFrog ? COLORS.frogDim : PRIORITY_CONFIG[t.priority].dim, border: `1px solid ${t.isFrog ? COLORS.frogBorder : PRIORITY_CONFIG[t.priority].color+"40"}`, borderRadius: 5, padding: "4px 6px", marginBottom: 4, cursor: "pointer", fontSize: 11, fontWeight: 600, color: t.isFrog ? COLORS.frogDark : PRIORITY_CONFIG[t.priority].color, lineHeight: 1.3 }}>
-                  {t.isFrog ? "🐸 " : ""}{t.title.slice(0, 22)}{t.title.length > 22 ? "…" : ""}
-                  {t.status === "Done" && <span style={{ marginLeft: 4, opacity: 0.7 }}>✓</span>}
-                </div>
+              {dayTasks.slice(0, maxChips).map(t => (
+                <CalTaskChip key={t.id} task={t} onEdit={onEdit} onContextMenu={onContextMenu} draggable onDragStart={onDragStart} />
               ))}
-              {dayTasks.length === 0 && (
-                <div style={{ fontSize: 10, color: COLORS.border, textAlign: "center", marginTop: 8 }}>—</div>
+              {dayTasks.length > maxChips && (
+                <button onClick={e => { e.stopPropagation(); setDayPopover(dayPopover === ds ? null : ds); }}
+                  style={{ background: "none", border: "none", color: COLORS.accent, fontSize: 10, fontWeight: 700, cursor: "pointer", textAlign: "left", padding: "1px 0", fontFamily: "inherit" }}>
+                  +{dayTasks.length - maxChips} more
+                </button>
+              )}
+              {dayPopover === ds && (
+                <div onClick={e => e.stopPropagation()} style={{ position: "absolute", zIndex: 200, marginTop: 4, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.2)", padding: 10, minWidth: 200, maxHeight: 260, overflowY: "auto" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, marginBottom: 6 }}>{d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" })}</div>
+                  {dayTasks.map(t => <CalTaskChip key={t.id} task={t} onEdit={onEdit} onContextMenu={onContextMenu} draggable={false} />)}
+                </div>
               )}
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
 
-      {/* Upcoming & Unscheduled row */}
-      <div style={{ display: "grid", gridTemplateColumns: unscheduled.length > 0 ? "1fr 1fr" : "1fr", gap: 16 }}>
-        {/* Upcoming this week summary */}
-        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 20 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>
-            📋 This Week at a Glance
+// ── Week grid (7-day agenda columns — there's no time-of-day data on
+// tasks, so this shows each day's tasks as a compact stacked list rather
+// than a misleading hourly grid). Working hours are shaded as a subtle
+// reminder of when the day's "core" hours are, using the same work-hours
+// setting from Settings. ────────────────────────────────────────────────
+function WeekGrid({ cursorDate, tasksByDate, weekStartsMonday, showHolidays, onDayClick, onEdit, onContextMenu, onDragStart, onDrop, dragOverDate, setDragOverDate, workHours, isMobile }) {
+  const dow = cursorDate.getDay();
+  const diff = weekStartsMonday ? (dow === 0 ? 6 : dow - 1) : dow;
+  const weekStart = addDays(cursorDate, -diff);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const todayYmd = ymd(new Date());
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(7, 1fr)", gap: 8 }}>
+      {days.map(d => {
+        const ds = ymd(d);
+        const isToday = ds === todayYmd;
+        const dayTasks = tasksByDate[ds] || [];
+        const holiday = showHolidays ? UK_HOLIDAY_MAP[ds] : null;
+        const isDragOver = dragOverDate === ds;
+        return (
+          <div key={ds}
+            onClick={() => onDayClick(ds)}
+            onDragOver={e => { e.preventDefault(); setDragOverDate(ds); }}
+            onDragLeave={() => setDragOverDate(dd => dd === ds ? null : dd)}
+            onDrop={e => onDrop(e, ds)}
+            style={{ background: isToday ? COLORS.accentDim : isDragOver ? COLORS.surface2 : COLORS.surface, border: `1px solid ${isToday ? COLORS.accent + "60" : isDragOver ? COLORS.accent : COLORS.border}`, borderRadius: 10, padding: 10, minHeight: 220, cursor: "pointer" }}>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: isToday ? COLORS.accent : COLORS.textMuted, textTransform: "uppercase" }}>{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: isToday ? COLORS.accent : COLORS.text }}>{d.getDate()}</div>
+              {holiday && <div style={{ fontSize: 9, color: COLORS.accent, marginTop: 2 }}>🎌 {holiday}</div>}
+              {workHours?.start && workHours?.end && (
+                <div style={{ fontSize: 9, color: COLORS.textMuted, marginTop: 2 }}>{workHours.start}–{workHours.end}</div>
+              )}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {dayTasks.map(t => <CalTaskChip key={t.id} task={t} onEdit={onEdit} onContextMenu={onContextMenu} draggable onDragStart={onDragStart} />)}
+              {dayTasks.length === 0 && <div style={{ fontSize: 10, color: COLORS.border, textAlign: "center", marginTop: 10 }}>—</div>}
+            </div>
           </div>
-          {weekDays.map(day => {
-            const ds = dateStr(day);
-            const dayTasks = tasks.filter(t => t.due === ds);
-            if (!dayTasks.length) return null;
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Day view — full agenda for a single day, since there's no time-of-day
+// data to justify an hourly grid. ────────────────────────────────────────
+function DayAgenda({ cursorDate, tasksByDate, showHolidays, onDayClick, onEdit, onContextMenu, onSetStatus, onToggleFrog, projects }) {
+  const ds = ymd(cursorDate);
+  const dayTasks = tasksByDate[ds] || [];
+  const holiday = showHolidays ? UK_HOLIDAY_MAP[ds] : null;
+
+  return (
+    <div>
+      {holiday && (
+        <div style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>🎌 {holiday}</div>
+      )}
+      {dayTasks.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 50, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 12 }}>
+          <div style={{ fontSize: 14, color: COLORS.textMuted, marginBottom: 12 }}>Nothing scheduled for this day.</div>
+          <button onClick={() => onDayClick(ds)} style={{ background: COLORS.accent, color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>+ Add a task</button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {dayTasks.map(t => {
+            const pc = PRIORITY_CONFIG[t.priority] || PRIORITY_CONFIG.Medium;
+            const proj = projects?.find(p => p.id === t.projectId);
+            const isDone = t.status === "Done";
             return (
-              <div key={ds} style={{ display: "flex", gap: 12, paddingBottom: 10, marginBottom: 10, borderBottom: `1px solid ${COLORS.border}` }}>
-                <div style={{ flexShrink: 0, textAlign: "center", width: 36 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: ds === todayStr ? COLORS.accent : COLORS.textMuted, textTransform: "uppercase" }}>{day.toLocaleDateString("en-GB", { weekday: "short" })}</div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: ds === todayStr ? COLORS.accent : COLORS.text, lineHeight: 1.2 }}>{day.getDate()}</div>
+              <div key={t.id} onClick={() => onEdit(t)} onContextMenu={e => { e.preventDefault(); onContextMenu(e, t); }}
+                style={{ display: "flex", alignItems: "center", gap: 12, background: t.isFrog ? COLORS.frogDim : COLORS.surface, border: `1px solid ${t.isFrog ? COLORS.frogBorder : COLORS.border}`, borderRadius: 10, padding: "12px 14px", cursor: "pointer" }}>
+                <div style={{ width: 4, height: 32, borderRadius: 2, background: t.isFrog ? COLORS.frog : pc.color, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: isDone ? COLORS.textMuted : COLORS.text, textDecoration: isDone ? "line-through" : "none" }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
+                  <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{t.priority}{proj ? ` · ${proj.name}` : ""}{t.estimatedMins ? ` · ${t.estimatedMins}m` : ""}</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  {dayTasks.slice(0,3).map(t => (
-                    <div key={t.id} onClick={() => onEdit(t)} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4, cursor: "pointer" }}>
-                      <div style={{ width: 3, height: 3, borderRadius: "50%", background: t.isFrog ? COLORS.frog : PRIORITY_CONFIG[t.priority].color, flexShrink: 0 }} />
-                      <span style={{ fontSize: 12, fontWeight: t.status === "Done" ? 400 : 600, color: t.status === "Done" ? COLORS.textMuted : COLORS.text, textDecoration: t.status === "Done" ? "line-through" : "none" }}>{t.title}</span>
-                    </div>
-                  ))}
-                  {dayTasks.length > 3 && <div style={{ fontSize: 11, color: COLORS.textMuted }}>+{dayTasks.length - 3} more</div>}
-                </div>
+                <button onClick={e => { e.stopPropagation(); onSetStatus(t.id, isDone ? "To Do" : "Done"); }}
+                  aria-label={isDone ? "Reopen task" : "Mark task done"}
+                  style={{ background: isDone ? COLORS.surface3 : COLORS.frogDim, color: isDone ? COLORS.textMuted : COLORS.frog, border: "none", borderRadius: 7, width: 30, height: 30, fontSize: 14, cursor: "pointer", flexShrink: 0 }}>
+                  {isDone ? "↺" : "✓"}
+                </button>
               </div>
             );
-          }).filter(Boolean)}
-          {weekDays.every(d => !tasks.filter(t => t.due === dateStr(d)).length) && (
-            <div style={{ fontSize: 13, color: COLORS.textMuted, textAlign: "center", padding: "16px 0" }}>Nothing scheduled this week</div>
-          )}
+          })}
         </div>
-
-        {unscheduled.length > 0 && (
-          <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 14 }}>
-              📌 Unscheduled ({unscheduled.length})
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {unscheduled.map(t => (
-                <div key={t.id} onClick={() => onEdit(t)}
-                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, cursor: "pointer", transition: "all 0.15s" }}>
-                  <div style={{ width: 3, height: 24, borderRadius: 2, background: t.isFrog ? COLORS.frog : PRIORITY_CONFIG[t.priority].color, flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
-                    <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 1 }}>{t.priority} · {t.status}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
@@ -5974,6 +6319,8 @@ function App() {
   const [view, setView] = useState("board");
   const [editingTask, setEditingTask] = useState(null);
   const [showNew, setShowNew] = useState(false);
+  const [newTaskPrefillDue, setNewTaskPrefillDue] = useState(null);
+  function createTaskWithDate(dateStr) { setNewTaskPrefillDue(dateStr); setShowNew(true); }
   const [showDaily, setShowDaily] = useState(false);
   const [showIE, setShowIE] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
@@ -7217,7 +7564,7 @@ function App() {
           </div>
         )}
 
-        {view === "calendar" && <CalendarView key={theme} tasks={tasks} onEdit={setEditingTask} />}
+        {view === "calendar" && <CalendarView key={theme} tasks={tasks} projects={projects} onEdit={setEditingTask} onCreateWithDate={createTaskWithDate} onSaveTask={saveTask} onDeleteTask={deleteTask} onToggleFrog={toggleFrog} onSetStatus={setStatus} workHours={workHours} />}
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
         {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
@@ -7240,7 +7587,7 @@ function App() {
         localStorage.setItem("vtm_checkin_shown", today());
       }} />}
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
-      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
+      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} prefillDue={newTaskPrefillDue} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); setNewTaskPrefillDue(null); }} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
