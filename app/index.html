@@ -5975,27 +5975,45 @@ function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
     return null;
   }
 
+  // Polls for a visible target rather than checking once: right after data
+  // finishes loading, some elements (e.g. the top-bar buttons) can take a
+  // beat to actually paint. A single quick check risked concluding the
+  // target didn't exist and skipping the step before it had even rendered.
+  // This keeps trying for ~3s before giving up for real.
   React.useEffect(() => {
+    let attempts = 0;
+    const MAX_ATTEMPTS = 20; // ~3s at 150ms
+    let poll = null;
+
     function measure() {
       const r = findVisibleTarget();
-      setRect(r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null);
+      if (r) {
+        setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+        if (poll) { clearInterval(poll); poll = null; }
+      }
     }
+
     measure();
+    if (!findVisibleTarget()) {
+      poll = setInterval(() => {
+        attempts++;
+        measure();
+        if (attempts >= MAX_ATTEMPTS && !findVisibleTarget()) {
+          clearInterval(poll);
+          poll = null;
+          onNext(true); // genuinely not on this layout — skip past it
+        }
+      }, 150);
+    }
+
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
-    const t = setTimeout(measure, 50); // catch late layout shifts (fonts, images)
-    return () => { window.removeEventListener("resize", measure); window.removeEventListener("scroll", measure, true); clearTimeout(t); };
+    return () => {
+      if (poll) clearInterval(poll);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
   }, [step.keys.join(",")]);
-
-  // None of this step's candidate targets are visible on this layout at
-  // all (not just a timing issue) — skip straight past it rather than
-  // showing a spotlight pointing at nothing.
-  React.useEffect(() => {
-    if (rect === null) {
-      const t = setTimeout(() => { if (!findVisibleTarget()) onNext(true); }, 300);
-      return () => clearTimeout(t);
-    }
-  }, [rect, step.keys.join(",")]);
 
   if (!rect) return null;
 
