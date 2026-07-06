@@ -1686,7 +1686,8 @@ function TaskModal({ task, onSave, onClose, projects }) {
                   <input type="number" min={1} value={form.recurrence.interval}
                     onChange={e => setF("recurrence", { ...form.recurrence, interval: Math.max(1, Number(e.target.value) || 1) })}
                     style={{ width: 56 }} />
-                  <select value={form.recurrence.unit} onChange={e => setF("recurrence", { ...form.recurrence, unit: e.target.value })}>
+                  <select value={form.recurrence.unit} onChange={e => setF("recurrence", { ...form.recurrence, unit: e.target.value })}
+                    style={{ width: 130, flexShrink: 0 }}>
                     <option value="day">day(s)</option>
                     <option value="week">week(s)</option>
                     <option value="month">month(s)</option>
@@ -1715,22 +1716,25 @@ function TaskModal({ task, onSave, onClose, projects }) {
                 <div style={{ fontSize: 11, fontWeight: 600, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Ends</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
-                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "never"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "never" })} />
+                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "never"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "never" })}
+                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: COLORS.accent }} />
                     Never
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
-                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "on"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "on" })} />
+                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "on"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "on" })}
+                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: COLORS.accent }} />
                     On
                     <input type="date" value={form.recurrence.endDate} disabled={form.recurrence.endType !== "on"}
                       onChange={e => setF("recurrence", { ...form.recurrence, endDate: e.target.value })}
-                      style={{ width: 150, opacity: form.recurrence.endType !== "on" ? 0.4 : 1 }} />
+                      style={{ width: 150, flexShrink: 0, opacity: form.recurrence.endType !== "on" ? 0.4 : 1 }} />
                   </label>
                   <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
-                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "after"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "after" })} />
+                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "after"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "after" })}
+                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: COLORS.accent }} />
                     After
                     <input type="number" min={1} value={form.recurrence.endCount} disabled={form.recurrence.endType !== "after"}
                       onChange={e => setF("recurrence", { ...form.recurrence, endCount: Number(e.target.value) || 1 })}
-                      style={{ width: 56, opacity: form.recurrence.endType !== "after" ? 0.4 : 1 }} />
+                      style={{ width: 56, flexShrink: 0, opacity: form.recurrence.endType !== "after" ? 0.4 : 1 }} />
                     occurrences
                   </label>
                 </div>
