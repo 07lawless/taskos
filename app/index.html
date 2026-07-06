@@ -1522,6 +1522,16 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
               {isDueToday ? "● " : ""}{task.due}
             </span>
           )}
+          {task.dueTime && (
+            <span style={{ fontSize: 10, color: COLORS.accent, padding: "2px 7px", background: COLORS.accentDim, borderRadius: 4, fontWeight: 600 }}>
+              🕐 {task.dueTime}
+            </span>
+          )}
+          {task.recurrenceId && (
+            <span title="Part of a recurring series" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 6px", background: COLORS.surface3, borderRadius: 4 }}>
+              🔁
+            </span>
+          )}
           {isStale && (
             <span title="No edits or status changes in a while — still on your plate?" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 7px", background: COLORS.surface3, borderRadius: 4, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>
               💤 {daysSinceTouch}d untouched
@@ -1569,6 +1579,229 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 }
 
 // ── TaskModal ──────────────────────────────────────────────────────────────────
+// ── Recurring task creation modal ────────────────────────────────────────────────
+// A dedicated modal (kept separate from the normal TaskModal so neither gets
+// cluttered). Supports: daily / weekly (specific weekdays, every-N-weeks) /
+// monthly in two flavours — a fixed calendar date, or an ordinal weekday
+// like "first Monday" / "last Friday". Time-of-day lives here specifically,
+// since precise timing is the whole point of a recurring reminder.
+const WEEKDAY_PICKER = [["MO", "Mon"], ["TU", "Tue"], ["WE", "Wed"], ["TH", "Thu"], ["FR", "Fri"], ["SA", "Sat"], ["SU", "Sun"]];
+const ORDINALS = [[1, "First"], [2, "Second"], [3, "Third"], [4, "Fourth"], [-1, "Last"]];
+
+function RecurringTaskModal({ onSave, onClose, projects, prefillDue }) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [priority, setPriority] = useState("Medium");
+  const [projectId, setProjectId] = useState(null);
+  const [startDate, setStartDate] = useState(prefillDue || today());
+  const [time, setTime] = useState("");
+  const [freq, setFreq] = useState("weekly");
+  const [interval, setInterval] = useState(1);
+  const [byDay, setByDay] = useState([]);
+  const [monthlyMode, setMonthlyMode] = useState("date"); // 'date' | 'weekday'
+  const [ordinal, setOrdinal] = useState(1);
+  const [ordWeekday, setOrdWeekday] = useState("MO");
+  const [endType, setEndType] = useState("count"); // never | count | until
+  const [count, setCount] = useState(12);
+  const [until, setUntil] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function toggleByDay(code) { setByDay(d => d.includes(code) ? d.filter(c => c !== code) : [...d, code]); }
+
+  // A plain-English preview of the pattern, so the choice is legible without
+  // having to reason about the controls.
+  function summarise() {
+    const iv = Math.max(1, parseInt(interval, 10) || 1);
+    let base;
+    if (freq === "daily") base = iv === 1 ? "Every day" : `Every ${iv} days`;
+    else if (freq === "weekly") {
+      const days = byDay.length ? byDay.map(c => WEEKDAY_PICKER.find(w => w[0] === c)?.[1]).join(", ") : new Date(parseYMD(startDate)).toLocaleDateString("en-GB", { weekday: "long" });
+      base = iv === 1 ? `Weekly on ${days}` : `Every ${iv} weeks on ${days}`;
+    } else {
+      if (monthlyMode === "weekday") {
+        const ord = ORDINALS.find(o => o[0] === ordinal)?.[1];
+        const wd = WEEKDAY_PICKER.find(w => w[0] === ordWeekday)?.[1];
+        base = `${iv === 1 ? "Monthly" : `Every ${iv} months`} on the ${ord?.toLowerCase()} ${wd}`;
+      } else {
+        const d = parseYMD(startDate).getDate();
+        base = `${iv === 1 ? "Monthly" : `Every ${iv} months`} on day ${d}`;
+      }
+    }
+    if (time) base += ` at ${time}`;
+    if (endType === "count") base += `, ${count} times`;
+    else if (endType === "until" && until) base += `, until ${until}`;
+    return base;
+  }
+
+  function build() {
+    const iv = Math.max(1, parseInt(interval, 10) || 1);
+    const rule = { freq, interval: iv };
+    if (freq === "weekly" && byDay.length) rule.byDay = byDay;
+    if (freq === "monthly" && monthlyMode === "weekday") { rule.monthlyMode = "weekday"; rule.ordinal = ordinal; rule.weekday = ordWeekday; }
+    if (endType === "count") rule.count = Math.max(1, parseInt(count, 10) || 1);
+    else if (endType === "until" && until) rule.until = until;
+    return rule;
+  }
+
+  async function handleCreate() {
+    if (!title.trim() || saving) return;
+    setSaving(true);
+    const task = { title: title.trim(), description, priority, projectId, due: startDate, dueTime: time || null };
+    await onSave(task, build());
+    // onSave closes the modal on success; re-enable if it somehow returns.
+    setSaving(false);
+  }
+
+  const field = { width: "100%", background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "10px 12px", fontSize: 14, color: COLORS.text, fontFamily: "inherit", boxSizing: "border-box" };
+  const lbl = { fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 };
+  const chip = (active) => ({ padding: "7px 12px", borderRadius: 8, border: `1px solid ${active ? COLORS.accent : COLORS.border}`, background: active ? COLORS.accent : COLORS.surface2, color: active ? "#fff" : COLORS.textDim, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" });
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 1000, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 20, overflowY: "auto" }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{ background: COLORS.surface, borderRadius: 16, width: "100%", maxWidth: 480, margin: "auto", boxShadow: "0 24px 60px rgba(0,0,0,0.25)", border: `1px solid ${COLORS.border}`, overflow: "hidden" }}>
+        <div style={{ padding: "18px 22px", borderBottom: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h2 style={{ fontSize: 17, fontWeight: 700, color: COLORS.text, display: "flex", alignItems: "center", gap: 8 }}><span>🔁</span> New recurring task</h2>
+          <button onClick={onClose} aria-label="Close" style={{ background: "none", border: "none", color: COLORS.textMuted, fontSize: 20, cursor: "pointer", lineHeight: 1 }}>✕</button>
+        </div>
+
+        <div style={{ padding: 22, display: "flex", flexDirection: "column", gap: 16, maxHeight: "70vh", overflowY: "auto" }}>
+          <div>
+            <label style={lbl}>TITLE</label>
+            <input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Weekly team standup" style={field} />
+          </div>
+
+          <div>
+            <label style={lbl}>DESCRIPTION (OPTIONAL)</label>
+            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={2} style={{ ...field, resize: "vertical" }} />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={lbl}>PRIORITY</label>
+              <select value={priority} onChange={e => setPriority(e.target.value)} style={field}>
+                <option>High</option><option>Medium</option><option>Low</option>
+              </select>
+            </div>
+            {projects && projects.length > 0 && (
+              <div>
+                <label style={lbl}>PROJECT</label>
+                <select value={projectId || ""} onChange={e => setProjectId(e.target.value || null)} style={field}>
+                  <option value="">None</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label style={lbl}>STARTS</label>
+              <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={field} />
+            </div>
+            <div>
+              <label style={lbl}>TIME (OPTIONAL)</label>
+              <input type="time" value={time} onChange={e => setTime(e.target.value)} style={field} />
+            </div>
+          </div>
+
+          <div style={{ height: 1, background: COLORS.border }} />
+
+          <div>
+            <label style={lbl}>REPEATS</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {[["daily", "Daily"], ["weekly", "Weekly"], ["monthly", "Monthly"]].map(([v, label]) => (
+                <button key={v} type="button" onClick={() => setFreq(v)} style={{ ...chip(freq === v), flex: 1 }}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 13, color: COLORS.text }}>Every</span>
+            <input type="number" min={1} value={interval} onChange={e => setInterval(e.target.value)} style={{ ...field, width: 70, padding: "8px 10px" }} />
+            <span style={{ fontSize: 13, color: COLORS.text }}>{freq === "daily" ? "day(s)" : freq === "weekly" ? "week(s)" : "month(s)"}</span>
+          </div>
+
+          {freq === "weekly" && (
+            <div>
+              <label style={lbl}>ON THESE DAYS</label>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {WEEKDAY_PICKER.map(([code, label]) => (
+                  <button key={code} type="button" onClick={() => toggleByDay(code)} style={chip(byDay.includes(code))}>{label}</button>
+                ))}
+              </div>
+              {byDay.length === 0 && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 6 }}>Defaults to the start date's weekday if none selected.</div>}
+            </div>
+          )}
+
+          {freq === "monthly" && (
+            <div>
+              <label style={lbl}>MONTHLY PATTERN</label>
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <button type="button" onClick={() => setMonthlyMode("date")} style={{ ...chip(monthlyMode === "date"), flex: 1 }}>On day {parseYMD(startDate).getDate()}</button>
+                <button type="button" onClick={() => setMonthlyMode("weekday")} style={{ ...chip(monthlyMode === "weekday"), flex: 1 }}>On a weekday</button>
+              </div>
+              {monthlyMode === "weekday" && (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <select value={ordinal} onChange={e => setOrdinal(parseInt(e.target.value, 10))} style={field}>
+                    {ORDINALS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+                  </select>
+                  <select value={ordWeekday} onChange={e => setOrdWeekday(e.target.value)} style={field}>
+                    {WEEKDAY_PICKER.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label style={lbl}>ENDS</label>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: COLORS.text, cursor: "pointer" }}>
+                <input type="radio" name="rt-end" checked={endType === "never"} onChange={() => setEndType("never")} style={{ accentColor: COLORS.accent }} />
+                <span>Never (keeps generating as time goes on)</span>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: COLORS.text, cursor: "pointer" }}>
+                <input type="radio" name="rt-end" checked={endType === "count"} onChange={() => setEndType("count")} style={{ accentColor: COLORS.accent }} />
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>After <input type="number" min={1} value={count} onChange={e => { setCount(e.target.value); setEndType("count"); }} style={{ ...field, width: 70, padding: "6px 8px" }} /> occurrences</span>
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: COLORS.text, cursor: "pointer" }}>
+                <input type="radio" name="rt-end" checked={endType === "until"} onChange={() => setEndType("until")} style={{ accentColor: COLORS.accent }} />
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>On date <input type="date" value={until} onChange={e => { setUntil(e.target.value); setEndType("until"); }} style={{ ...field, width: "auto", padding: "6px 8px" }} /></span>
+              </label>
+            </div>
+          </div>
+
+          <div style={{ background: COLORS.accentDim, border: `1px solid ${COLORS.accent}30`, borderRadius: 10, padding: "12px 14px", fontSize: 13, color: COLORS.accent, fontWeight: 600 }}>
+            {summarise()}
+          </div>
+        </div>
+
+        <div style={{ padding: "16px 22px", borderTop: `1px solid ${COLORS.border}`, display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={{ background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: "10px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+          <button onClick={handleCreate} disabled={!title.trim() || saving} style={{ background: COLORS.accent, color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", opacity: (!title.trim() || saving) ? 0.5 : 1 }}>{saving ? "Creating…" : "Create recurring task"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Recurring task delete scope prompt ───────────────────────────────────────────
+function RecurringDeletePrompt({ onThis, onFollowing, onCancel }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && onCancel()}>
+      <div style={{ background: COLORS.surface, borderRadius: 14, width: "100%", maxWidth: 360, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", border: `1px solid ${COLORS.border}` }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.text, marginBottom: 6 }}>🔁 Delete recurring task</div>
+        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 18, lineHeight: 1.5 }}>This task is part of a recurring series. What would you like to delete?</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <button onClick={onThis} style={{ background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 9, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>This occurrence only</button>
+          <button onClick={onFollowing} style={{ background: COLORS.highDim, color: COLORS.high, border: "none", borderRadius: 9, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>This and all following occurrences</button>
+          <button onClick={onCancel} style={{ background: "none", color: COLORS.textMuted, border: "none", padding: "8px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TaskModal({ task, onSave, onClose, projects }) {
   const [form, setForm] = useState(() => {
     const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
@@ -2504,7 +2737,7 @@ function SearchBar({ tasks, onSelect, onClose }) {
 }
 
 // ── Calendar View ──────────────────────────────────────────────────────────────
-function CalendarView({ tasks, onEdit }) {
+function CalendarView({ tasks, onEdit, onNewRecurring }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [dayOffset, setDayOffset] = useState(0); // for mobile day view
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -2601,6 +2834,7 @@ function CalendarView({ tasks, onEdit }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
           <div style={{ display: "flex", gap: 6 }}>
+            {onNewRecurring && <button onClick={onNewRecurring} title="New recurring task" style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>🔁</button>}
             <button onClick={() => { setDayOffset(0); setSelectedDay(todayStr); }} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 10px", fontSize: 12, fontWeight: 600 }}>Today</button>
             <button onClick={() => setDayOffset(d => d - 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>←</button>
             <button onClick={() => setDayOffset(d => d + 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>→</button>
@@ -2632,7 +2866,7 @@ function CalendarView({ tasks, onEdit }) {
               <div key={t.id} onClick={() => onEdit(t)}
                 style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.isFrog ? "🐸 " : ""}{t.recurrenceId ? "🔁 " : ""}{t.dueTime ? `${t.dueTime} · ` : ""}{t.title}</div>
                   {t.description && <div style={{ fontSize: 12, color: COLORS.textMuted }}>{t.description.slice(0, 60)}{t.description.length > 60 ? "…" : ""}</div>}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
@@ -2665,6 +2899,7 @@ function CalendarView({ tasks, onEdit }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {onNewRecurring && <button onClick={onNewRecurring} title="New recurring task" style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 5 }}>🔁 Recurring</button>}
           <button onClick={() => setWeekOffset(0)} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.accent}30` }}>Today</button>
           <button onClick={() => setWeekOffset(w => w-1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>←</button>
           <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text, minWidth: 160, textAlign: "center" }}>
@@ -5617,6 +5852,21 @@ const api = {
   async restoreNote(id) { const r = await fetch('/api/notes/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async restoreBookmark(id) { const r = await fetch('/api/bookmarks/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async emptyTrash() { const r = await fetch('/api/trash', { method: 'DELETE', credentials: 'include' }); return r.ok; },
+  // Recurring tasks. Creation returns the materialised occurrences so the
+  // caller can merge them straight into local state without a refetch.
+  async createRecurringTask(task, rule) {
+    const r = await fetch('/api/tasks/recurring', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, rule }) });
+    if (!r.ok) return null;
+    return r.json();
+  },
+  async updateRecurringSeries(recurrenceId, fromDue, fields) {
+    const r = await fetch('/api/tasks/recurring/' + recurrenceId, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fromDue, fields }) });
+    return r.ok;
+  },
+  async deleteRecurringSeries(recurrenceId, fromDue) {
+    const r = await fetch('/api/tasks/recurring/' + recurrenceId + '?fromDue=' + encodeURIComponent(fromDue), { method: 'DELETE', credentials: 'include' });
+    return r.ok;
+  },
 };
 
 // ── Trash Bin ───────────────────────────────────────────────────────────────────
@@ -5974,6 +6224,9 @@ function App() {
   const [view, setView] = useState("board");
   const [editingTask, setEditingTask] = useState(null);
   const [showNew, setShowNew] = useState(false);
+  const [showRecurring, setShowRecurring] = useState(false);
+  const [recurringPrefillDue, setRecurringPrefillDue] = useState(null);
+  const [recurringDeletePrompt, setRecurringDeletePrompt] = useState(null); // { id, recurrenceId, due }
   const [showDaily, setShowDaily] = useState(false);
   const [showIE, setShowIE] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
@@ -6238,7 +6491,46 @@ function App() {
     if (authUser) api.saveTask(taskWithWs).catch(console.error);
   }
 
-  function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); setToastMsg("Task moved to bin"); }
+  function deleteTask(id) {
+    const t = tasks.find(x => x.id === id);
+    if (t && t.recurrenceId) { setRecurringDeletePrompt({ id: t.id, recurrenceId: t.recurrenceId, due: t.due }); return; }
+    updateTasks(ts => ts.filter(t => t.id !== id));
+    if (authUser) api.deleteTask(id).catch(console.error);
+    setToastMsg("Task moved to bin");
+  }
+
+  // Creates a whole recurring series at once. The backend materialises real,
+  // independent task rows (each carrying the shared recurrenceId + rule), so
+  // Board / Calendar / Analytics all treat them as ordinary tasks — this just
+  // mirrors the returned occurrences into local state to avoid a refetch.
+  async function saveRecurringTask(task, rule) {
+    if (!authUser) { setToastMsg("Sign in to create recurring tasks"); return; }
+    const result = await api.createRecurringTask({ ...task, workspaceId: activeWorkspace?.id }, rule);
+    if (!result || !result.occurrences) { setToastMsg("Couldn't create the recurring task — try again"); return; }
+    const newTasks = result.occurrences.map(occ => ({
+      ...task, id: occ.id, due: occ.due, status: "To Do", completedAt: null, subtasks: [],
+      workspaceId: activeWorkspace?.id, recurrenceId: result.recurrenceId, recurrenceRule: rule,
+    }));
+    updateTasks(ts => [...ts, ...newTasks]);
+    setShowRecurring(false); setRecurringPrefillDue(null);
+    setToastMsg(`Created ${result.count} occurrences 🔁`);
+  }
+
+  function confirmDeleteThisOccurrence() {
+    const { id } = recurringDeletePrompt;
+    updateTasks(ts => ts.filter(t => t.id !== id));
+    if (authUser) api.deleteTask(id).catch(console.error);
+    setRecurringDeletePrompt(null);
+    setToastMsg("Task moved to bin");
+  }
+  async function confirmDeleteFollowingOccurrences() {
+    const { recurrenceId, due } = recurringDeletePrompt;
+    setRecurringDeletePrompt(null);
+    const ok = await api.deleteRecurringSeries(recurrenceId, due);
+    if (!ok) { setToastMsg("Couldn't delete the series — try again"); return; }
+    updateTasks(ts => ts.filter(t => !(t.recurrenceId === recurrenceId && t.due >= due && t.status !== "Done")));
+    setToastMsg("This and all following occurrences moved to bin");
+  }
   function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
       function setStatus(id, status) {
@@ -6991,6 +7283,11 @@ function App() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               Daily
             </button>
+            <button onClick={() => { setShowRecurring(true); setShowMoreMenu(false); }}
+              style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h14"/><path d="M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H3"/></svg>
+              New recurring task
+            </button>
             <button onClick={() => { setView("trash"); setShowMoreMenu(false); }}
               style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 12px", background: "none", color: COLORS.text, borderRadius: 10, border: "none", fontSize: 15, fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
@@ -7066,7 +7363,12 @@ function App() {
                 style={{ background: "none", color: COLORS.textMuted, borderRadius: 100, padding: "5px 11px", fontSize: 12, border: `1px dashed ${COLORS.border}`, marginLeft: 2 }}>
                 + Project
               </button>
-              <div style={{ marginLeft: "auto", display: "flex", gap: 3, background: COLORS.surface3, borderRadius: 8, padding: 3, border: `1px solid ${COLORS.border}` }}>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
+                <button onClick={() => setShowRecurring(true)} title="Create a recurring task"
+                  style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 8, padding: "6px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 5, cursor: "pointer", fontFamily: "inherit" }}>
+                  🔁 Recurring
+                </button>
+                <div style={{ display: "flex", gap: 3, background: COLORS.surface3, borderRadius: 8, padding: 3, border: `1px solid ${COLORS.border}` }}>
                 <button onClick={() => { setBoardView('kanban'); localStorage.setItem('vtm_board_view','kanban'); }}
                   title="Kanban view"
                   style={{ background: boardView==='kanban' ? COLORS.surface : 'transparent', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: boardView==='kanban' ? COLORS.accent : COLORS.textMuted, transition: 'all 0.15s', display:'flex', alignItems:'center' }}>
@@ -7077,6 +7379,7 @@ function App() {
                   style={{ background: boardView==='list' ? COLORS.surface : 'transparent', border: 'none', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: boardView==='list' ? COLORS.accent : COLORS.textMuted, transition: 'all 0.15s', display:'flex', alignItems:'center' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 </button>
+                </div>
               </div>
             </div>
           </div>
@@ -7217,7 +7520,7 @@ function App() {
           </div>
         )}
 
-        {view === "calendar" && <CalendarView key={theme} tasks={tasks} onEdit={setEditingTask} />}
+        {view === "calendar" && <CalendarView key={theme} tasks={tasks} onEdit={setEditingTask} onNewRecurring={() => setShowRecurring(true)} />}
         {view === "wellbeing" && <WellbeingView checkins={checkins} tasks={tasks} onOpenCheckin={() => setShowCheckin(true)} />}
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
         {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
@@ -7241,6 +7544,8 @@ function App() {
       }} />}
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
       {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
+      {showRecurring && <RecurringTaskModal projects={projects} prefillDue={recurringPrefillDue} onSave={saveRecurringTask} onClose={() => { setShowRecurring(false); setRecurringPrefillDue(null); }} />}
+      {recurringDeletePrompt && <RecurringDeletePrompt onThis={confirmDeleteThisOccurrence} onFollowing={confirmDeleteFollowingOccurrences} onCancel={() => setRecurringDeletePrompt(null)} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
