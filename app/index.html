@@ -1672,7 +1672,12 @@ function TaskModal({ task, onSave, onClose, projects }) {
           <div>
             <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>REPEAT</label>
             <div onClick={toggleRepeatPanel} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", padding: "11px 13px", borderRadius: 9, border: `1px solid ${COLORS.border}`, background: COLORS.surface3 }}>
-              <span style={{ fontSize: 14, color: COLORS.text }}>{form.recurrence ? "Repeats" : "Does not repeat"}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={COLORS.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M17 2l4 4-4 4" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><path d="M7 22l-4-4 4-4" /><path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                </svg>
+                <span style={{ fontSize: 14, color: COLORS.text }}>{form.recurrence ? "Repeats" : "Does not repeat"}</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 {form.recurrence && <span style={{ fontSize: 12, color: COLORS.accent, fontStyle: "italic" }}>{recurrenceSummary(form.recurrence)}</span>}
                 <span style={{ fontSize: 11, color: COLORS.textMuted, display: "inline-block", transform: repeatOpen ? "rotate(180deg)" : "none", transition: "transform .15s ease" }}>▾</span>
@@ -1683,16 +1688,24 @@ function TaskModal({ task, onSave, onClose, projects }) {
               <div style={{ marginTop: 8, padding: 14, borderRadius: 10, border: `1px solid ${COLORS.border}`, background: COLORS.surface2 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 13, color: COLORS.textDim }}>Every</span>
-                  <input type="number" min={1} value={form.recurrence.interval}
-                    onChange={e => setF("recurrence", { ...form.recurrence, interval: Math.max(1, Number(e.target.value) || 1) })}
-                    style={{ width: 56 }} />
-                  <select value={form.recurrence.unit} onChange={e => setF("recurrence", { ...form.recurrence, unit: e.target.value })}
-                    style={{ width: 130, flexShrink: 0 }}>
-                    <option value="day">day(s)</option>
-                    <option value="week">week(s)</option>
-                    <option value="month">month(s)</option>
-                    <option value="year">year(s)</option>
-                  </select>
+                  <div style={{ display: "flex", alignItems: "center", border: `1px solid ${COLORS.border}`, borderRadius: 8, background: COLORS.surface, overflow: "hidden" }}>
+                    <button type="button" onClick={() => setF("recurrence", { ...form.recurrence, interval: Math.max(1, (form.recurrence.interval || 1) - 1) })}
+                      style={{ width: 26, height: 28, background: "transparent", color: COLORS.textDim, fontSize: 15 }}>−</button>
+                    <input type="number" min={1} value={form.recurrence.interval}
+                      onChange={e => setF("recurrence", { ...form.recurrence, interval: Math.max(1, Number(e.target.value) || 1) })}
+                      style={{ width: 34, textAlign: "center", border: "none", borderRadius: 0, padding: "4px 0", background: "transparent" }} />
+                    <button type="button" onClick={() => setF("recurrence", { ...form.recurrence, interval: (form.recurrence.interval || 1) + 1 })}
+                      style={{ width: 26, height: 28, background: "transparent", color: COLORS.textDim, fontSize: 15 }}>+</button>
+                  </div>
+                  <div style={{ width: 120 }}>
+                    <select value={form.recurrence.unit} onChange={e => setF("recurrence", { ...form.recurrence, unit: e.target.value })}
+                      style={{ width: "100%", padding: "7px 10px" }}>
+                      <option value="day">day(s)</option>
+                      <option value="week">week(s)</option>
+                      <option value="month">month(s)</option>
+                      <option value="year">year(s)</option>
+                    </select>
+                  </div>
                 </div>
 
                 {form.recurrence.unit === "week" && (
@@ -1714,29 +1727,40 @@ function TaskModal({ task, onSave, onClose, projects }) {
                 )}
 
                 <div style={{ fontSize: 11, fontWeight: 600, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Ends</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
-                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "never"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "never" })}
-                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: COLORS.accent }} />
-                    Never
-                  </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
-                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "on"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "on" })}
-                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: COLORS.accent }} />
-                    On
-                    <input type="date" value={form.recurrence.endDate} disabled={form.recurrence.endType !== "on"}
-                      onChange={e => setF("recurrence", { ...form.recurrence, endDate: e.target.value })}
-                      style={{ width: 150, flexShrink: 0, opacity: form.recurrence.endType !== "on" ? 0.4 : 1 }} />
-                  </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
-                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "after"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "after" })}
-                      style={{ width: 16, height: 16, flexShrink: 0, accentColor: COLORS.accent }} />
-                    After
-                    <input type="number" min={1} value={form.recurrence.endCount} disabled={form.recurrence.endType !== "after"}
-                      onChange={e => setF("recurrence", { ...form.recurrence, endCount: Number(e.target.value) || 1 })}
-                      style={{ width: 56, flexShrink: 0, opacity: form.recurrence.endType !== "after" ? 0.4 : 1 }} />
-                    occurrences
-                  </label>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
+                  {[
+                    { key: "never", label: "Never" },
+                    { key: "on", label: "On" },
+                    { key: "after", label: "After" },
+                  ].map(opt => {
+                    const active = form.recurrence.endType === opt.key;
+                    return (
+                      <div key={opt.key} style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                        <button type="button" onClick={() => setF("recurrence", { ...form.recurrence, endType: opt.key })}
+                          style={{ width: 17, height: 17, borderRadius: "50%", border: `2px solid ${active ? COLORS.accent : COLORS.borderHover}`, background: COLORS.surface, flexShrink: 0, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {active && <span style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS.accent }} />}
+                        </button>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: active ? COLORS.text : COLORS.textDim, textTransform: "uppercase", letterSpacing: 0.3, flexShrink: 0 }}>{opt.label}</span>
+                        {opt.key === "on" && (
+                          <div style={{ width: 150 }}>
+                            <input type="date" value={form.recurrence.endDate} disabled={!active}
+                              onChange={e => setF("recurrence", { ...form.recurrence, endDate: e.target.value })}
+                              style={{ width: "100%", padding: "7px 10px", opacity: active ? 1 : 0.4 }} />
+                          </div>
+                        )}
+                        {opt.key === "after" && (
+                          <>
+                            <div style={{ width: 56 }}>
+                              <input type="number" min={1} value={form.recurrence.endCount} disabled={!active}
+                                onChange={e => setF("recurrence", { ...form.recurrence, endCount: Number(e.target.value) || 1 })}
+                                style={{ width: "100%", padding: "7px 10px", opacity: active ? 1 : 0.4 }} />
+                            </div>
+                            <span style={{ fontSize: 12.5, fontWeight: 700, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.3 }}>Occurrences</span>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <button type="button" onClick={removeRepeat} style={{ background: "none", color: COLORS.high, fontSize: 12, fontWeight: 600, padding: 0 }}>
