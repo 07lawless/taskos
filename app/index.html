@@ -5954,7 +5954,7 @@ const TOUR_STEPS = [
   { keys: ["new-task"], title: "Create your first task", body: "Every task starts here. Give it a title, a due date, and a priority, then click Create." },
   { keys: ["search"], title: "Find anything fast", body: "Press Ctrl+K (or ⌘K on Mac) any time to jump straight to a task by title." },
   { keys: ["sidebar-nav", "bottom-nav"], title: "Everything lives here", body: "Board, Calendar, Notes, Bookmarks, Wellbeing, and Teams are all one tap away." },
-  { keys: ["xp-bar"], title: "Level up as you go", body: "Completing tasks earns XP. Tap here any time to see your level and streak." },
+  { keys: ["sidebar-xp", "xp-bar"], title: "Level up as you go", body: "Completing tasks earns XP. Tap here any time to see your level and streak." },
 ];
 
 function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
@@ -5967,10 +5967,11 @@ function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
   // checked explicitly rather than only checking whether the element exists.
   function findVisibleTarget() {
     for (const key of step.keys) {
-      const el = document.querySelector(`[data-tour="${key}"]`);
-      if (!el) continue;
-      const r = el.getBoundingClientRect();
-      if (r.width > 0 && r.height > 0) return r;
+      const els = document.querySelectorAll(`[data-tour="${key}"]`);
+      for (const el of els) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) return r;
+      }
     }
     return null;
   }
@@ -7147,7 +7148,7 @@ function App() {
               <div className="ws-hint">Switch workspace</div>
             </span>
           </button>
-          <div className="xp-strip" onClick={() => setView("xp")} title={`Level ${sidebarXpLevel} - ${sidebarXpProgress}% to next level`} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setView("xp"); }}>
+          <div className="xp-strip" data-tour="sidebar-xp" onClick={() => setView("xp")} title={`Level ${sidebarXpLevel} - ${sidebarXpProgress}% to next level`} role="button" tabIndex="0" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setView("xp"); }}>
             <div className="xp-orb">
               {levelTierIcon(sidebarXpLevel)}
             </div>
@@ -7242,13 +7243,13 @@ function App() {
           </div>
 
           <div className="topbar-actions">
-            <button onClick={() => setShowSearch(true)}
+            <button data-tour="search" onClick={() => setShowSearch(true)}
               style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 14, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               <span className="desktop-only" style={{ fontSize: 12, fontWeight: 500 }}>Search</span>
             </button>
 
-            <button onClick={() => setShowNew(true)}
+            <button data-tour="new-task" onClick={() => setShowNew(true)}
               style={{ background: COLORS.accent, color: "#fff", borderRadius: 100, padding: "7px 14px", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, border: "none", whiteSpace: "nowrap" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span className="desktop-only">New task</span>
