@@ -5951,44 +5951,82 @@ function TrashView({ onDataRefresh, workspaces }) {
 // double-click) can't double-award.
 const TOUR_SEEN_KEY = "tasklist_tour_seen_v1";
 const TOUR_STEPS = [
-  { key: "new-task", title: "Create your first task", body: "Every task starts here. Give it a title, a due date, and a priority, then click Create." },
-  { key: "search", title: "Find anything fast", body: "Press Ctrl+K (or ⌘K on Mac) any time to jump straight to a task by title." },
-  { key: "sidebar-nav", title: "Everything lives here", body: "Board, Calendar, Notes, Bookmarks, Wellbeing, and Teams are all one click away." },
-  { key: "sidebar-foot", title: "Level up as you go", body: "Completing tasks earns XP. Watch your level and streak climb right here." },
+  { keys: ["new-task"], title: "Create your first task", body: "Every task starts here. Give it a title, a due date, and a priority, then click Create." },
+  { keys: ["search"], title: "Find anything fast", body: "Press Ctrl+K (or ⌘K on Mac) any time to jump straight to a task by title." },
+  { keys: ["sidebar-nav", "bottom-nav"], title: "Everything lives here", body: "Board, Calendar, Notes, Bookmarks, Wellbeing, and Teams are all one tap away." },
+  { keys: ["xp-bar"], title: "Level up as you go", body: "Completing tasks earns XP. Tap here any time to see your level and streak." },
 ];
 
 function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
   const [rect, setRect] = React.useState(null);
 
+  // Finds the first candidate key with an element that's actually visible
+  // (in the DOM AND has real size) — a display:none element (e.g. the
+  // desktop sidebar on mobile, or the mobile bottom nav on desktop) still
+  // matches querySelector, it just has a zero-size rect, so that has to be
+  // checked explicitly rather than only checking whether the element exists.
+  function findVisibleTarget() {
+    for (const key of step.keys) {
+      const el = document.querySelector(`[data-tour="${key}"]`);
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return r;
+    }
+    return null;
+  }
+
   React.useEffect(() => {
     function measure() {
-      const el = document.querySelector(`[data-tour="${step.key}"]`);
-      if (!el) { setRect(null); return; }
-      const r = el.getBoundingClientRect();
-      setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+      const r = findVisibleTarget();
+      setRect(r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null);
     }
     measure();
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
     const t = setTimeout(measure, 50); // catch late layout shifts (fonts, images)
     return () => { window.removeEventListener("resize", measure); window.removeEventListener("scroll", measure, true); clearTimeout(t); };
-  }, [step.key]);
+  }, [step.keys.join(",")]);
 
-  // If the target isn't on screen (e.g. sidebar collapsed on mobile), skip
-  // straight past this step rather than showing a spotlight pointing at nothing.
+  // None of this step's candidate targets are visible on this layout at
+  // all (not just a timing issue) — skip straight past it rather than
+  // showing a spotlight pointing at nothing.
   React.useEffect(() => {
     if (rect === null) {
-      const el = document.querySelector(`[data-tour="${step.key}"]`);
-      if (!el) { const t = setTimeout(() => onNext(true), 300); return () => clearTimeout(t); }
+      const t = setTimeout(() => { if (!findVisibleTarget()) onNext(true); }, 300);
+      return () => clearTimeout(t);
     }
-  }, [rect, step.key]);
+  }, [rect, step.keys.join(",")]);
 
   if (!rect) return null;
 
   const pad = 6;
   const spot = { top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 };
-  const tooltipBelow = spot.top < window.innerHeight * 0.55;
-  const tooltipTop = tooltipBelow ? spot.top + spot.height + 14 : spot.top - 14;
+  const CARD_W = 280, CARD_H = 190, GAP = 14, MARGIN = 16;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
+
+  // Try below, then right, then above, then left — whichever direction
+  // actually has room. Needed because some targets (e.g. the whole
+  // sidebar nav column) are nearly full-height, so "below" or "above"
+  // alone can push the tooltip almost entirely off-screen.
+  let tipTop, tipLeft;
+  if (vh - (spot.top + spot.height + GAP) >= CARD_H + MARGIN) {
+    tipTop = spot.top + spot.height + GAP;
+    tipLeft = clamp(spot.left, MARGIN, vw - CARD_W - MARGIN);
+  } else if (vw - (spot.left + spot.width + GAP) >= CARD_W + MARGIN) {
+    tipTop = clamp(spot.top, MARGIN, vh - CARD_H - MARGIN);
+    tipLeft = spot.left + spot.width + GAP;
+  } else if (spot.top - GAP - CARD_H >= MARGIN) {
+    tipTop = spot.top - GAP - CARD_H;
+    tipLeft = clamp(spot.left, MARGIN, vw - CARD_W - MARGIN);
+  } else if (spot.left - GAP - CARD_W >= MARGIN) {
+    tipTop = clamp(spot.top, MARGIN, vh - CARD_H - MARGIN);
+    tipLeft = spot.left - GAP - CARD_W;
+  } else {
+    // Nothing fits cleanly (tiny viewport) — clamp fully inside as a last resort.
+    tipTop = clamp(spot.top, MARGIN, vh - CARD_H - MARGIN);
+    tipLeft = clamp(spot.left, MARGIN, vw - CARD_W - MARGIN);
+  }
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 10001 }}>
@@ -5999,11 +6037,8 @@ function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
         pointerEvents: "none",
       }} />
       <div style={{
-        position: "fixed",
-        top: tooltipBelow ? tooltipTop : undefined,
-        bottom: tooltipBelow ? undefined : window.innerHeight - tooltipTop,
-        left: Math.min(Math.max(spot.left, 16), window.innerWidth - 296),
-        width: 280, background: COLORS.surface, borderRadius: 14, padding: 18,
+        position: "fixed", top: tipTop, left: tipLeft,
+        width: CARD_W, background: COLORS.surface, borderRadius: 14, padding: 18,
         boxShadow: "0 16px 40px rgba(0,0,0,0.35)", border: `1px solid ${COLORS.border}`,
       }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.accent, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
@@ -6020,6 +6055,7 @@ function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
       </div>
     </div>
   );
+
 }
 
 function WorkHoursSetupModal({ onSave, onSkip }) {
@@ -6658,7 +6694,7 @@ function App() {
   function handleTourNext(targetMissing) {
     const step = TOUR_STEPS[tourStepIndex];
     if (!targetMissing) {
-      api.awardOnboardingStep(step.key).then(result => {
+      api.awardOnboardingStep(step.keys[0]).then(result => {
         if (result && result.xpAwarded) {
           setToastMsg(`+${result.xpAwarded} XP · ${step.title}`);
           if (typeof result.totalXp === "number") setXp(x => ({ ...x, total_xp: result.totalXp, current_level: result.currentLevel ?? x?.current_level, current_level_xp: result.currentLevelXp ?? x?.current_level_xp }));
@@ -7085,7 +7121,7 @@ function App() {
           ))}
         </nav>
 
-        <div className="sidebar-foot" data-tour="sidebar-foot">
+        <div className="sidebar-foot">
           <button className="ws-pill" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
             <span className="ws-icon">{workspaceIcon(activeWorkspace)}</span>
             <span className="ws-meta">
@@ -7133,7 +7169,7 @@ function App() {
               </button>
 
               {/* XP Bar */}
-              <XPBar xp={xp} onClick={() => setView("xp")} />
+              <div data-tour="xp-bar"><XPBar xp={xp} onClick={() => setView("xp")} /></div>
 
               {/* Profile menu */}
               <div style={{ position: "relative" }}>
@@ -7262,7 +7298,7 @@ function App() {
       )}
 
       {/* Mobile bottom navigation */}
-      <div className="bottom-nav" style={{ background: COLORS.surface, borderTop: `1px solid ${COLORS.border}` }}>
+      <div className="bottom-nav" data-tour="bottom-nav" style={{ background: COLORS.surface, borderTop: `1px solid ${COLORS.border}` }}>
         {[
           { v: "board", label: "Board", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
           { v: "calendar", label: "Calendar", svg: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
