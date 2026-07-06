@@ -244,6 +244,21 @@ const DAY_OPTIONS = [
   { key: "Sun", label: "S" }, { key: "Mon", label: "M" }, { key: "Tue", label: "T" },
   { key: "Wed", label: "W" }, { key: "Thu", label: "T" }, { key: "Fri", label: "F" }, { key: "Sat", label: "S" },
 ];
+function weekdayKeyFromDate(dateStr) {
+  const d = dateStr ? new Date(dateStr + "T00:00:00") : new Date();
+  if (isNaN(d.getTime())) return "Mon";
+  return DAY_OPTIONS[d.getDay()].key;
+}
+function sanitizeRecurrence(r, dueDate) {
+  if (!r) return null;
+  const clean = { ...r };
+  if (clean.unit === "week" && (!clean.daysOfWeek || !clean.daysOfWeek.length)) {
+    clean.daysOfWeek = [weekdayKeyFromDate(dueDate)];
+  }
+  if (clean.endType === "on" && !clean.endDate) clean.endType = "never";
+  if (clean.endType === "after" && (!clean.endCount || clean.endCount < 1)) clean.endCount = 1;
+  return clean;
+}
 function recurrenceSummary(r) {
   if (!r) return null;
   const n = r.interval || 1;
@@ -256,6 +271,28 @@ function recurrenceSummary(r) {
     text += `, ${r.endCount} times`;
   }
   return text;
+}
+// Maps the UI's recurrence shape ({ interval, unit, daysOfWeek, endType,
+// endDate, endCount }) onto the exact `rule` shape server.js's
+// POST /api/tasks/recurring expects ({ freq, interval, byDay, until, count }).
+// These are deliberately two different shapes: the UI one is convenient to
+// edit form-by-form, the server one is what generateOccurrenceDates()
+// actually consumes. NOTE: the server only implements freq
+// 'daily' | 'weekly' | 'monthly' — there's no 'yearly' case in
+// generateOccurrenceDates, so a yearly rule would silently generate zero
+// occurrences and the endpoint would 400. The "year(s)" option has been
+// removed from the unit dropdown below until that's added server-side.
+const WEEKDAY_TO_CODE = { Sun: "SU", Mon: "MO", Tue: "TU", Wed: "WE", Thu: "TH", Fri: "FR", Sat: "SA" };
+const FREQ_MAP = { day: "daily", week: "weekly", month: "monthly" };
+function toBackendRule(r) {
+  if (!r) return null;
+  const rule = { freq: FREQ_MAP[r.unit] || "weekly", interval: r.interval || 1 };
+  if (r.unit === "week" && r.daysOfWeek && r.daysOfWeek.length) {
+    rule.byDay = r.daysOfWeek.map(d => WEEKDAY_TO_CODE[d]).filter(Boolean);
+  }
+  if (r.endType === "on" && r.endDate) rule.until = r.endDate;
+  if (r.endType === "after" && r.endCount) rule.count = r.endCount;
+  return rule;
 }
 const MOOD_EMOJIS = ["😞", "😕", "😐", "🙂", "😄"];
 const MOOD_LABELS = ["Rough", "Low", "Okay", "Good", "Great"];
@@ -1599,7 +1636,7 @@ function TaskModal({ task, onSave, onClose, projects }) {
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })); }
   function toggleRepeatPanel() {
     if (!form.recurrence) {
-      setF("recurrence", { interval: 1, unit: "week", daysOfWeek: [], endType: "never", endDate: "", endCount: 10 });
+      setF("recurrence", { interval: 1, unit: "week", daysOfWeek: [weekdayKeyFromDate(form.due)], endType: "never", endDate: "", endCount: 10 });
       setRepeatOpen(true);
     } else {
       setRepeatOpen(o => !o);
@@ -1611,7 +1648,7 @@ function TaskModal({ task, onSave, onClose, projects }) {
     if (!form.title.trim()) return;
     const wasNotDone = task?.status !== "Done";
     const nowDone = form.status === "Done";
-    onSave({ ...form, id: form.id || generateId(), completedAt: (wasNotDone && nowDone) ? new Date().toISOString() : form.completedAt });
+    onSave({ ...form, recurrence: sanitizeRecurrence(form.recurrence, form.due), id: form.id || generateId(), completedAt: (wasNotDone && nowDone) ? new Date().toISOString() : form.completedAt, isNewTask: !task });
   }
 
   async function handleSuggestDue() {
@@ -1703,7 +1740,6 @@ function TaskModal({ task, onSave, onClose, projects }) {
                       <option value="day">day(s)</option>
                       <option value="week">week(s)</option>
                       <option value="month">month(s)</option>
-                      <option value="year">year(s)</option>
                     </select>
                   </div>
                 </div>
@@ -5717,6 +5753,14 @@ const api = {
   async deleteWorkspace(id) { await fetch('/api/workspaces/'+id, { method:'DELETE', credentials:'include' }); },
   async saveTask(task) { const r = await fetch('/api/tasks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); return r.ok ? r.json() : null; },
   async deleteTask(id) { await fetch('/api/tasks/' + id, { method: 'DELETE', credentials: 'include' }); },
+  // Creates a whole recurring series in one call — server.js materialises every
+  // occurrence as its own task row (capped at 100 / 12 months out) and returns
+  // { ok, recurrenceId, count, occurrences: [{ id, due }, ...] }.
+  async createRecurringTask(task, rule) { const r = await fetch('/api/tasks/recurring', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, rule }) }); return r.ok ? r.json() : null; },
+  // scope=future: applies field changes to every not-yet-done upcoming occurrence in the series.
+  async updateRecurringSeries(recurrenceId, fromDue, fields) { const r = await fetch('/api/tasks/recurring/' + recurrenceId, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fromDue, fields }) }); return r.ok ? r.json() : null; },
+  // scope=future: soft-deletes every not-yet-done upcoming occurrence in the series (moves them to the Bin).
+  async deleteRecurringSeries(recurrenceId, fromDue) { const r = await fetch('/api/tasks/recurring/' + recurrenceId + '?fromDue=' + encodeURIComponent(fromDue), { method: 'DELETE', credentials: 'include' }); return r.ok ? r.json() : null; },
   async getCheckins() { const r = await fetch('/api/checkins', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveCheckin(c) { await fetch('/api/checkins', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) }); },
   async getProjects(wsId) { const r = await fetch('/api/projects?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
@@ -6357,7 +6401,44 @@ function App() {
   function updateTasks(fn) { pushHistory(tasks); setTasks(fn); }
 
   function saveTask(task) {
-    const taskWithWs = { ...task, workspaceId: activeWorkspace?.id };
+    const { isNewTask, recurrence, ...rest } = task;
+    const taskWithWs = { ...rest, workspaceId: activeWorkspace?.id };
+
+    // Brand-new task with a repeat configured: server.js only ever generates
+    // occurrences via POST /api/tasks/recurring — the regular POST /api/tasks
+    // save path ignores recurrence entirely on updates and only reads
+    // recurrenceId/recurrenceRule (which we don't set) on insert. So this has
+    // to be a separate call, followed by a re-fetch since the server creates
+    // many rows at once rather than returning them inline in a shape we can
+    // just splice into local state.
+    // Known limitation: this only fires for a brand-new task. Turning on
+    // repeat while editing an existing one-off task, or editing/removing an
+    // already-recurring task's series, isn't wired up yet — see note below.
+    if (isNewTask && recurrence && authUser) {
+      setEditingTask(null); setShowNew(false);
+      const rule = toBackendRule(recurrence);
+      api.createRecurringTask(taskWithWs, rule).then(async result => {
+        if (!result || !result.ok) { console.error('createRecurringTask failed', result); return; }
+        const refreshed = await api.getTasks(activeWorkspace?.id);
+        if (refreshed) {
+          setTasks(refreshed
+            .sort((a, b) => (a.position ?? 999999) - (b.position ?? 999999))
+            .map(t => ({
+              ...t,
+              isFrog: t.is_frog,
+              projectId: t.project_id,
+              createdAt: t.created_at,
+              completedAt: t.completed_at,
+              aiBreakdown: t.ai_breakdown,
+              timeSpent: t.time_spent || 0,
+              estimatedMins: t.estimated_mins,
+              subtasks: typeof t.subtasks === 'string' ? JSON.parse(t.subtasks) : (t.subtasks || []),
+            })));
+        }
+      }).catch(console.error);
+      return;
+    }
+
     updateTasks(ts => {
       const idx = ts.findIndex(t => t.id === taskWithWs.id);
       if (idx >= 0) { const n = [...ts]; n[idx] = taskWithWs; return n; }
