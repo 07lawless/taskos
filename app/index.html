@@ -253,9 +253,6 @@ const METRIC_CONFIG = {
 function generateId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 function cap(s) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
 function today() { return new Date().toISOString().split("T")[0]; }
-// Parse a "YYYY-MM-DD" string into a local-time Date (avoids the UTC shift
-// that new Date("YYYY-MM-DD") causes, which can land on the wrong day).
-function parseYMD(s) { const [y, m, d] = String(s).split("-").map(Number); return new Date(y, m - 1, d); }
 // Defensive: a DATE column coming back from Postgres can arrive as either
 // a plain "YYYY-MM-DD" string or a full ISO datetime string like
 // "2026-07-04T00:00:00.000Z" (node-pg hands back a JS Date object for
@@ -1525,16 +1522,6 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
               {isDueToday ? "● " : ""}{task.due}
             </span>
           )}
-          {task.dueTime && (
-            <span style={{ fontSize: 10, color: COLORS.accent, padding: "2px 7px", background: COLORS.accentDim, borderRadius: 4, fontWeight: 600 }}>
-              🕐 {task.dueTime}
-            </span>
-          )}
-          {task.recurrenceId && (
-            <span title="Part of a recurring series" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 6px", background: COLORS.surface3, borderRadius: 4 }}>
-              🔁
-            </span>
-          )}
           {isStale && (
             <span title="No edits or status changes in a while — still on your plate?" style={{ fontSize: 10, color: COLORS.textMuted, padding: "2px 7px", background: COLORS.surface3, borderRadius: 4, fontWeight: 500, border: `1px solid ${COLORS.border}` }}>
               💤 {daysSinceTouch}d untouched
@@ -1582,105 +1569,19 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 }
 
 // ── TaskModal ──────────────────────────────────────────────────────────────────
-// ── Recurring task creation modal ────────────────────────────────────────────────
-// A dedicated modal (kept separate from the normal TaskModal so neither gets
-// cluttered). Supports: daily / weekly (specific weekdays, every-N-weeks) /
-// monthly in two flavours — a fixed calendar date, or an ordinal weekday
-// like "first Monday" / "last Friday". Time-of-day lives here specifically,
-// since precise timing is the whole point of a recurring reminder.
-const WEEKDAY_PICKER = [["MO", "Mon"], ["TU", "Tue"], ["WE", "Wed"], ["TH", "Thu"], ["FR", "Fri"], ["SA", "Sat"], ["SU", "Sun"]];
-const ORDINALS = [[1, "First"], [2, "Second"], [3, "Third"], [4, "Fourth"], [-1, "Last"]];
-
-// ── Recurring task delete scope prompt ───────────────────────────────────────────
-function RecurringDeletePrompt({ onThis, onFollowing, onCancel }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && onCancel()}>
-      <div style={{ background: COLORS.surface, borderRadius: 14, width: "100%", maxWidth: 360, padding: 24, boxShadow: "0 20px 60px rgba(0,0,0,0.2)", border: `1px solid ${COLORS.border}` }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.text, marginBottom: 6 }}>🔁 Delete recurring task</div>
-        <div style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 18, lineHeight: 1.5 }}>This task is part of a recurring series. What would you like to delete?</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <button onClick={onThis} style={{ background: COLORS.surface3, color: COLORS.text, border: `1px solid ${COLORS.border}`, borderRadius: 9, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>This occurrence only</button>
-          <button onClick={onFollowing} style={{ background: COLORS.highDim, color: COLORS.high, border: "none", borderRadius: 9, padding: "11px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", textAlign: "left" }}>This and all following occurrences</button>
-          <button onClick={onCancel} style={{ background: "none", color: COLORS.textMuted, border: "none", padding: "8px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TaskModal({ task, onSave, onSaveRecurring, onClose, projects }) {
+function TaskModal({ task, onSave, onClose, projects }) {
   const [form, setForm] = useState(() => {
-    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", dueTime: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
+    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
     return Array.isArray(base.subtasks) ? base : { ...base, subtasks: [] };
   });
   const [newSub, setNewSub] = useState("");
   const [dueSuggesting, setDueSuggesting] = useState(false);
   const [dueSuggestion, setDueSuggestion] = useState(null);
 
-  // Recurrence — only offered when creating a brand new task (not editing an
-  // existing one, and not on the team/collab board). "none" keeps this a
-  // normal one-off task; anything else routes the save through onSaveRecurring.
-  const isNewTask = !task;
-  const canRecur = isNewTask && !!onSaveRecurring;
-  const [freq, setFreq] = useState("none");
-  const [interval, setRecInterval] = useState(1);
-  const [byDay, setByDay] = useState([]);
-  const [monthlyMode, setMonthlyMode] = useState("date");
-  const [ordinal, setOrdinal] = useState(1);
-  const [ordWeekday, setOrdWeekday] = useState("MO");
-  const [endType, setEndType] = useState("count");
-  const [count, setCount] = useState(12);
-  const [until, setUntil] = useState("");
-
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })); }
   function addSub() { if (!newSub.trim()) return; setF("subtasks", [...form.subtasks, { id: generateId(), title: newSub.trim(), done: false }]); setNewSub(""); }
-  function toggleByDay(code) { setByDay(d => d.includes(code) ? d.filter(c => c !== code) : [...d, code]); }
-
-  function buildRule() {
-    const iv = Math.max(1, parseInt(interval, 10) || 1);
-    const rule = { freq, interval: iv };
-    if (freq === "weekly" && byDay.length) rule.byDay = byDay;
-    if (freq === "monthly" && monthlyMode === "weekday") { rule.monthlyMode = "weekday"; rule.ordinal = ordinal; rule.weekday = ordWeekday; }
-    if (endType === "count") rule.count = Math.max(1, parseInt(count, 10) || 1);
-    else if (endType === "until" && until) rule.until = until;
-    return rule;
-  }
-
-  function recurrenceSummary() {
-    if (freq === "none") return null;
-    const iv = Math.max(1, parseInt(interval, 10) || 1);
-    let base;
-    if (freq === "daily") base = iv === 1 ? "Every day" : `Every ${iv} days`;
-    else if (freq === "weekly") {
-      const days = byDay.length ? byDay.map(c => WEEKDAY_PICKER.find(w => w[0] === c)?.[1]).join(", ") : (form.due ? new Date(parseYMD(form.due)).toLocaleDateString("en-GB", { weekday: "long" }) : "the start day");
-      base = iv === 1 ? `Weekly on ${days}` : `Every ${iv} weeks on ${days}`;
-    } else {
-      if (monthlyMode === "weekday") {
-        const ord = ORDINALS.find(o => o[0] === ordinal)?.[1];
-        const wd = WEEKDAY_PICKER.find(w => w[0] === ordWeekday)?.[1];
-        base = `${iv === 1 ? "Monthly" : `Every ${iv} months`} on the ${ord?.toLowerCase()} ${wd}`;
-      } else {
-        const d = form.due ? parseYMD(form.due).getDate() : "?";
-        base = `${iv === 1 ? "Monthly" : `Every ${iv} months`} on day ${d}`;
-      }
-    }
-    if (form.dueTime) base += ` at ${form.dueTime}`;
-    if (endType === "count") base += `, ${count} times`;
-    else if (endType === "until" && until) base += `, until ${until}`;
-    return base;
-  }
-
   function handleSave() {
     if (!form.title.trim()) return;
-    // Recurring path: needs a start date, then routes to the series creator.
-    if (canRecur && freq !== "none") {
-      if (!form.due) { alert("Pick a due date — it's used as the start of the recurring series."); return; }
-      onSaveRecurring(
-        { title: form.title.trim(), description: form.description, priority: form.priority, projectId: form.projectId, due: form.due, dueTime: form.dueTime || null },
-        buildRule()
-      );
-      return;
-    }
     const wasNotDone = task?.status !== "Done";
     const nowDone = form.status === "Done";
     onSave({ ...form, id: form.id || generateId(), completedAt: (wasNotDone && nowDone) ? new Date().toISOString() : form.completedAt });
@@ -1740,83 +1641,6 @@ function TaskModal({ task, onSave, onSaveRecurring, onClose, projects }) {
               )}
             </div>
           </div>
-
-          {canRecur && (
-            <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: 12, overflow: "hidden" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: freq !== "none" ? COLORS.accentDim : COLORS.surface2 }}>
-                <label style={{ fontSize: 13, fontWeight: 700, color: freq !== "none" ? COLORS.accent : COLORS.text, display: "flex", alignItems: "center", gap: 7 }}>
-                  <span>🔁</span> Repeat
-                </label>
-                <select value={freq} onChange={e => setFreq(e.target.value)} style={{ width: "auto", minWidth: 150 }}>
-                  <option value="none">Does not repeat</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-
-              {freq !== "none" && (
-                <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 14 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 13, color: COLORS.text }}>Every</span>
-                    <input type="number" min={1} value={interval} onChange={e => setRecInterval(e.target.value)} style={{ width: 70 }} />
-                    <span style={{ fontSize: 13, color: COLORS.text }}>{freq === "daily" ? "day(s)" : freq === "weekly" ? "week(s)" : "month(s)"}</span>
-                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 12, color: COLORS.textMuted }}>at</span>
-                      <input type="time" value={form.dueTime || ""} onChange={e => setF("dueTime", e.target.value)} style={{ width: "auto" }} />
-                    </div>
-                  </div>
-
-                  {freq === "weekly" && (
-                    <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                      {WEEKDAY_PICKER.map(([code, label]) => (
-                        <button key={code} type="button" onClick={() => toggleByDay(code)}
-                          style={{ padding: "7px 11px", borderRadius: 8, border: `1px solid ${byDay.includes(code) ? COLORS.accent : COLORS.border}`, background: byDay.includes(code) ? COLORS.accent : COLORS.surface2, color: byDay.includes(code) ? "#fff" : COLORS.textDim, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {freq === "monthly" && (
-                    <div>
-                      <div style={{ display: "flex", gap: 8, marginBottom: monthlyMode === "weekday" ? 10 : 0 }}>
-                        <button type="button" onClick={() => setMonthlyMode("date")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1px solid ${monthlyMode === "date" ? COLORS.accent : COLORS.border}`, background: monthlyMode === "date" ? COLORS.accent : COLORS.surface2, color: monthlyMode === "date" ? "#fff" : COLORS.textDim, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>On day {form.due ? parseYMD(form.due).getDate() : "—"}</button>
-                        <button type="button" onClick={() => setMonthlyMode("weekday")} style={{ flex: 1, padding: "8px", borderRadius: 8, border: `1px solid ${monthlyMode === "weekday" ? COLORS.accent : COLORS.border}`, background: monthlyMode === "weekday" ? COLORS.accent : COLORS.surface2, color: monthlyMode === "weekday" ? "#fff" : COLORS.textDim, fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>On a weekday</button>
-                      </div>
-                      {monthlyMode === "weekday" && (
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <select value={ordinal} onChange={e => setOrdinal(parseInt(e.target.value, 10))}>{ORDINALS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}</select>
-                          <select value={ordWeekday} onChange={e => setOrdWeekday(e.target.value)}>{WEEKDAY_PICKER.map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div>
-                    <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 8 }}>ENDS</label>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
-                        <input type="radio" name="tm-rec-end" checked={endType === "never"} onChange={() => setEndType("never")} style={{ accentColor: COLORS.accent }} /> Never
-                      </label>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
-                        <input type="radio" name="tm-rec-end" checked={endType === "count"} onChange={() => setEndType("count")} style={{ accentColor: COLORS.accent }} />
-                        After <input type="number" min={1} value={count} onChange={e => { setCount(e.target.value); setEndType("count"); }} style={{ width: 66 }} /> occurrences
-                      </label>
-                      <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text, cursor: "pointer" }}>
-                        <input type="radio" name="tm-rec-end" checked={endType === "until"} onChange={() => setEndType("until")} style={{ accentColor: COLORS.accent }} />
-                        On date <input type="date" value={until} onChange={e => { setUntil(e.target.value); setEndType("until"); }} style={{ width: "auto" }} />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div style={{ background: COLORS.accentDim, borderRadius: 8, padding: "10px 12px", fontSize: 12.5, color: COLORS.accent, fontWeight: 600 }}>
-                    {recurrenceSummary()}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
           <div>
             <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 10 }}>SUBTASKS</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
@@ -1832,7 +1656,7 @@ function TaskModal({ task, onSave, onSaveRecurring, onClose, projects }) {
             ))}
           </div>
           <button onClick={handleSave} style={{ background: COLORS.accent, color: "#fff", borderRadius: 8, padding: "13px", fontSize: 14, fontWeight: 600, marginTop: 4 }}>
-            {task ? "Save Changes" : (canRecur && freq !== "none") ? "Create recurring task 🔁" : "Create Task"}
+            {task ? "Save Changes" : "Create Task"}
           </button>
         </div>
       </div>
@@ -2808,7 +2632,7 @@ function CalendarView({ tasks, onEdit }) {
               <div key={t.id} onClick={() => onEdit(t)}
                 style={{ padding: "12px 14px", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.isFrog ? "🐸 " : ""}{t.recurrenceId ? "🔁 " : ""}{t.dueTime ? `${t.dueTime} · ` : ""}{t.title}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
                   {t.description && <div style={{ fontSize: 12, color: COLORS.textMuted }}>{t.description.slice(0, 60)}{t.description.length > 60 ? "…" : ""}</div>}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
@@ -5793,21 +5617,6 @@ const api = {
   async restoreNote(id) { const r = await fetch('/api/notes/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async restoreBookmark(id) { const r = await fetch('/api/bookmarks/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async emptyTrash() { const r = await fetch('/api/trash', { method: 'DELETE', credentials: 'include' }); return r.ok; },
-  // Recurring tasks. Creation returns the materialised occurrences so the
-  // caller can merge them straight into local state without a refetch.
-  async createRecurringTask(task, rule) {
-    const r = await fetch('/api/tasks/recurring', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task, rule }) });
-    if (!r.ok) return null;
-    return r.json();
-  },
-  async updateRecurringSeries(recurrenceId, fromDue, fields) {
-    const r = await fetch('/api/tasks/recurring/' + recurrenceId, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fromDue, fields }) });
-    return r.ok;
-  },
-  async deleteRecurringSeries(recurrenceId, fromDue) {
-    const r = await fetch('/api/tasks/recurring/' + recurrenceId + '?fromDue=' + encodeURIComponent(fromDue), { method: 'DELETE', credentials: 'include' });
-    return r.ok;
-  },
 };
 
 // ── Trash Bin ───────────────────────────────────────────────────────────────────
@@ -6165,9 +5974,6 @@ function App() {
   const [view, setView] = useState("board");
   const [editingTask, setEditingTask] = useState(null);
   const [showNew, setShowNew] = useState(false);
-  const [showRecurring, setShowRecurring] = useState(false);
-  const [recurringPrefillDue, setRecurringPrefillDue] = useState(null);
-  const [recurringDeletePrompt, setRecurringDeletePrompt] = useState(null); // { id, recurrenceId, due }
   const [showDaily, setShowDaily] = useState(false);
   const [showIE, setShowIE] = useState(false);
   const [showCheckin, setShowCheckin] = useState(false);
@@ -6432,47 +6238,7 @@ function App() {
     if (authUser) api.saveTask(taskWithWs).catch(console.error);
   }
 
-  function deleteTask(id) {
-    const t = tasks.find(x => x.id === id);
-    if (t && t.recurrenceId) { setRecurringDeletePrompt({ id: t.id, recurrenceId: t.recurrenceId, due: t.due }); return; }
-    updateTasks(ts => ts.filter(t => t.id !== id));
-    if (authUser) api.deleteTask(id).catch(console.error);
-    setToastMsg("Task moved to bin");
-  }
-
-  // Creates a whole recurring series at once. The backend materialises real,
-  // independent task rows (each carrying the shared recurrenceId + rule), so
-  // Board / Calendar / Analytics all treat them as ordinary tasks — this just
-  // mirrors the returned occurrences into local state to avoid a refetch.
-  async function saveRecurringTask(task, rule) {
-    if (!authUser) { setToastMsg("Sign in to create recurring tasks"); return; }
-    const result = await api.createRecurringTask({ ...task, workspaceId: activeWorkspace?.id }, rule);
-    if (!result || !result.occurrences) { setToastMsg("Couldn't create the recurring task — try again"); return; }
-    const newTasks = result.occurrences.map(occ => ({
-      ...task, id: occ.id, due: occ.due, status: "To Do", completedAt: null, subtasks: [],
-      workspaceId: activeWorkspace?.id, recurrenceId: result.recurrenceId, recurrenceRule: rule,
-    }));
-    updateTasks(ts => [...ts, ...newTasks]);
-    setShowRecurring(false); setRecurringPrefillDue(null);
-    setShowNew(false); setEditingTask(null);
-    setToastMsg(`Created ${result.count} occurrences 🔁`);
-  }
-
-  function confirmDeleteThisOccurrence() {
-    const { id } = recurringDeletePrompt;
-    updateTasks(ts => ts.filter(t => t.id !== id));
-    if (authUser) api.deleteTask(id).catch(console.error);
-    setRecurringDeletePrompt(null);
-    setToastMsg("Task moved to bin");
-  }
-  async function confirmDeleteFollowingOccurrences() {
-    const { recurrenceId, due } = recurringDeletePrompt;
-    setRecurringDeletePrompt(null);
-    const ok = await api.deleteRecurringSeries(recurrenceId, due);
-    if (!ok) { setToastMsg("Couldn't delete the series — try again"); return; }
-    updateTasks(ts => ts.filter(t => !(t.recurrenceId === recurrenceId && t.due >= due && t.status !== "Done")));
-    setToastMsg("This and all following occurrences moved to bin");
-  }
+  function deleteTask(id) { updateTasks(ts => ts.filter(t => t.id !== id)); if (authUser) api.deleteTask(id).catch(console.error); setToastMsg("Task moved to bin"); }
   function toggleFrog(id) { updateTasks(ts => { const updated = ts.map(t => ({ ...t, isFrog: t.id === id ? !t.isFrog : (t.id !== id && t.isFrog ? false : t.isFrog) })); if (authUser) { updated.forEach(t => { if (t.id === id || t.isFrog !== ts.find(o => o.id === t.id)?.isFrog) api.saveTask({ ...t, workspaceId: activeWorkspace?.id }).catch(console.error); }); } return updated; }); }
 
       function setStatus(id, status) {
@@ -7474,8 +7240,7 @@ function App() {
         localStorage.setItem("vtm_checkin_shown", today());
       }} />}
       {showSearch && <SearchBar tasks={tasks} onSelect={t => setEditingTask(t)} onClose={() => setShowSearch(false)} />}
-      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onSaveRecurring={saveRecurringTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
-      {recurringDeletePrompt && <RecurringDeletePrompt onThis={confirmDeleteThisOccurrence} onFollowing={confirmDeleteFollowingOccurrences} onCancel={() => setRecurringDeletePrompt(null)} />}
+      {(showNew || editingTask) && <TaskModal task={editingTask} projects={projects} onSave={saveTask} onClose={() => { setShowNew(false); setEditingTask(null); }} />}
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
