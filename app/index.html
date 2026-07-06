@@ -5793,6 +5793,8 @@ const api = {
   // older than 24 hours on a schedule. See the note left for the human
   // developer near the TrashView component for the exact backend contract.
   async getTrash() { const r = await fetch('/api/trash', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
+  // Idempotent per (user, step) server-side — safe to call more than once for the same step.
+  async awardOnboardingStep(step) { const r = await fetch('/api/onboarding/step', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step }) }); return r.ok ? r.json() : null; },
   async restoreTask(id) { const r = await fetch('/api/tasks/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async restoreNote(id) { const r = await fetch('/api/notes/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   async restoreBookmark(id) { const r = await fetch('/api/bookmarks/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
@@ -5941,6 +5943,85 @@ function TrashView({ onDataRefresh, workspaces }) {
 }
 
 // ── Work Hours Setup Modal ─────────────────────────────────────────────────────
+// ── Onboarding product tour ────────────────────────────────────────────────
+// Spotlight-style tour: dims everything except the target element (found via
+// its data-tour attribute), with a tooltip card describing that feature.
+// Steps that award XP call onStepComplete(step.key) once per key — the
+// server makes this idempotent, so a duplicate call (e.g. from a fast
+// double-click) can't double-award.
+const TOUR_SEEN_KEY = "tasklist_tour_seen_v1";
+const TOUR_STEPS = [
+  { key: "new-task", title: "Create your first task", body: "Every task starts here. Give it a title, a due date, and a priority, then click Create." },
+  { key: "search", title: "Find anything fast", body: "Press Ctrl+K (or ⌘K on Mac) any time to jump straight to a task by title." },
+  { key: "sidebar-nav", title: "Everything lives here", body: "Board, Calendar, Notes, Bookmarks, Wellbeing, and Teams are all one click away." },
+  { key: "sidebar-foot", title: "Level up as you go", body: "Completing tasks earns XP. Watch your level and streak climb right here." },
+];
+
+function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
+  const [rect, setRect] = React.useState(null);
+
+  React.useEffect(() => {
+    function measure() {
+      const el = document.querySelector(`[data-tour="${step.key}"]`);
+      if (!el) { setRect(null); return; }
+      const r = el.getBoundingClientRect();
+      setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    const t = setTimeout(measure, 50); // catch late layout shifts (fonts, images)
+    return () => { window.removeEventListener("resize", measure); window.removeEventListener("scroll", measure, true); clearTimeout(t); };
+  }, [step.key]);
+
+  // If the target isn't on screen (e.g. sidebar collapsed on mobile), skip
+  // straight past this step rather than showing a spotlight pointing at nothing.
+  React.useEffect(() => {
+    if (rect === null) {
+      const el = document.querySelector(`[data-tour="${step.key}"]`);
+      if (!el) { const t = setTimeout(() => onNext(true), 300); return () => clearTimeout(t); }
+    }
+  }, [rect, step.key]);
+
+  if (!rect) return null;
+
+  const pad = 6;
+  const spot = { top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 };
+  const tooltipBelow = spot.top < window.innerHeight * 0.55;
+  const tooltipTop = tooltipBelow ? spot.top + spot.height + 14 : spot.top - 14;
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 10001 }}>
+      <div style={{
+        position: "fixed", top: spot.top, left: spot.left, width: spot.width, height: spot.height,
+        borderRadius: 12, boxShadow: "0 0 0 9999px rgba(10,10,16,0.72)",
+        transition: "top .25s ease, left .25s ease, width .25s ease, height .25s ease",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "fixed",
+        top: tooltipBelow ? tooltipTop : undefined,
+        bottom: tooltipBelow ? undefined : window.innerHeight - tooltipTop,
+        left: Math.min(Math.max(spot.left, 16), window.innerWidth - 296),
+        width: 280, background: COLORS.surface, borderRadius: 14, padding: 18,
+        boxShadow: "0 16px 40px rgba(0,0,0,0.35)", border: `1px solid ${COLORS.border}`,
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.accent, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 6 }}>
+          Step {stepIndex + 1} of {totalSteps}
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.text, marginBottom: 6 }}>{step.title}</div>
+        <div style={{ fontSize: 13, color: COLORS.textDim, lineHeight: 1.5, marginBottom: 16 }}>{step.body}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <button onClick={onSkip} style={{ background: "none", color: COLORS.textMuted, fontSize: 12, fontWeight: 600, padding: 0 }}>Skip tour</button>
+          <button onClick={() => onNext(false)} style={{ background: COLORS.accent, color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 700 }}>
+            {stepIndex === totalSteps - 1 ? "Done" : "Next"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function WorkHoursSetupModal({ onSave, onSkip }) {
   const [start, setStart] = React.useState("09:00");
   const [end, setEnd] = React.useState("17:30");
@@ -6194,6 +6275,8 @@ function App() {
   const [shareCopied, setShareCopied] = React.useState(false);
   const [shareWorkspaceId, setShareWorkspaceId] = React.useState(null);
   const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
+  const [tourStepIndex, setTourStepIndex] = React.useState(0);
+  const [showTour, setShowTour] = React.useState(false);
   const [xp, setXp] = React.useState(null);
   const [levelUpInfo, setLevelUpInfo] = React.useState(null);
   const [toastMsg, setToastMsg] = React.useState(null);
@@ -6556,6 +6639,36 @@ function App() {
   function saveCheckin(entry) { setCheckins(prev => { const filtered = prev.filter(c => c.date !== entry.date); return [...filtered, entry]; }); if (authUser) api.saveCheckin(entry).catch(console.error); }
   function saveWorkHours(wh) { setWorkHours(wh); if (authUser) api.saveSettings({ workHours: wh, theme }).catch(console.error); }
   function saveEodSetting(val) { const wh = { ...workHours, showEodJournal: val }; setWorkHours(wh); if (authUser) api.saveSettings({ workHours: wh, theme }).catch(console.error); }
+
+  // Onboarding product tour — starts once work hours setup is out of the way
+  // (never show two first-login modals stacked), and only once ever per
+  // browser (dismissing without finishing still counts as seen, per design).
+  useEffect(() => {
+    if (!dataLoaded || !authUser) return;
+    if (showWorkHoursSetup) return;
+    if (localStorage.getItem(TOUR_SEEN_KEY)) return;
+    setShowTour(true);
+  }, [dataLoaded, authUser, showWorkHoursSetup]);
+
+  function finishTour() {
+    localStorage.setItem(TOUR_SEEN_KEY, "1");
+    setShowTour(false);
+    setTourStepIndex(0);
+  }
+  function handleTourNext(targetMissing) {
+    const step = TOUR_STEPS[tourStepIndex];
+    if (!targetMissing) {
+      api.awardOnboardingStep(step.key).then(result => {
+        if (result && result.xpAwarded) {
+          setToastMsg(`+${result.xpAwarded} XP · ${step.title}`);
+          if (typeof result.totalXp === "number") setXp(x => ({ ...x, total_xp: result.totalXp, current_level: result.currentLevel ?? x?.current_level, current_level_xp: result.currentLevelXp ?? x?.current_level_xp }));
+        }
+      }).catch(console.error);
+    }
+    if (tourStepIndex >= TOUR_STEPS.length - 1) { finishTour(); return; }
+    setTourStepIndex(i => i + 1);
+  }
+  function handleTourSkip() { finishTour(); }
 
   async function switchWorkspace(ws) {
     setActiveWorkspace(ws);
@@ -6940,7 +7053,7 @@ function App() {
           </button>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" data-tour="sidebar-nav">
           {sidebarSections.map(section => (
             <React.Fragment key={section.label}>
               <div className="nav-section-label">{section.label}</div>
@@ -6972,7 +7085,7 @@ function App() {
           ))}
         </nav>
 
-        <div className="sidebar-foot">
+        <div className="sidebar-foot" data-tour="sidebar-foot">
           <button className="ws-pill" onClick={() => setShowWorkspaceSwitcher(true)} title="Switch workspace">
             <span className="ws-icon">{workspaceIcon(activeWorkspace)}</span>
             <span className="ws-meta">
@@ -7006,14 +7119,14 @@ function App() {
             {/* Right actions */}
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               {/* Search */}
-              <button onClick={() => setShowSearch(true)}
+              <button data-tour="search" onClick={() => setShowSearch(true)}
                 style={{ background: COLORS.surface3, color: COLORS.textMuted, borderRadius: 100, padding: "7px 12px", fontSize: 14, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", gap: 6 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 <span className="desktop-only" style={{ fontSize: 12, fontWeight: 500 }}>Search</span>
               </button>
 
               {/* New task */}
-              <button onClick={() => setShowNew(true)}
+              <button data-tour="new-task" onClick={() => setShowNew(true)}
                 style={{ background: COLORS.accent, color: "#fff", borderRadius: 100, padding: "7px 14px", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 5, border: "none", whiteSpace: "nowrap" }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span className="desktop-only">New task</span>
@@ -7461,6 +7574,7 @@ function App() {
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
+      {showTour && <TourOverlay step={TOUR_STEPS[tourStepIndex]} stepIndex={tourStepIndex} totalSteps={TOUR_STEPS.length} onNext={handleTourNext} onSkip={handleTourSkip} />}
       {showCheckin && <WellbeingCheckinModal existing={checkins.find(c => c.date === today())} onSave={saveCheckin} onClose={() => setShowCheckin(false)} />}
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
       {showDailyPlan && <AIDailyPlanModal tasks={tasks} checkins={checkins} onClose={() => setShowDailyPlan(false)} />}
