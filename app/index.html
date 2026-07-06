@@ -240,6 +240,23 @@ const PRIORITY_CONFIG = {
   Low: { get color() { return COLORS.low; }, get dim() { return COLORS.lowDim; }, label: "LOW" },
 };
 const STATUS_COLS = ["To Do", "In Progress", "Done"];
+const DAY_OPTIONS = [
+  { key: "Sun", label: "S" }, { key: "Mon", label: "M" }, { key: "Tue", label: "T" },
+  { key: "Wed", label: "W" }, { key: "Thu", label: "T" }, { key: "Fri", label: "F" }, { key: "Sat", label: "S" },
+];
+function recurrenceSummary(r) {
+  if (!r) return null;
+  const n = r.interval || 1;
+  const unitWord = r.unit + (n === 1 ? "" : "s");
+  let text = `Every ${n} ${unitWord}`;
+  if (r.unit === "week" && r.daysOfWeek && r.daysOfWeek.length) text += ` on ${r.daysOfWeek.join(", ")}`;
+  if (r.endType === "on" && r.endDate) {
+    text += `, until ${new Date(r.endDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+  } else if (r.endType === "after" && r.endCount) {
+    text += `, ${r.endCount} times`;
+  }
+  return text;
+}
 const MOOD_EMOJIS = ["😞", "😕", "😐", "🙂", "😄"];
 const MOOD_LABELS = ["Rough", "Low", "Okay", "Good", "Great"];
 const METRIC_CONFIG = {
@@ -1571,14 +1588,24 @@ function TaskCard({ task, onEdit, onDelete, onFrog, onStatusChange, onDragStart,
 // ── TaskModal ──────────────────────────────────────────────────────────────────
 function TaskModal({ task, onSave, onClose, projects }) {
   const [form, setForm] = useState(() => {
-    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "" };
+    const base = task || { title: "", description: "", priority: "Medium", status: "To Do", due: "", subtasks: [], isFrog: false, createdAt: new Date().toISOString(), completedAt: null, aiBreakdown: null, happiness: null, projectId: null, timeSpent: 0, estimatedMins: "", recurrence: null };
     return Array.isArray(base.subtasks) ? base : { ...base, subtasks: [] };
   });
   const [newSub, setNewSub] = useState("");
   const [dueSuggesting, setDueSuggesting] = useState(false);
   const [dueSuggestion, setDueSuggestion] = useState(null);
+  const [repeatOpen, setRepeatOpen] = useState(false);
 
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })); }
+  function toggleRepeatPanel() {
+    if (!form.recurrence) {
+      setF("recurrence", { interval: 1, unit: "week", daysOfWeek: [], endType: "never", endDate: "", endCount: 10 });
+      setRepeatOpen(true);
+    } else {
+      setRepeatOpen(o => !o);
+    }
+  }
+  function removeRepeat() { setF("recurrence", null); setRepeatOpen(false); }
   function addSub() { if (!newSub.trim()) return; setF("subtasks", [...form.subtasks, { id: generateId(), title: newSub.trim(), done: false }]); setNewSub(""); }
   function handleSave() {
     if (!form.title.trim()) return;
@@ -1641,6 +1668,80 @@ function TaskModal({ task, onSave, onClose, projects }) {
               )}
             </div>
           </div>
+
+          <div>
+            <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 6 }}>REPEAT</label>
+            <div onClick={toggleRepeatPanel} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", padding: "11px 13px", borderRadius: 9, border: `1px solid ${COLORS.border}`, background: COLORS.surface3 }}>
+              <span style={{ fontSize: 14, color: COLORS.text }}>{form.recurrence ? "Repeats" : "Does not repeat"}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {form.recurrence && <span style={{ fontSize: 12, color: COLORS.accent, fontStyle: "italic" }}>{recurrenceSummary(form.recurrence)}</span>}
+                <span style={{ fontSize: 11, color: COLORS.textMuted, display: "inline-block", transform: repeatOpen ? "rotate(180deg)" : "none", transition: "transform .15s ease" }}>▾</span>
+              </div>
+            </div>
+
+            {form.recurrence && repeatOpen && (
+              <div style={{ marginTop: 8, padding: 14, borderRadius: 10, border: `1px solid ${COLORS.border}`, background: COLORS.surface2 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: 13, color: COLORS.textDim }}>Every</span>
+                  <input type="number" min={1} value={form.recurrence.interval}
+                    onChange={e => setF("recurrence", { ...form.recurrence, interval: Math.max(1, Number(e.target.value) || 1) })}
+                    style={{ width: 56 }} />
+                  <select value={form.recurrence.unit} onChange={e => setF("recurrence", { ...form.recurrence, unit: e.target.value })}>
+                    <option value="day">day(s)</option>
+                    <option value="week">week(s)</option>
+                    <option value="month">month(s)</option>
+                    <option value="year">year(s)</option>
+                  </select>
+                </div>
+
+                {form.recurrence.unit === "week" && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Repeats on</div>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      {DAY_OPTIONS.map((d, i) => {
+                        const active = form.recurrence.daysOfWeek.includes(d.key);
+                        return (
+                          <button key={d.key + i} type="button"
+                            onClick={() => setF("recurrence", { ...form.recurrence, daysOfWeek: active ? form.recurrence.daysOfWeek.filter(x => x !== d.key) : [...form.recurrence.daysOfWeek, d.key] })}
+                            style={{ width: 30, height: 30, borderRadius: "50%", border: `1px solid ${active ? COLORS.accent : COLORS.border}`, background: active ? COLORS.accent : COLORS.surface, color: active ? "#fff" : COLORS.textDim, fontSize: 11, fontWeight: 700 }}>
+                            {d.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: 11, fontWeight: 600, color: COLORS.textMuted, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 8 }}>Ends</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 12 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
+                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "never"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "never" })} />
+                    Never
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
+                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "on"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "on" })} />
+                    On
+                    <input type="date" value={form.recurrence.endDate} disabled={form.recurrence.endType !== "on"}
+                      onChange={e => setF("recurrence", { ...form.recurrence, endDate: e.target.value })}
+                      style={{ width: 150, opacity: form.recurrence.endType !== "on" ? 0.4 : 1 }} />
+                  </label>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: COLORS.text }}>
+                    <input type="radio" name="recurEnd" checked={form.recurrence.endType === "after"} onChange={() => setF("recurrence", { ...form.recurrence, endType: "after" })} />
+                    After
+                    <input type="number" min={1} value={form.recurrence.endCount} disabled={form.recurrence.endType !== "after"}
+                      onChange={e => setF("recurrence", { ...form.recurrence, endCount: Number(e.target.value) || 1 })}
+                      style={{ width: 56, opacity: form.recurrence.endType !== "after" ? 0.4 : 1 }} />
+                    occurrences
+                  </label>
+                </div>
+
+                <button type="button" onClick={removeRepeat} style={{ background: "none", color: COLORS.high, fontSize: 12, fontWeight: 600, padding: 0 }}>
+                  Remove repeat
+                </button>
+              </div>
+            )}
+          </div>
+
           <div>
             <label style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: 600, display: "block", marginBottom: 10 }}>SUBTASKS</label>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
