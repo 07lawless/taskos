@@ -312,13 +312,13 @@ const METRIC_CONFIG = {
 };
 
 function generateId() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-// Board due-date pills show UK format (DD-MM-YY) rather than the raw
+// Board due-date pills show UK format (DD-MM-YYYY) rather than the raw
 // YYYY-MM-DD the date is stored/edited as everywhere else in the app.
 function formatDueDateUK(ymd) {
   if (!ymd) return ymd;
   const [y, m, d] = ymd.split("-");
   if (!y || !m || !d) return ymd; // defensive — never crash the card on a malformed date
-  return `${d}-${m}-${y.slice(-2)}`;
+  return `${d}-${m}-${y}`;
 }
 function cap(s) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
 function today() { return new Date().toISOString().split("T")[0]; }
