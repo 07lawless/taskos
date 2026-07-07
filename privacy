@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasklist.uk - Privacy Policy</title>
+  <meta name="description" content="How Tasklist.uk collects, uses, stores and protects your data. Plain-English privacy policy covering Google sign-in, AI features, and your rights." />
+  <link rel="canonical" href="https://tasklist.uk/privacy" />
+  <meta name="robots" content="index,follow" />
+
+  <link rel="icon" type="image/png" sizes="32x32"  href="/icons/favicon-32.png?v=2" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png?v=2" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png?v=2" />
+  <link rel="shortcut icon" href="/icons/favicon-32.png?v=2" />
+  <link rel="apple-touch-icon" href="/icons/favicon-192.png?v=2" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    /* Inlined from the shared site stylesheet so this page is fully
+       self-contained — renders identically whether previewed locally
+       or deployed, with no dependency on /blogs/style.css */
+    :root {
+      --bg: #f5f5f3;
+      --surface: #ffffff;
+      --surface2: #f0f0ed;
+      --border: #e2e2de;
+      --text: #1c1c1a;
+      --text-dim: #6b6b65;
+      --text-muted: #9d9d96;
+      --accent: #4f46e5;
+      --accent-dim: #eeedfb;
+      --radius: 14px;
+      --nav-h: 64px;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav.site-nav {
+      position: sticky; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      background: rgba(245,245,243,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      height: 100%; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .nav-logo:hover { text-decoration: none; }
+    .nav-logo-mark { width: 34px; height: 34px; background: var(--accent); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: white; }
+    .nav-logo-text { font-size: 19px; letter-spacing: -0.3px; }
+    .nav-logo-text .logo-task { font-weight: 800; color: var(--text); }
+    .nav-logo-text .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-link { font-size: 14px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px; }
+    .nav-link:hover { color: var(--text); background: var(--surface2); text-decoration: none; }
+    .nav-cta { background: var(--accent); color: white; font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 8px; text-decoration: none; }
+    .nav-cta:hover { opacity: 0.9; text-decoration: none; }
+
+    .post-header { max-width: 1100px; margin: 0 auto; padding: 56px 24px 32px; }
+    .post-eyebrow { font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 16px; }
+    .post-header h1 { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(30px, 5vw, 46px); line-height: 1.2; letter-spacing: -1px; margin: 0 0 20px; }
+    .post-meta { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; }
+
+    article.post-body {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px 80px;
+      font-size: 17px; color: var(--text);
+    }
+    article.post-body h2 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: 28px; letter-spacing: -0.5px; margin: 48px 0 16px; line-height: 1.3;
+    }
+    article.post-body h3 { font-size: 19px; font-weight: 700; margin: 32px 0 12px; }
+    article.post-body p { margin: 0 0 20px; color: var(--text); }
+    article.post-body ul, article.post-body ol { margin: 0 0 20px; padding-left: 24px; }
+    article.post-body li { margin-bottom: 8px; }
+
+    footer.site-footer { border-top: 1px solid var(--border); padding: 40px 0; }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center;
+      justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    .footer-built { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; }
+    .footer-built a { color: var(--text-dim); }
+    .footer-copy { font-size: 13px; color: var(--text-muted); }
+
+    /* Legal-document additions */
+    article.post-body table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 15px; }
+    article.post-body th, article.post-body td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    article.post-body th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); }
+    .policy-updated { font-size: 13px; color: var(--text-muted); }
+    .summary-box {
+      background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+      border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 0 0 28px; font-size: 15px; color: var(--text-dim);
+    }
+
+    @media (max-width: 640px) {
+      .nav-links .nav-link { display: none; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      .post-header { padding: 40px 20px 24px; }
+      article.post-body { padding: 0 20px 60px; font-size: 16px; }
+      article.post-body h2 { font-size: 23px; margin: 36px 0 14px; }
+      article.post-body table { font-size: 13px; }
+      article.post-body th, article.post-body td { padding: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-mark">tl</div>
+        <span class="nav-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
+      </a>
+      <div class="nav-links">
+        <a href="/blogs" class="nav-link">Blog</a>
+        <a href="/documentation" class="nav-link">Docs</a>
+        <a href="https://app.tasklist.uk" class="nav-cta">Open App →</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="post-header">
+    <div class="post-eyebrow">Legal</div>
+    <h1>Privacy Policy</h1>
+    <div class="post-meta">
+      <span class="policy-updated">Last updated: 6 June 2026</span>
+    </div>
+  </header>
+
+  <article class="post-body">
+
+    <div class="summary-box">
+      <strong>The short version:</strong> Tasklist.uk stores the tasks, notes and other content you create so the app works across your devices. We sign you in with Google, we never sell your data, we don't run ads, and you can delete everything at any time. AI features send the relevant task text to Groq to generate a response, and nothing else.
+    </div>
+
+    <p>This policy explains what personal data Tasklist.uk ("we", "us") collects, why we collect it, how it is stored, and the rights you have over it. Tasklist.uk is operated by Daniel Lawless in the United Kingdom, and this policy is written to meet the requirements of the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.</p>
+
+    <p>It applies to the Tasklist.uk application at <a href="https://app.tasklist.uk">app.tasklist.uk</a> and the website at <a href="https://tasklist.uk">tasklist.uk</a>.</p>
+
+    <h2>What we collect</h2>
+
+    <h3>Account information</h3>
+    <p>When you sign in with Google, we receive and store your name, email address, profile picture, and a Google account identifier. We use this to create your account, sign you in, and display your name and avatar inside the app. We do not receive your Google password, and we do not access your Gmail, Drive, Calendar or any other Google service.</p>
+
+    <h3>Content you create</h3>
+    <p>The app stores whatever you put into it so that it can sync across your devices. This includes:</p>
+    <ul>
+      <li>Tasks, including titles, descriptions, subtasks, due dates, priorities and projects</li>
+      <li>Notes and bookmarks</li>
+      <li>Workspaces and their names</li>
+      <li>Wellbeing check-ins: your self-reported mood, energy, stress, sleep and happiness scores, and any note you attach to them</li>
+      <li>Settings such as your work hours, theme, and preferences</li>
+    </ul>
+    <p><strong>A specific note on wellbeing check-ins:</strong> these are health-related data, which UK GDPR treats as a special category requiring extra care. Check-ins are entirely optional. We store them only so you can view your own history and trends, they are never shared with other users, never used for any other purpose, and are deleted along with everything else if you delete your data. By choosing to record a check-in, you consent to us storing it for these purposes; you can stop using the feature at any time.</p>
+
+    <h3>Activity and progress data</h3>
+    <p>The app records data generated by your use of it: XP earned, levels, streaks, task completion history, and unlocked rewards. This powers the Levels &amp; Rewards features and your personal analytics.</p>
+
+    <h3>Cookies and local storage</h3>
+    <p>We use one essential session cookie to keep you signed in for up to 30 days. We do not use advertising or tracking cookies. The app also uses your browser's local storage for small preferences, such as remembering that you have seen the first-time tour.</p>
+
+    <h2>How we use your data</h2>
+    <table>
+      <tr><th>Purpose</th><th>Lawful basis</th></tr>
+      <tr><td>Creating your account and signing you in</td><td>Performance of a contract (providing the service you asked for)</td></tr>
+      <tr><td>Storing and syncing your tasks, notes, bookmarks and settings</td><td>Performance of a contract</td></tr>
+      <tr><td>Storing optional wellbeing check-ins</td><td>Your explicit consent, given by choosing to record them</td></tr>
+      <tr><td>Powering AI features when you use them</td><td>Performance of a contract</td></tr>
+      <tr><td>Showing the scoreboard and team features</td><td>Legitimate interests (the social features of the app), limited as described below</td></tr>
+      <tr><td>Keeping the service secure and diagnosing faults</td><td>Legitimate interests</td></tr>
+    </table>
+    <p>We do not sell your data, share it with advertisers, or use it to build advertising profiles. We do not use your content to train AI models.</p>
+
+    <h2>AI features</h2>
+    <p>Some features (task breakdowns, the daily plan, and the end-of-day recap) use AI. When you use one of these features, the relevant text, such as the title and description of the task being broken down, is sent to <a href="https://groq.com" target="_blank" rel="noopener">Groq</a>, a US-based AI provider, to generate the response. Only the text needed for that specific request is sent. Your account details are not included, and nothing is sent to Groq unless you actively use an AI feature. Groq's handling of this data is described in their own privacy policy.</p>
+
+    <h2>What other users can see</h2>
+    <ul>
+      <li><strong>Scoreboard:</strong> your first name, last name, avatar, level and prestige are visible to other signed-in users. Your email address is never shown.</li>
+      <li><strong>Teams:</strong> if you join a team, your name, email address and avatar are visible to other members of that team, and tasks on the team board are visible to the team.</li>
+      <li><strong>Share links:</strong> if you generate a read-only share link for a board, anyone with that link can view the tasks on it without an account. You can revoke a share link at any time from Settings, which disables it immediately.</li>
+    </ul>
+
+    <h2>Where your data is stored</h2>
+    <p>Your data is stored in a PostgreSQL database on a server operated by Hetzner Online GmbH in Germany, within the European Union. The website and the app are both served from this same server, and traffic between your browser and the server is encrypted with TLS (HTTPS).</p>
+    <p>Where data is transferred outside the UK (for example to Groq in the United States when you use an AI feature), we rely on the safeguards those providers offer, including standard contractual clauses.</p>
+
+    <h2>How long we keep it</h2>
+    <ul>
+      <li><strong>Your content</strong> is kept for as long as you keep your account, so the app can keep working for you.</li>
+      <li><strong>Deleted items</strong> (tasks, notes, bookmarks) go to the Bin, where they are permanently and irreversibly erased after 24 hours, or immediately if you empty the Bin yourself.</li>
+      <li><strong>Sessions</strong> expire after 30 days of inactivity.</li>
+    </ul>
+
+    <h2>Your rights</h2>
+    <p>Under UK GDPR you have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> the personal data we hold about you. The app's Export feature in Settings gives you a copy of your task data at any time, and you can request the rest.</li>
+      <li><strong>Correct</strong> inaccurate data. Most of your data is directly editable in the app.</li>
+      <li><strong>Delete</strong> your data. You can clear your data from Settings, or contact us to have your account and all associated data permanently removed.</li>
+      <li><strong>Object to or restrict</strong> certain processing, and <strong>withdraw consent</strong> where processing is based on consent (such as wellbeing check-ins), at any time.</li>
+      <li><strong>Data portability</strong>: receive your data in a machine-readable format, which the Export feature provides.</li>
+      <li><strong>Complain</strong> to the Information Commissioner's Office (ICO) at <a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a> if you believe we have mishandled your data. We would appreciate the chance to resolve any concern directly first.</li>
+    </ul>
+
+    <h2>Children</h2>
+    <p>Tasklist.uk is not directed at children under 13, and we do not knowingly collect data from them. If you believe a child under 13 has created an account, contact us and we will delete it.</p>
+
+    <h2>Third parties we rely on</h2>
+    <table>
+      <tr><th>Provider</th><th>What they do</th><th>Data involved</th></tr>
+      <tr><td>Google</td><td>Sign-in (OAuth)</td><td>Name, email, avatar, account identifier</td></tr>
+      <tr><td>Hetzner Online GmbH (Germany, EU)</td><td>Hosting for the website, app and database</td><td>All app data</td></tr>
+      <tr><td>Groq (USA)</td><td>AI responses, only when you use an AI feature</td><td>The task text relevant to that request</td></tr>
+      <tr><td>Google Fonts</td><td>Serves the fonts used by the site and app</td><td>Your IP address, as with any web request</td></tr>
+    </table>
+
+    <h2>Changes to this policy</h2>
+    <p>If we make meaningful changes to this policy, we will update the date at the top and, for significant changes, let you know in the app. Continued use of Tasklist.uk after a change means you accept the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>For anything related to your data or this policy, contact: <a href="mailto:dannylawless19@outlook.com">dannylawless19@outlook.com</a></p>
+
+  </article>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-mark">tl</div>
+        <span class="nav-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
+      </a>
+      <div class="footer-built">
+        <a href="/blogs">Blog</a>
+        <a href="/documentation">Documentation</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+      <span class="footer-copy">© 2026 Tasklist.uk</span>
+    </div>
+  </footer>
+
+</body>
+</html>
