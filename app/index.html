@@ -250,6 +250,8 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 const STORAGE_KEY = "vtm_tasks_v1";
 const WELLBEING_KEY = "vtm_wellbeing_v1";
+const NOTES_STORAGE_KEY = "vtm_notes_v1";
+const BOOKMARKS_STORAGE_KEY = "vtm_bookmarks_v1";
 const USER_KEY = "vtm_user_v1";
 const PROJECTS_KEY = "vtm_projects_v1";
 const WORKHOURS_KEY = "vtm_workhours_v1";
@@ -1169,6 +1171,15 @@ function applyAccentOverride(preview, isDark) {
 }
 
 // ── AI ─────────────────────────────────────────────────────────────────────────
+// AI features (breakdown, due-date suggestion, daily plan) run through the
+// app's own Groq API key server-side — auth-gated deliberately, to stop an
+// anonymous guest from spending that budget. Checked directly via the same
+// localStorage flag guest mode itself uses, rather than threading authUser
+// as a prop through every component that might trigger one of these.
+function isGuestMode() {
+  try { return localStorage.getItem("tasklist_guest_mode") === "1"; } catch (e) { return false; }
+}
+
 async function fetchAIBreakdown(task) {
   const subtaskList = task.subtasks.length ? task.subtasks.map(s => `- ${s.title}${s.done ? " (done)" : ""}`).join("\n") : "None listed";
   const prompt = `You are a focused productivity assistant. A user has marked the following task as their most important thing to do today.
@@ -1230,6 +1241,7 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
   const [open, setOpen] = useState(false);
 
   async function generate() {
+    if (isGuestMode()) { setState("guest-locked"); setOpen(true); return; }
     if (!task.description || !task.description.trim()) {
       setState("needs-description");
       setOpen(true);
@@ -1275,6 +1287,12 @@ function AIBreakdownPanel({ task, onSaveBreakdown }) {
         <div style={{ background: COLORS.mediumDim, borderRadius: 8, padding: "12px 14px", border: `1px solid ${COLORS.medium}40`, fontSize: 12.5, color: COLORS.medium, display: "flex", gap: 8, lineHeight: 1.5 }}>
           <span style={{ fontSize: 14, flexShrink: 0 }}>✏️</span>
           <span>Add a bit more detail to this task's description first. The AI breakdown needs something to work from, otherwise it ends up guessing.</span>
+        </div>
+      )}
+      {state === "guest-locked" && (
+        <div style={{ background: COLORS.accentDim, borderRadius: 8, padding: "12px 14px", border: `1px solid ${COLORS.accent}40`, fontSize: 12.5, color: COLORS.accent, display: "flex", gap: 8, lineHeight: 1.5 }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>🔒</span>
+          <span>AI breakdowns need a free Google sign-in — they run through a shared AI budget, so guest mode keeps them switched off. <a href="/auth/google" style={{ color: COLORS.accent, fontWeight: 700 }}>Sign in</a></span>
         </div>
       )}
       {hasBreakdown && state !== "loading" && state !== "needs-description" && (
@@ -1738,6 +1756,7 @@ function TaskModal({ task, onSave, onClose, projects }) {
   const [newSub, setNewSub] = useState("");
   const [dueSuggesting, setDueSuggesting] = useState(false);
   const [dueSuggestion, setDueSuggestion] = useState(null);
+  const [dueSuggestError, setDueSuggestError] = useState(null);
   const [repeatOpen, setRepeatOpen] = useState(false);
 
   function setF(k, v) { setForm(f => ({ ...f, [k]: v })); }
@@ -1762,9 +1781,15 @@ function TaskModal({ task, onSave, onClose, projects }) {
     if (!form.title.trim()) return;
     setDueSuggesting(true);
     setDueSuggestion(null);
-    const result = await suggestDueDate(form.title, form.description, form.priority);
-    setDueSuggesting(false);
-    if (result) setDueSuggestion(result);
+    setDueSuggestError(null);
+    try {
+      const result = await suggestDueDate(form.title, form.description, form.priority);
+      if (result) setDueSuggestion(result);
+    } catch (e) {
+      setDueSuggestError(e.message || "Couldn't get a suggestion. Try again.");
+    } finally {
+      setDueSuggesting(false);
+    }
   }
 
   return (
@@ -1802,6 +1827,11 @@ function TaskModal({ task, onSave, onClose, projects }) {
                   {dueSuggesting ? "…" : "✨"}
                 </button>
               </div>
+              {dueSuggestError && (
+                <div style={{ marginTop: 6, fontSize: 11, color: COLORS.textDim }}>
+                  {dueSuggestError}{isGuestMode() && <> <a href="/auth/google" style={{ color: COLORS.accent, fontWeight: 700 }}>Sign in</a></>}
+                </div>
+              )}
               {dueSuggestion && (
                 <div style={{ marginTop: 6, background: COLORS.accentDim, borderRadius: 8, padding: "8px 10px", border: `1px solid ${COLORS.accent}30` }}>
                   <div style={{ fontSize: 11, color: COLORS.accent, fontWeight: 600, marginBottom: 3 }}>AI suggests: {dueSuggestion.date}</div>
@@ -3213,6 +3243,7 @@ function FocusMode({ task, onClose }) {
 
 // ── Smart Due Date Suggestion ──────────────────────────────────────────────────
 async function suggestDueDate(title, description, priority) {
+  if (isGuestMode()) throw new Error("Sign in to use AI due-date suggestions.");
   const prompt = `A user is creating a task and wants a suggested due date. Today is ${today()}.
 
 Task title: ${title}
@@ -3352,6 +3383,7 @@ function AIDailyPlanModal({ tasks, checkins, onClose }) {
   const activeTasks = tasks.filter(t => t.status !== "Done");
 
   async function generatePlan() {
+    if (isGuestMode()) { setState("guest-locked"); return; }
     setState("loading");
     const taskList = activeTasks.map((t, i) =>
       `${i+1}. "${t.title}" | Priority: ${t.priority} | Due: ${t.due || "no date"} | Status: ${t.status}${t.isFrog ? " | FROG TASK" : ""}${t.subtasks.length ? ` | ${t.subtasks.filter(s=>s.done).length}/${t.subtasks.length} subtasks done` : ""}`
@@ -3422,6 +3454,13 @@ Respond with ONLY this JSON format (no markdown, no extra text):
         {state === "error" && (
           <div style={{ background: COLORS.highDim, borderRadius: 10, padding: 16, color: COLORS.high, fontSize: 13 }}>
             Something went wrong. <button onClick={generatePlan} style={{ background: "none", color: COLORS.accent, textDecoration: "underline", fontSize: 13 }}>Try again</button>
+          </div>
+        )}
+
+        {state === "guest-locked" && (
+          <div style={{ background: COLORS.accentDim, borderRadius: 10, padding: 16, color: COLORS.accent, fontSize: 13, display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 15, flexShrink: 0 }}>🔒</span>
+            <span>The AI daily plan needs a free Google sign-in — it runs through a shared AI budget, so guest mode keeps it switched off. <a href="/auth/google" style={{ color: COLORS.accent, fontWeight: 700 }}>Sign in</a></span>
           </div>
         )}
 
@@ -4290,7 +4329,7 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
             <div style={{ fontSize: 13, color: COLORS.textMuted }}>{user?.email}</div>
           </div>
         </div>
-        <a href="/auth/logout" style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
+        <a href="/auth/logout" onClick={() => { try { localStorage.removeItem("tasklist_guest_mode"); } catch (e) {} }} style={{ display: "inline-block", background: COLORS.highDim, color: COLORS.high, borderRadius: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600, textDecoration: "none", border: `1px solid ${COLORS.high}30` }}>Sign out</a>
       </Section>
       <Section title="Profile">
         <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
@@ -6418,9 +6457,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showAllDone, setShowAllDone] = useState(false);
   const [showArchivedDone, setShowArchivedDone] = useState(false);
-  const [bookmarks, setBookmarks] = useState([]);
+  const [bookmarks, setBookmarks] = useState(() => { try { const s = localStorage.getItem(BOOKMARKS_STORAGE_KEY); return s ? JSON.parse(s) : []; } catch { return []; } });
   const [editingBookmark, setEditingBookmark] = useState(null);
-  const [notes, setNotes] = useState([]);
+  const [notes, setNotes] = useState(() => { try { const s = localStorage.getItem(NOTES_STORAGE_KEY); return s ? JSON.parse(s) : []; } catch { return []; } });
   const [editingNote, setEditingNote] = useState(null);
   const [showNewNote, setShowNewNote] = useState(false);
   const [workspaces, setWorkspaces] = useState([]);
@@ -6624,6 +6663,11 @@ function App() {
   }, [authUser]);
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }, [tasks]);
+  // Mirrors the tasks persistence above — for a guest this is the only copy
+  // of the data that exists at all; for a signed-in user it's a harmless
+  // local cache that gets overwritten by the real fetch from the server.
+  useEffect(() => { try { localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes)); } catch (e) {} }, [notes]);
+  useEffect(() => { try { localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarks)); } catch (e) {} }, [bookmarks]);
   useEffect(() => { localStorage.setItem(WELLBEING_KEY, JSON.stringify(checkins)); }, [checkins]);
   useEffect(() => { localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects)); }, [projects]);
   useEffect(() => { localStorage.setItem(WORKHOURS_KEY, JSON.stringify(workHours)); }, [workHours]);
@@ -7174,7 +7218,12 @@ function App() {
   const sidebarSections = [
     { label: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"]] },
     { label: "Insights", items: [["wellbeing","Wellbeing"],["analytics","Analytics"],["xp","Levels & Rewards"]] },
-    { label: "Together", items: [["teams","Teams"], ...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["notifications","Notifications"]] },
+    // Teams/Collaborate/Notifications are inherently multiplayer (join
+    // codes, other members, server-side notifications) — there's no
+    // sensible local-only version, so this whole section is hidden for
+    // guests rather than left visible and failing with a confusing
+    // "Unauthorised" error the moment they try to use it.
+    ...(authUser ? [{ label: "Together", items: [["teams","Teams"], ...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["notifications","Notifications"]] }] : []),
     { label: "Tools", items: [["focus","Focus"],["plan","Plan"],["daily","Daily"],["trash","Bin"],["documentation","Documentation"],["settings","Settings"]] },
   ];
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -7349,7 +7398,7 @@ function App() {
                         {NAV_ICONS.settings}
                         Settings
                       </button>
-                      <a href="/auth/logout"
+                      <a href="/auth/logout" onClick={() => { try { localStorage.removeItem("tasklist_guest_mode"); } catch (e) {} }}
                         style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", fontSize: 13, fontWeight: 500, color: COLORS.high, textDecoration: "none", borderTop: `1px solid ${COLORS.border}` }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                         Sign out
@@ -7423,7 +7472,7 @@ function App() {
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
                       </button>
                     </div>
-                    <a href="/auth/logout"
+                    <a href="/auth/logout" onClick={() => { try { localStorage.removeItem("tasklist_guest_mode"); } catch (e) {} }}
                       style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", fontSize: 13, fontWeight: 500, color: COLORS.high, textDecoration: "none", borderTop: `1px solid ${COLORS.border}` }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                       Sign out
