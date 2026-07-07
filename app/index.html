@@ -6260,7 +6260,7 @@ function SharedBoardView({ token }) {
                       <div style={{ display: "flex", gap: 5, marginBottom: 7, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 10, fontWeight: 700, color: pc.text, background: pc.dim, padding: "2px 7px", borderRadius: 100 }}>{t.priority?.toUpperCase()}</span>
                         {project && <span style={{ fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: getProjectColor(project.colorId).bg, color: getProjectColor(project.colorId).text }}>{project.name}</span>}
-                        {t.due && <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : COLORS.surface3, borderRadius: 4 }}>{isOverdue ? "⚠ " : ""}{t.due}</span>}
+                        {t.due && <span style={{ fontSize: 10, color: isOverdue ? COLORS.high : COLORS.textMuted, padding: "2px 7px", background: isOverdue ? COLORS.highDim : COLORS.surface3, borderRadius: 4 }}>{isOverdue ? "⚠ " : ""}{formatDueDateUK(t.due)}</span>}
                       </div>
                       <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.4, color: COLORS.text }}>{t.isFrog ? "🐸 " : ""}{t.title}</div>
                       {t.description && <div style={{ fontSize: 12, color: COLORS.textDim, marginTop: 4, lineHeight: 1.5 }}>{t.description.slice(0, 100)}{t.description.length > 100 ? "…" : ""}</div>}
@@ -7592,7 +7592,7 @@ function App() {
                         {t.description && <div style={{ fontSize: 12, color: COLORS.textDim, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.description}</div>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                        {t.due && <span style={{ fontSize: 11, color: t.due < today() && t.status !== "Done" ? COLORS.high : COLORS.textMuted, background: COLORS.surface3, padding: "2px 7px", borderRadius: 4 }}>{t.due}</span>}
+                        {t.due && <span style={{ fontSize: 11, color: t.due < today() && t.status !== "Done" ? COLORS.high : COLORS.textMuted, background: COLORS.surface3, padding: "2px 7px", borderRadius: 4 }}>{formatDueDateUK(t.due)}</span>}
                         <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: { High: COLORS.highDim, Medium: COLORS.mediumDim, Low: COLORS.lowDim }[t.priority], color: { High: COLORS.high, Medium: COLORS.medium, Low: COLORS.low }[t.priority] }}>{t.priority}</span>
                         <button onClick={e => { e.stopPropagation(); setStatus(t.id, col === "To Do" ? "In Progress" : col === "In Progress" ? "Done" : "To Do"); }}
                           style={{ background: COLORS.surface3, border: `1px solid ${COLORS.border}`, borderRadius: 6, padding: "3px 8px", fontSize: 11, fontWeight: 600, color: COLORS.textMuted, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
