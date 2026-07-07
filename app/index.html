@@ -82,6 +82,19 @@
     .login-btn:hover { border-color: #4f46e5; background: #eeedfb; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,70,229,0.15); }
     .login-btn img { width: 18px; height: 18px; }
     .login-footer { margin-top: 16px; font-size: 11px; color: #c0c0cc; line-height: 1.6; font-family: "DM Sans", system-ui, sans-serif; }
+    .login-footer a { color: #9d9dac; text-decoration: underline; }
+    .login-footer a:hover { color: #6b6b7a; }
+    .login-guest-btn {
+      display: block; width: 100%; margin-top: 10px; background: none; border: none;
+      font-family: "DM Sans", system-ui, sans-serif; font-size: 12.5px; font-weight: 600;
+      color: #9a9aa8; text-decoration: underline; cursor: pointer; padding: 4px;
+    }
+    .login-guest-btn:hover { color: #4f46e5; }
+    .login-guest-note {
+      display: none; margin-top: 10px; font-size: 10.5px; color: #b4b4c0; line-height: 1.55;
+      font-family: "DM Sans", system-ui, sans-serif; background: #f4f4f8; border-radius: 8px; padding: 8px 10px;
+    }
+    .login-guest-note.show { display: block; }
     .login-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
     .login-divider-line { flex: 1; height: 1px; background: #e8e8f0; }
     .login-divider-text { font-size: 10px; color: #b0b0c0; font-weight: 600; letter-spacing: 0.8px; font-family: "DM Sans", system-ui, sans-serif; }
@@ -100,6 +113,11 @@
     .login-overlay.dark .login-divider-line { background: #32323f; }
     .login-overlay.dark .login-divider-text { color: #6a6a7a; }
     .login-overlay.dark .login-footer { color: #5a5a6a; }
+    .login-overlay.dark .login-footer a { color: #7a7a8a; }
+    .login-overlay.dark .login-footer a:hover { color: #a0a0b0; }
+    .login-overlay.dark .login-guest-btn { color: #7a7a8a; }
+    .login-overlay.dark .login-guest-btn:hover { color: #7c6af7; }
+    .login-overlay.dark .login-guest-note { background: #22222e; color: #7a7a8a; }
 
     .auth-loader {
       position: fixed; inset: 0; z-index: 9998;
@@ -170,7 +188,9 @@
           </svg>
           Continue with Google
         </a>
-        <div class="login-footer">Your data is stored securely and never sold or shared.</div>
+        <button type="button" class="login-guest-btn" onclick="tasklistContinueAsGuest()">Continue without an account</button>
+        <div class="login-footer">Your data is stored securely and never sold or shared. <a href="https://tasklist.uk/privacy" target="_blank" rel="noopener">Privacy Policy</a></div>
+        <div class="login-guest-note" id="login-guest-note">Guest mode keeps everything on this device only — nothing syncs, and switching devices or clearing your browser loses your data. Sign in any time to switch to a synced account.</div>
       </div>
     </div>
   </div>
@@ -201,6 +221,28 @@
           if (overlay) overlay.classList.add('dark');
         });
       }
+
+      // Guest mode: lets someone use the app fully without Google sign-in.
+      // Nothing here touches the backend or React's authUser state — the
+      // app's own save/delete functions already skip syncing whenever
+      // authUser is null, so simply hiding the overlay is enough to drop
+      // into a fully working, local-storage-only mode. First click shows
+      // a plain-language warning about what "no account" actually means;
+      // the same click handler then commits on the second click.
+      window.tasklistContinueAsGuest = function () {
+        const note = document.getElementById('login-guest-note');
+        const btn = document.querySelector('.login-guest-btn');
+        if (note && !note.classList.contains('show')) {
+          note.classList.add('show');
+          if (btn) btn.textContent = 'Yes, continue without an account';
+          return;
+        }
+        try { localStorage.setItem('tasklist_guest_mode', '1'); } catch (e) {}
+        const overlay = document.getElementById('login-overlay');
+        if (overlay) overlay.style.display = 'none';
+        const loader = document.getElementById('auth-loader');
+        if (loader) loader.style.display = 'none';
+      };
     })();
   </script>
   <script type="text/babel">
@@ -6422,6 +6464,7 @@ function App() {
       if (loader) loader.style.display = 'none';
       return;
     }
+    const isReturningGuest = (() => { try { return localStorage.getItem('tasklist_guest_mode') === '1'; } catch (e) { return false; } })();
     fetch('/auth/me', { credentials: 'include' })
       .then(r => r.json())
       .then(user => {
@@ -6430,9 +6473,10 @@ function App() {
         if (loader) loader.style.display = 'none';
         const overlay = document.getElementById('login-overlay');
         if (!user) {
-          if (overlay) overlay.style.display = 'flex';
+          if (overlay) overlay.style.display = isReturningGuest ? 'none' : 'flex';
         } else {
           if (overlay) overlay.style.display = 'none';
+          try { localStorage.removeItem('tasklist_guest_mode'); } catch (e) {}
           loadUserData();
         }
       })
@@ -6440,7 +6484,7 @@ function App() {
         const loader = document.getElementById('auth-loader');
         if (loader) loader.style.display = 'none';
         const overlay = document.getElementById('login-overlay');
-        if (overlay) overlay.style.display = 'flex';
+        if (overlay) overlay.style.display = isReturningGuest ? 'none' : 'flex';
       });
   }, []);
 
