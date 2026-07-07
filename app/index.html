@@ -377,6 +377,56 @@ const css = `
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
   @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ── First-login welcome screen (Variant 4: Typographic Minimal) ── */
+  @keyframes welcome-lift { from { transform: translateY(110%); } to { transform: translateY(0); } }
+  @keyframes welcome-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes welcome-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+  .welcome-overlay {
+    position: fixed; inset: 0; z-index: 10002; background: var(--c-bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px;
+  }
+  .welcome-mark {
+    width: 56px; height: 56px; background: var(--c-accent); border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 34px;
+    animation: welcome-pop .5s cubic-bezier(.2,.9,.3,1.2) both;
+  }
+  .welcome-overlay h1 {
+    font-family: 'DM Serif Display', Georgia, serif; font-weight: 400;
+    font-size: clamp(34px, 7vw, 58px); line-height: 1.1; letter-spacing: -1.5px;
+    max-width: 700px; color: var(--c-text);
+  }
+  .welcome-overlay h1 .wline { display: block; overflow: hidden; }
+  .welcome-overlay h1 .wline span { display: inline-block; animation: welcome-lift .7s cubic-bezier(.2,.8,.2,1) both; }
+  .welcome-overlay h1 .wline:nth-child(2) span { animation-delay: .15s; }
+  .welcome-overlay h1 em { font-style: italic; color: var(--c-accent); }
+  .welcome-overlay p {
+    color: var(--c-text-dim); font-size: 16px; margin-top: 22px; max-width: 420px; line-height: 1.65;
+    animation: welcome-rise .6s ease .5s both;
+  }
+  .welcome-frogline {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 26px;
+    background: var(--c-frog-dim); color: var(--c-frog);
+    font-size: 13px; font-weight: 700; padding: 8px 18px; border-radius: 100px;
+    animation: welcome-rise .6s ease .65s both;
+  }
+  .welcome-cta {
+    margin-top: 34px; background: var(--c-text); color: var(--c-bg);
+    font-size: 15px; font-weight: 700; padding: 14px 36px; border-radius: 14px; border: none;
+    animation: welcome-rise .6s ease .8s both; transition: transform .15s; cursor: pointer;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+  .welcome-cta:hover { transform: translateY(-2px); }
+  .welcome-skip {
+    margin-top: 16px; background: none; border: none; color: var(--c-text-muted);
+    font-size: 12.5px; font-weight: 600; animation: welcome-rise .6s ease .9s both;
+    cursor: pointer; font-family: 'DM Sans', system-ui, sans-serif;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .welcome-mark, .welcome-overlay h1 .wline span, .welcome-overlay p, .welcome-frogline, .welcome-cta, .welcome-skip { animation: none !important; }
+  }
   .ai-fade-in { animation: fadeIn 0.35s ease forwards; }
   .ai-thinking span { display:inline-block; animation: pulse 1.2s ease infinite; }
   .ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
@@ -5957,6 +6007,23 @@ const TOUR_STEPS = [
   { keys: ["sidebar-xp", "xp-bar"], title: "Level up as you go", body: "Completing tasks earns XP. Tap here any time to see your level and streak." },
 ];
 
+function WelcomeScreen({ onStart, onSkip }) {
+  return (
+    <div className="welcome-overlay">
+      <div className="welcome-mark">tl</div>
+      <h1>
+        <span className="wline"><span>Do the hard thing</span></span>
+        <span className="wline"><span><em>first.</em></span></span>
+      </h1>
+      <p>Welcome to Tasklist. One important task a day, done before the noise starts. That's the whole trick.</p>
+      <div className="welcome-frogline">🐸 Your first frog is waiting</div>
+      <br />
+      <button className="welcome-cta" onClick={onStart}>Let's go</button>
+      <button className="welcome-skip" onClick={onSkip}>Skip intro</button>
+    </div>
+  );
+}
+
 function TourOverlay({ step, stepIndex, totalSteps, onNext, onSkip }) {
   const [rect, setRect] = React.useState(null);
 
@@ -6332,6 +6399,7 @@ function App() {
   const [showWorkHoursSetup, setShowWorkHoursSetup] = React.useState(false);
   const [tourStepIndex, setTourStepIndex] = React.useState(0);
   const [showTour, setShowTour] = React.useState(false);
+  const [showWelcome, setShowWelcome] = React.useState(false);
   const [xp, setXp] = React.useState(null);
   const [levelUpInfo, setLevelUpInfo] = React.useState(null);
   const [toastMsg, setToastMsg] = React.useState(null);
@@ -6695,20 +6763,26 @@ function App() {
   function saveWorkHours(wh) { setWorkHours(wh); if (authUser) api.saveSettings({ workHours: wh, theme }).catch(console.error); }
   function saveEodSetting(val) { const wh = { ...workHours, showEodJournal: val }; setWorkHours(wh); if (authUser) api.saveSettings({ workHours: wh, theme }).catch(console.error); }
 
-  // Onboarding product tour — starts once work hours setup is out of the way
-  // (never show two first-login modals stacked), and only once ever per
-  // browser (dismissing without finishing still counts as seen, per design).
+  // First-login flow: work hours setup → welcome screen → spotlight tour.
+  // Only ever runs once per browser — dismissing at any stage (welcome's
+  // "Skip intro" or the tour's own "Skip tour") marks the whole sequence
+  // as seen, same one-shot semantics as before.
   useEffect(() => {
     if (!dataLoaded || !authUser) return;
     if (showWorkHoursSetup) return;
     if (localStorage.getItem(TOUR_SEEN_KEY)) return;
-    setShowTour(true);
+    setShowWelcome(true);
   }, [dataLoaded, authUser, showWorkHoursSetup]);
 
   function finishTour() {
     localStorage.setItem(TOUR_SEEN_KEY, "1");
+    setShowWelcome(false);
     setShowTour(false);
     setTourStepIndex(0);
+  }
+  function startTourFromWelcome() {
+    setShowWelcome(false);
+    setShowTour(true);
   }
   function handleTourNext(targetMissing) {
     const step = TOUR_STEPS[tourStepIndex];
@@ -7629,6 +7703,7 @@ function App() {
       {showDaily && <DailySummaryModal tasks={tasks} checkins={checkins} onClose={() => setShowDaily(false)} onOpenCheckin={() => { setShowDaily(false); setShowCheckin(true); }} />}
       {showIE && <ImportExportModal tasks={tasks} onImport={data => { setTasks(data); if (authUser) { data.forEach(task => api.saveTask(task).catch(console.error)); } }} onClose={() => setShowIE(false)} />}
       {showWorkHoursSetup && <WorkHoursSetupModal onSave={wh => { saveWorkHours(wh); setShowWorkHoursSetup(false); }} onSkip={() => setShowWorkHoursSetup(false)} />}
+      {showWelcome && <WelcomeScreen onStart={startTourFromWelcome} onSkip={finishTour} />}
       {showTour && <TourOverlay step={TOUR_STEPS[tourStepIndex]} stepIndex={tourStepIndex} totalSteps={TOUR_STEPS.length} onNext={handleTourNext} onSkip={handleTourSkip} />}
       {showCheckin && <WellbeingCheckinModal existing={checkins.find(c => c.date === today())} onSave={saveCheckin} onClose={() => setShowCheckin(false)} />}
       {happinessTask && <HappinessModal task={happinessTask} onRate={saveHappiness} onClose={() => setHappinessTask(null)} />}
