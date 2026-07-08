@@ -5935,6 +5935,7 @@ const api = {
   async getBrands() { const r = await fetch('/api/brands', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveBrand(brand) { const r = await fetch('/api/brands', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(brand) }); return r.ok ? r.json() : null; },
   async deleteBrand(id) { const r = await fetch('/api/brands/' + id, { method: 'DELETE', credentials: 'include' }); return r.ok; },
+  async restoreBrand(id) { const r = await fetch('/api/brands/' + id + '/restore', { method: 'POST', credentials: 'include' }); return r.ok; },
   // Multipart, not JSON — the only upload-style calls in the whole api object.
   async uploadBrandFile(brandId, file, kind) {
     const fd = new FormData();
@@ -5995,7 +5996,7 @@ function TrashView({ onDataRefresh, workspaces }) {
   async function loadTrash() {
     setLoading(true);
     const data = await api.getTrash();
-    setTrash(data || { tasks: [], notes: [], bookmarks: [] });
+    setTrash(data || { tasks: [], notes: [], bookmarks: [], brands: [] });
     setLoading(false);
   }
 
@@ -6003,7 +6004,7 @@ function TrashView({ onDataRefresh, workspaces }) {
 
   async function handleRestore(type, id) {
     setRestoringId(id);
-    const fn = type === "task" ? api.restoreTask : type === "note" ? api.restoreNote : api.restoreBookmark;
+    const fn = type === "task" ? api.restoreTask : type === "note" ? api.restoreNote : type === "brand" ? api.restoreBrand : api.restoreBookmark;
     const ok = await fn(id);
     if (ok) {
       await loadTrash();
@@ -6026,6 +6027,7 @@ function TrashView({ onDataRefresh, workspaces }) {
     { key: "tasks", label: "Tasks", icon: "📋", items: trash.tasks || [] },
     { key: "notes", label: "Notes", icon: "🗒️", items: trash.notes || [] },
     { key: "bookmarks", label: "Bookmarks", icon: "🔖", items: trash.bookmarks || [] },
+    { key: "brands", label: "Brands", icon: "🎨", items: trash.brands || [] },
   ] : [];
   const totalCount = sections.reduce((sum, s) => sum + s.items.length, 0);
 
@@ -6036,7 +6038,7 @@ function TrashView({ onDataRefresh, workspaces }) {
           <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>
             <em style={{ fontStyle: "italic", color: COLORS.accent }}>Bin</em>
           </h2>
-          <p style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>Deleted tasks, notes and bookmarks are kept here for 24 hours, then removed for good.</p>
+          <p style={{ fontSize: 13, color: COLORS.textMuted, marginTop: 4 }}>Deleted tasks, notes, bookmarks and brands are kept here for 24 hours, then removed for good.</p>
         </div>
         {totalCount > 0 && (
           <button onClick={handleEmptyTrash} style={{ background: COLORS.highDim, color: COLORS.high, border: `1px solid ${COLORS.high}30`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
@@ -6063,8 +6065,17 @@ function TrashView({ onDataRefresh, workspaces }) {
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {section.items.map(item => {
                   const ws = section.key === "tasks" ? getWorkspace(item.workspace_id) : null;
+                  const brandLogo = section.key === "brands" ? item.files?.find(f => f.kind === "logo") : null;
+                  const brandColor = section.key === "brands" ? (item.colors?.[0]?.hex || COLORS.accent) : null;
                   return (
                   <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "12px 14px" }}>
+                    {section.key === "brands" && (
+                      <div style={{ width: 30, height: 30, borderRadius: 8, flexShrink: 0, overflow: "hidden", background: brandLogo ? COLORS.surface2 : brandColor, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {brandLogo
+                          ? <img src={`/uploads/brands/${brandLogo.filename}`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                          : <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{(item.name || "?").slice(0, 1).toUpperCase()}</span>}
+                      </div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {item.title || item.name || item.url || "Untitled"}
@@ -6078,7 +6089,7 @@ function TrashView({ onDataRefresh, workspaces }) {
                         )}
                       </div>
                     </div>
-                    <button onClick={() => handleRestore(section.key === "tasks" ? "task" : section.key === "notes" ? "note" : "bookmark", item.id)}
+                    <button onClick={() => handleRestore(section.key === "tasks" ? "task" : section.key === "notes" ? "note" : section.key === "brands" ? "brand" : "bookmark", item.id)}
                       disabled={restoringId === item.id}
                       style={{ background: COLORS.accentDim, color: COLORS.accent, border: "none", borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", flexShrink: 0, opacity: restoringId === item.id ? 0.6 : 1 }}>
                       {restoringId === item.id ? "Restoring…" : "Restore"}
@@ -6544,7 +6555,6 @@ function BrandDetailView({ brand, onSaved, onDeleted, onBack }) {
 
   async function handleDeleteBrand() {
     if (!brandId) { onBack(); return; }
-    if (!window.confirm(`Delete "${name}"? This removes its logo and all files too — can't be undone.`)) return;
     const ok = await api.deleteBrand(brandId).catch(() => false);
     if (!ok) { setUploadErr("Couldn't delete this brand — try again."); return; }
     onDeleted();
@@ -8120,7 +8130,7 @@ function App() {
           const b = brands.find(br => `brand-${br.id}` === view);
           if (!b) return null;
           return (
-            <BrandDetailView key={b.id} brand={b} onBack={() => setView("brands")} onDeleted={() => { reloadBrands(); setView("brands"); }}
+            <BrandDetailView key={b.id} brand={b} onBack={() => setView("brands")} onDeleted={() => { reloadBrands(); setView("brands"); setToastMsg("Brand moved to bin"); }}
               onSaved={() => reloadBrands()} />
           );
         })()}
