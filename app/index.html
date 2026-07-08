@@ -6545,16 +6545,25 @@ function BrandDetailView({ brand, onSaved, onDeleted, onBack }) {
   async function handleDeleteBrand() {
     if (!brandId) { onBack(); return; }
     if (!window.confirm(`Delete "${name}"? This removes its logo and all files too — can't be undone.`)) return;
-    await api.deleteBrand(brandId).catch(console.error);
+    const ok = await api.deleteBrand(brandId).catch(() => false);
+    if (!ok) { setUploadErr("Couldn't delete this brand — try again."); return; }
     onDeleted();
   }
 
   return (
     <div style={{ maxWidth: 720, margin: "0 auto" }}>
-      <button onClick={onBack} style={{ background: "none", color: COLORS.textDim, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, marginBottom: 18 }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        All brands
-      </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+        <button onClick={onBack} style={{ background: "none", color: COLORS.textDim, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          All brands
+        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <button onClick={handleDeleteBrand} style={{ background: "none", color: COLORS.high, fontSize: 12.5, fontWeight: 600 }}>{brandId ? "Delete brand" : "Cancel"}</button>
+          <button onClick={handleSave} disabled={!name.trim() || saving} style={{ background: COLORS.accent, color: "#fff", borderRadius: 10, padding: "9px 22px", fontSize: 13.5, fontWeight: 700, opacity: !name.trim() || saving ? 0.6 : 1 }}>
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
 
       {/* Header — logo/initial, name, and a soft wash of the brand's own primary colour */}
       <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "22px 24px", borderRadius: 18, background: `${primary}10`, border: `1px solid ${primary}30`, marginBottom: 24 }}>
@@ -6658,13 +6667,6 @@ function BrandDetailView({ brand, onSaved, onDeleted, onBack }) {
       </div>
 
       {uploadErr && <div style={{ fontSize: 12.5, color: COLORS.high, background: COLORS.highDim, borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>{uploadErr}</div>}
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4 }}>
-        <button onClick={handleDeleteBrand} style={{ background: "none", color: COLORS.high, fontSize: 12.5, fontWeight: 600 }}>{brandId ? "Delete brand" : "Cancel"}</button>
-        <button onClick={handleSave} disabled={!name.trim() || saving} style={{ background: COLORS.accent, color: "#fff", borderRadius: 10, padding: "11px 26px", fontSize: 13.5, fontWeight: 700, opacity: !name.trim() || saving ? 0.6 : 1 }}>
-          {saving ? "Saving…" : "Save"}
-        </button>
-      </div>
     </div>
   );
 }
@@ -6754,6 +6756,8 @@ function App() {
     try { return JSON.parse(localStorage.getItem('vtm_workspace') || 'null'); } catch { return null; }
   });
   const [showWorkspaceSwitcher, setShowWorkspaceSwitcher] = useState(false);
+  const [brandsSubmenuOpen, setBrandsSubmenuOpen] = useState(false);
+  useEffect(() => { if (view.startsWith("brand-") && view !== "brand-new") setBrandsSubmenuOpen(true); }, [view]);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [projectFilter, setProjectFilter] = useState(null);
@@ -7507,7 +7511,7 @@ function App() {
     ...(teams.length > 0 ? [["collab","Collaborate"]] : []),
     ["teams","Teams"]];
   const sidebarSections = [
-    { label: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"], ...(authUser ? [["brands","Brands"], ...brands.map(b => [`brand-${b.id}`, b.name])] : [])] },
+    { label: "Workspace", items: [["board","Board"],["calendar","Calendar"],["notes","Notes"],["bookmarks","Bookmarks"], ...(authUser ? [["brands","Brands"], ...(brandsSubmenuOpen ? brands.map(b => [`brand-${b.id}`, b.name]) : [])] : [])] },
     { label: "Insights", items: [["wellbeing","Wellbeing"],["analytics","Analytics"],["xp","Levels & Rewards"]] },
     // Teams/Collaborate/Notifications are inherently multiplayer (join
     // codes, other members, server-side notifications) — there's no
@@ -7598,6 +7602,25 @@ function App() {
                         ? <img src={`/uploads/brands/${logo.filename}`} alt="" style={{ width: 13, height: 13, borderRadius: 3, objectFit: "contain", flexShrink: 0 }} />
                         : <span style={{ width: 9, height: 9, borderRadius: 3, background: swatch, display: "inline-block", flexShrink: 0 }} />}
                       <span className="label" style={{ fontSize: 12.5 }}>{label}</span>
+                      <span className="tip">{label}</span>
+                    </button>
+                  );
+                }
+                if (v === "brands") {
+                  return (
+                    <button key={v} className={"sidebar-nav-item" + (view === "brands" ? " active" : "")} onClick={() => handleSidebarItem(v)}>
+                      {NAV_ICONS.brands}
+                      <span className="label">{label}</span>
+                      {brands.length > 0 && (
+                        <span onClick={e => { e.stopPropagation(); setBrandsSubmenuOpen(o => !o); }}
+                          title={brandsSubmenuOpen ? "Collapse brands" : "Expand brands"}
+                          style={{ marginLeft: "auto", display: "flex", alignItems: "center", padding: 3, flexShrink: 0 }}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                            style={{ transform: brandsSubmenuOpen ? "rotate(180deg)" : "none", transition: "transform .15s ease" }}>
+                            <polyline points="6 9 12 15 18 9"/>
+                          </svg>
+                        </span>
+                      )}
                       <span className="tip">{label}</span>
                     </button>
                   );
@@ -8095,7 +8118,7 @@ function App() {
           const b = brands.find(br => `brand-${br.id}` === view);
           if (!b) return null;
           return (
-            <BrandDetailView key={b.id} brand={b} onBack={() => setView("brands")} onDeleted={() => setView("brands")}
+            <BrandDetailView key={b.id} brand={b} onBack={() => setView("brands")} onDeleted={() => { reloadBrands(); setView("brands"); }}
               onSaved={() => reloadBrands()} />
           );
         })()}
