@@ -2463,7 +2463,7 @@ function WeeklySummary({ tasks }) {
 
   const inProgress = tasks.filter(t => t.status === "In Progress");
   const overdue = tasks.filter(t => t.due && t.due < localYmd(new Date()) && t.status !== "Done");
-  const frogsCompleted = completed.filter(t => t.isFrog);
+  const frogsCompleted = completed.filter(t => t.wasFrog);
 
   function formatDate(iso) {
     return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
@@ -2576,7 +2576,7 @@ function AnalyticsView({ tasks }) {
   const byPriority = Object.keys(PRIORITY_CONFIG).map(p => ({ priority: p, count: tasks.filter(t => t.priority === p).length }));
   const completedTasks = tasks.filter(t => t.completedAt && t.createdAt);
   const avgMs = completedTasks.length ? completedTasks.reduce((acc, t) => acc + (new Date(t.completedAt) - new Date(t.createdAt)), 0) / completedTasks.length : 0;
-  const frogsCompleted = tasks.filter(t => t.isFrog && t.status === "Done").length;
+  const frogsCompleted = tasks.filter(t => t.wasFrog && t.status === "Done").length;
   const allSubs = tasks.flatMap(t => t.subtasks);
   const subRate = allSubs.length ? Math.round((allSubs.filter(s => s.done).length / allSubs.length) * 100) : 0;
   const aiBreakdownsGenerated = tasks.filter(t => t.aiBreakdown?.steps?.length > 0).length;
@@ -2649,7 +2649,7 @@ function AnalyticsView({ tasks }) {
       <div className="stats-grid-4" style={{ marginBottom: 20 }}>
         {[
           { label: "Subtask Rate", value: `${subRate}%`, sub: `${allSubs.filter(s=>s.done).length}/${allSubs.length} done`, color: COLORS.frog },
-          { label: "Frogs Done", value: `${frogsCompleted}`, sub: `of ${tasks.filter(t=>t.isFrog).length} flagged`, color: COLORS.frog },
+          { label: "Frogs Done", value: `${frogsCompleted}`, sub: "priority tasks finished", color: COLORS.frog },
           { label: "AI Breakdowns", value: `${aiBreakdownsGenerated}`, sub: "tasks analysed", color: COLORS.accent },
           { label: "Total Tasks", value: `${totalTasks}`, sub: `${statusCounts.find(s=>s.status==="Done")?.count||0} completed` },
         ].map(c => (
@@ -6322,7 +6322,7 @@ function SharedBoardView({ token }) {
   );
 
   const allTasks = (data.tasks || []).map(t => ({
-    ...t, isFrog: t.is_frog, projectId: t.project_id,
+    ...t, isFrog: t.is_frog, wasFrog: t.was_frog, projectId: t.project_id,
     subtasks: typeof t.subtasks === 'string' ? JSON.parse(t.subtasks) : (t.subtasks || []),
   }));
   const projects = (data.projects || []).map(p => ({ ...p, colorId: p.color_id }));
@@ -6870,6 +6870,7 @@ function App() {
           .map(t => ({
           ...t,
           isFrog: t.is_frog,
+          wasFrog: t.was_frog,
           projectId: t.project_id,
           createdAt: t.created_at,
           completedAt: t.completed_at,
@@ -7049,6 +7050,7 @@ function App() {
             .map(t => ({
               ...t,
               isFrog: t.is_frog,
+              wasFrog: t.was_frog,
               projectId: t.project_id,
               createdAt: t.created_at,
               completedAt: t.completed_at,
@@ -7226,7 +7228,7 @@ function App() {
       if (tasksData) setTasks(tasksData
         .sort((a, b) => (a.position ?? 999999) - (b.position ?? 999999))
         .map(t => ({
-        ...t, isFrog: t.is_frog, projectId: t.project_id,
+        ...t, isFrog: t.is_frog, wasFrog: t.was_frog, projectId: t.project_id,
         createdAt: t.created_at, completedAt: t.completed_at,
         aiBreakdown: t.ai_breakdown, timeSpent: t.time_spent || 0,
         estimatedMins: t.estimated_mins,
