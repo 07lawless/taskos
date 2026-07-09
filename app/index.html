@@ -1553,14 +1553,18 @@ function WellbeingView({ checkins, tasks, onOpenCheckin }) {
             <line key={v} x1={0} y1={90 - (v-1)*18} x2={svgW} y2={90 - (v-1)*18}
               stroke={COLORS.border} strokeWidth={0.5} strokeDasharray="4,4" />
           ))}
-          {/* Drawn in this order (not the legend's mood/energy/happiness order) so that
-              when two metrics are rated identically on a given day, mood — the one most
-              likely to get silently painted over otherwise — always ends up on top. */}
-          {["happiness", "energy", "mood"].map((key) => {
+          {/* A small constant pixel offset per series (not a change to the actual
+              values) so that on any day where two or three metrics are rated
+              identically, the lines sit as tight parallel tracks instead of one
+              painting exactly over another. Reordering draw order alone (mood
+              on top, say) only ever moves the problem to whichever line ends up
+              underneath — this fixes it regardless of which metrics happen to tie. */}
+          {["mood", "energy", "happiness"].map((key) => {
             const lineColor = { mood: "#8b5cf6", energy: "#10b981", happiness: "#f59e0b" }[key];
+            const yOffset = { mood: -2, energy: 0, happiness: 2 }[key];
             const pts = last14.map((d, i) => {
               const x = (i / 13) * (svgW - 20) + 10;
-              const y = d.entry ? 90 - (d.entry[key] - 1) * 18 : null;
+              const y = d.entry ? 90 - (d.entry[key] - 1) * 18 + yOffset : null;
               return { x, y, hasData: !!d.entry };
             });
             const pathPts = pts.filter(p => p.y !== null);
@@ -1568,8 +1572,8 @@ function WellbeingView({ checkins, tasks, onOpenCheckin }) {
             const pathD = pathPts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
             return (
               <g key={key}>
-                <path d={pathD} fill="none" stroke={lineColor} strokeWidth={key === "mood" ? 2.5 : 2} strokeLinejoin="round" />
-                {pathPts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={key === "mood" ? 3.5 : 3} fill={lineColor} />)}
+                <path d={pathD} fill="none" stroke={lineColor} strokeWidth={2} strokeLinejoin="round" />
+                {pathPts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={3} fill={lineColor} />)}
               </g>
             );
           })}
