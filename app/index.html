@@ -4176,6 +4176,10 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [newProjName, setNewProjName] = useState("");
   const [newProjColor, setNewProjColor] = useState("violet");
+  // Tracked by option id, not one useState per row — see the comment on the
+  // equivalent fix in WorkspaceSwitcher for why a hook inside .map() here
+  // crashed the whole app the moment the workspace list changed length.
+  const [copiedShareOptId, setCopiedShareOptId] = useState(null);
   const [editingProj, setEditingProj] = useState(null);
 
   function saveProfile() {
@@ -4377,10 +4381,10 @@ function SettingsView({ user, workHours, projects, theme, onToggleTheme, onSaveU
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[{ id: null, icon: "🌐", name: "All workspaces" }, ...(workspaces || []).map(w => ({ id: w.id, icon: workspaceIcon(w), name: w.name }))].map(opt => {
             const existingToken = onAllShareTokens?.find(t => t.workspace_id === opt.id || (opt.id === null && t.workspace_id === null));
-            const [copied, setCopied] = React.useState(false);
+            const copied = copiedShareOptId === opt.id;
             const copyLink = () => {
               navigator.clipboard.writeText(`https://app.tasklist.uk/share/${existingToken.token}`);
-              setCopied(true); setTimeout(() => setCopied(false), 2500);
+              setCopiedShareOptId(opt.id); setTimeout(() => setCopiedShareOptId(id => id === opt.id ? null : id), 2500);
             };
             return (
               <div key={opt.id || "all"} style={{ background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 12, padding: "14px 16px" }}>
