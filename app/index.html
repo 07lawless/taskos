@@ -2154,26 +2154,47 @@ function CollabBoardView({ teams }) {
 
   async function saveTask(task) {
     const isNew = !task.id || !tasks.find(t => t.id === task.id);
-    if (isNew) {
-      await fetch(`/api/teams/${activeTeam.id}/tasks`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }).catch(() => {});
-    } else {
-      await fetch(`/api/teams/${activeTeam.id}/tasks/${task.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }).catch(() => {});
+    try {
+      const r = isNew
+        ? await fetch(`/api/teams/${activeTeam.id}/tasks`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) })
+        : await fetch(`/api/teams/${activeTeam.id}/tasks/${task.id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        window.alert(d.error || 'Could not save this task.');
+        return;
+      }
+    } catch (e) {
+      window.alert('Could not save this task. Check your connection and try again.');
+      return;
     }
     setEditingTask(null); setShowNew(false);
     loadTasks(activeTeam.id);
   }
 
   async function deleteTask(id) {
+    const prev = tasks;
     setTasks(ts => ts.filter(t => t.id !== id));
-    await fetch(`/api/teams/${activeTeam.id}/tasks/${id}`, { method: 'DELETE', credentials: 'include' }).catch(() => {});
+    try {
+      const r = await fetch(`/api/teams/${activeTeam.id}/tasks/${id}`, { method: 'DELETE', credentials: 'include' });
+      if (!r.ok) { setTasks(prev); window.alert('Could not delete this task.'); }
+    } catch (e) {
+      setTasks(prev);
+      window.alert('Could not delete this task. Check your connection and try again.');
+    }
   }
 
   async function setStatus(id, status) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
+    const prevTasks = tasks;
     const updated = { ...task, status };
     setTasks(ts => ts.map(t => t.id === id ? updated : t));
-    await fetch(`/api/teams/${activeTeam.id}/tasks/${id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) }).catch(() => {});
+    try {
+      const r = await fetch(`/api/teams/${activeTeam.id}/tasks/${id}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) });
+      if (!r.ok) setTasks(prevTasks);
+    } catch (e) {
+      setTasks(prevTasks);
+    }
   }
 
   function handleDrop(targetStatus) {
@@ -3955,8 +3976,17 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
 
   async function removeMember(teamId, userId) {
     if (!window.confirm("Remove this member?")) return;
-    await fetch(`/api/teams/${teamId}/members/${userId}`, { method: 'DELETE', credentials: 'include' });
-    setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.filter(m => m.id !== userId) } : t));
+    try {
+      const r = await fetch(`/api/teams/${teamId}/members/${userId}`, { method: 'DELETE', credentials: 'include' });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        window.alert(d.error || 'Could not remove member.');
+        return;
+      }
+      setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.filter(m => m.id !== userId) } : t));
+    } catch (e) {
+      window.alert('Could not remove member. Check your connection and try again.');
+    }
   }
 
   async function leaveTeam(teamId, isSoleMember) {
@@ -3964,8 +3994,17 @@ function TeamsView({ teams, setTeams, notifications, setNotifications, authUser,
       ? "Delete this team? This can't be undone."
       : "Leave this team? You'll need a new invite to rejoin.";
     if (!window.confirm(msg)) return;
-    await fetch(`/api/teams/${teamId}/members/${authUser.id}`, { method: 'DELETE', credentials: 'include' });
-    setTeams(prev => prev.filter(t => t.id !== teamId));
+    try {
+      const r = await fetch(`/api/teams/${teamId}/members/${authUser.id}`, { method: 'DELETE', credentials: 'include' });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        window.alert(d.error || (isSoleMember ? 'Could not delete team.' : 'Could not leave team.'));
+        return;
+      }
+      setTeams(prev => prev.filter(t => t.id !== teamId));
+    } catch (e) {
+      window.alert('Could not complete that. Check your connection and try again.');
+    }
   }
 
   async function promoteToggle(teamId, userId, currentRole) {
@@ -5729,7 +5768,7 @@ function XPDetailView({ tasks, onClose, rewards, onEquip, onXpChange, authUid })
               // on the pg driver's parsing config, so normalise it safely here.
               const dateStr = typeof d.activity_date === "string"
                 ? d.activity_date.slice(0, 10)
-                : new Date(d.activity_date).toISOString().slice(0, 10);
+                : localYmd(new Date(d.activity_date));
               const parsedDate = new Date(dateStr + "T00:00:00");
               const isValidDate = !isNaN(parsedDate.getTime());
               const isToday = dateStr === today();
@@ -5872,7 +5911,7 @@ const api = {
   async saveCheckin(c) { await fetch('/api/checkins', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) }); },
   async getProjects(wsId) { const r = await fetch('/api/projects?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveProject(p) { await fetch('/api/projects', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) }); },
-  async deleteProject(id) { await fetch('/api/projects/' + id, { method: 'DELETE', credentials: 'include' }); },
+  async deleteProject(id) { const r = await fetch('/api/projects/' + id, { method: 'DELETE', credentials: 'include' }); return r.ok; },
   async getSettings() { const r = await fetch('/api/settings', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveSettings(s) { await fetch('/api/settings', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) }); },
   async getBookmarks() { const r = await fetch('/api/bookmarks', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
@@ -6998,7 +7037,11 @@ function App() {
       setEditingTask(null); setShowNew(false);
       const rule = toBackendRule(recurrence);
       api.createRecurringTask(taskWithWs, rule).then(async result => {
-        if (!result || !result.ok) { console.error('createRecurringTask failed', result); return; }
+        if (!result || !result.ok) {
+          console.error('createRecurringTask failed', result);
+          setToastMsg("Couldn't create the recurring task — try again");
+          return;
+        }
         const refreshed = await api.getTasks(activeWorkspace?.id);
         if (refreshed) {
           setTasks(refreshed
@@ -7015,7 +7058,7 @@ function App() {
               subtasks: typeof t.subtasks === 'string' ? JSON.parse(t.subtasks) : (t.subtasks || []),
             })));
         }
-      }).catch(console.error);
+      }).catch(e => { console.error(e); setToastMsg("Couldn't create the recurring task — try again"); });
       return;
     }
 
@@ -7316,11 +7359,16 @@ function App() {
     });
     if (authUser) api.saveProject(projWithWs).catch(console.error);
   }
-  function deleteProject(id) {
+  async function deleteProject(id) {
+    const proj = projects.find(p => p.id === id);
+    if (!window.confirm(`Delete the project "${proj?.name || "this project"}"? This can't be undone — projects aren't recoverable from the Bin like tasks are. Tasks using it will just lose their tag.`)) return;
+    if (authUser) {
+      const ok = await api.deleteProject(id).catch(() => false);
+      if (!ok) { setToastMsg("Couldn't delete project — try again"); return; }
+    }
     setProjects(prev => prev.filter(p => p.id !== id));
     setTasks(ts => ts.map(t => t.projectId === id ? { ...t, projectId: null } : t));
     if (projectFilter === id) setProjectFilter(null);
-    if (authUser) api.deleteProject(id).catch(console.error);
   }
 
   function clearData() {
