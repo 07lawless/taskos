@@ -2257,7 +2257,7 @@ function DailyView({ tasks, checkins, onSetStatus, onOpenCheckin, onStartFocus, 
   function toggleDone(t) { onSetStatus(t.id, t.status === "Done" ? "To Do" : "Done"); }
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", paddingBottom: 60 }}>
       {/* Header — matches the date + "Your ___" pattern used across the app */}
       <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
@@ -2275,6 +2275,7 @@ function DailyView({ tasks, checkins, onSetStatus, onOpenCheckin, onStartFocus, 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8 }}>
             {Object.entries(METRIC_CONFIG).map(([key, cfg]) => (
               <div key={key} style={{ textAlign: "center", background: COLORS.surface2, borderRadius: 8, padding: "10px 4px", border: `1px solid ${COLORS.border}` }}>
+                <div style={{ fontSize: 16, marginBottom: 2 }}>{MOOD_EMOJIS[todayCheckin[key]-1]}</div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: moodColor(todayCheckin[key]) }}>{todayCheckin[key]}</div>
                 <div style={{ fontSize: 10, color: COLORS.textMuted, marginTop: 2 }}>{cfg.label}</div>
               </div>
@@ -2945,8 +2946,13 @@ function CalendarView({ tasks, onEdit }) {
     return (
       <div style={{ paddingBottom: 20 }}>
         {/* Mobile header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
+              {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+            </div>
+            <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
+          </div>
           <div style={{ display: "flex", gap: 6 }}>
             <button onClick={() => { setDayOffset(0); setSelectedDay(todayStr); }} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 10px", fontSize: 12, fontWeight: 600 }}>Today</button>
             <button onClick={() => setDayOffset(d => d - 1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 14, border: `1px solid ${COLORS.border}` }}>←</button>
@@ -3009,8 +3015,13 @@ function CalendarView({ tasks, onEdit }) {
   // Desktop 7-day view
   return (
     <div style={{ paddingBottom: 40 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
+            {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+          </div>
+          <h2 style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "clamp(24px, 3.5vw, 34px)", fontWeight: 400, letterSpacing: "-0.5px", lineHeight: 1.15, color: COLORS.text }}>Your <em style={{ fontStyle: "italic", color: COLORS.accent }}>calendar</em></h2>
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button onClick={() => setWeekOffset(0)} style={{ background: COLORS.accentDim, color: COLORS.accent, borderRadius: 7, padding: "5px 12px", fontSize: 12, fontWeight: 600, border: `1px solid ${COLORS.accent}30` }}>Today</button>
           <button onClick={() => setWeekOffset(w => w-1)} style={{ background: COLORS.surface3, color: COLORS.text, borderRadius: 7, padding: "5px 10px", fontSize: 13, border: `1px solid ${COLORS.border}` }}>←</button>
@@ -6629,7 +6640,7 @@ function BrandDetailView({ brand, onSaved, onDeleted, onBack }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. tasklist.uk"
-            style={{ background: "none", border: "none", padding: 0, fontFamily: `'${headingFont}', serif`, fontSize: 28, fontWeight: 700, color: COLORS.text, width: "100%" }} />
+            style={{ background: "none", border: "none", padding: 0, fontFamily: `'${headingFont}', serif`, fontSize: 28, fontWeight: 400, color: COLORS.text, width: "100%" }} />
           <div style={{ fontFamily: `'${bodyFont}', sans-serif`, fontSize: 13, color: COLORS.textDim, marginTop: 4 }}>The quick brown fox jumps over the lazy dog.</div>
         </div>
       </div>
@@ -6769,7 +6780,7 @@ function BrandsView({ brands, onOpenBrand, onNewBrand }) {
                       ? <img src={`/uploads/brands/${logo.filename}`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                       : <span style={{ color: "#fff", fontSize: 17, fontWeight: 800 }}>{b.name.slice(0, 1).toUpperCase()}</span>}
                   </div>
-                  <div style={{ fontFamily: `'${b.heading_font || "DM Serif Display"}', serif`, fontSize: 16, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
+                  <div style={{ fontFamily: `'${b.heading_font || "DM Serif Display"}', serif`, fontSize: 16, fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", gap: 5 }}>
