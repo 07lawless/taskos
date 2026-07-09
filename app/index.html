@@ -5370,6 +5370,14 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
   const [newName, setNewName] = useState('');
   const [newIcon, setNewIcon] = useState('📋');
   const [newColor, setNewColor] = useState('#4f46e5');
+  // Tracked by workspace id, not one useState per row — calling a hook
+  // inside .map() ties the number of hook calls to the array length, which
+  // violates React's Rules of Hooks the moment that length changes (e.g.
+  // deleting a workspace). With no error boundary anywhere in this app,
+  // that invariant violation doesn't fail gracefully — it crashes and
+  // unmounts the entire React tree, which is exactly what a black screen
+  // after deleting a workspace looks like.
+  const [copiedShareId, setCopiedShareId] = useState(null);
 
   function handleCreate() {
     if (!newName.trim()) return;
@@ -5397,7 +5405,7 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
           {workspaces.map(ws => {
             const isActive = ws.id === activeWorkspace?.id;
             const existingToken = allShareTokens?.find(t => t.workspace_id === ws.id);
-            const [shareCopied, setShareCopied] = React.useState(false);
+            const shareCopied = copiedShareId === ws.id;
             async function handleShare(e) {
               e.stopPropagation();
               if (existingToken) {
@@ -5406,8 +5414,8 @@ function WorkspaceSwitcher({ workspaces, activeWorkspace, onSwitch, onCreate, on
                 const token = await onGenerateShare(ws.id);
                 if (token) navigator.clipboard.writeText(`https://app.tasklist.uk/share/${token}`);
               }
-              setShareCopied(true);
-              setTimeout(() => setShareCopied(false), 2000);
+              setCopiedShareId(ws.id);
+              setTimeout(() => setCopiedShareId(id => id === ws.id ? null : id), 2000);
             }
             return (
               <div key={ws.id} onClick={() => onSwitch(ws)}
@@ -5845,7 +5853,7 @@ const api = {
   async getTasks(wsId) { const r = await fetch('/api/tasks?workspace_id=' + wsId, { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async getWorkspaces() { const r = await fetch('/api/workspaces', { credentials: 'include' }); if (!r.ok) return null; return r.json(); },
   async saveWorkspace(w) { const method = w.id ? 'PUT' : 'POST'; const url = w.id ? '/api/workspaces/'+w.id : '/api/workspaces'; const r = await fetch(url, { method, credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify(w) }); return r.ok ? r.json() : null; },
-  async deleteWorkspace(id) { await fetch('/api/workspaces/'+id, { method:'DELETE', credentials:'include' }); },
+  async deleteWorkspace(id) { const r = await fetch('/api/workspaces/'+id, { method:'DELETE', credentials:'include' }); return r.ok; },
   async saveTask(task) { const r = await fetch('/api/tasks', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(task) }); return r.ok ? r.json() : null; },
   async deleteTask(id) { await fetch('/api/tasks/' + id, { method: 'DELETE', credentials: 'include' }); },
   // Creates a whole recurring series in one call — server.js materialises every
@@ -7193,10 +7201,11 @@ function App() {
 
   async function deleteWorkspace(id) {
     if (workspaces.length <= 1) return;
-    await api.deleteWorkspace(id);
+    const ok = await api.deleteWorkspace(id).catch(() => false);
+    if (!ok) { setToastMsg("Couldn't delete workspace — try again"); return; }
     const remaining = workspaces.filter(w => w.id !== id);
     setWorkspaces(remaining);
-    if (activeWorkspace?.id === id) await switchWorkspace(remaining[0]);
+    if (activeWorkspace?.id === id && remaining.length) await switchWorkspace(remaining[0]);
   }
   function updateTimeSpent(taskId, seconds) { setTasks(ts => ts.map(t => t.id === taskId ? { ...t, timeSpent: seconds } : t)); }
 
