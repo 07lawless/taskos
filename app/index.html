@@ -7500,7 +7500,7 @@ function App() {
     // guests rather than left visible and failing with a confusing
     // "Unauthorised" error the moment they try to use it.
     ...(authUser ? [{ label: "Together", items: [["teams","Teams"], ...(teams.length > 0 ? [["collab","Collaborate"]] : []), ["notifications","Notifications"]] }] : []),
-    { label: "Tools", items: [["focus","Focus"],["daily","Daily"],["trash","Bin"],["documentation","Documentation"],["settings","Settings"]] },
+    { label: "Tools", items: [["trash","Bin"],["daily","Daily"],["focus","Focus"],["settings","Settings"]] },
   ];
   const unreadCount = notifications.filter(n => !n.read).length;
   const sidebarXpLevel = xp?.current_level || 1;
