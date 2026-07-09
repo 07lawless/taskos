@@ -365,7 +365,15 @@ function formatDueDateUK(ymd) {
   return `${d}-${m}-${y}`;
 }
 function cap(s) { if (!s) return ''; return s.charAt(0).toUpperCase() + s.slice(1); }
-function today() { return new Date().toISOString().split("T")[0]; }
+// Formats a Date as YYYY-MM-DD using its LOCAL calendar date — never use
+// .toISOString() for this, since that converts to UTC first and silently
+// shifts the date by a day whenever the local timezone offset isn't zero
+// (e.g. every single day during UK British Summer Time, UTC+1). That bug
+// used to be scattered across ~11 places in this file (today(), overdue
+// checks, the calendar's own day highlighting, weekly summary ranges) —
+// all consolidated to call this instead.
+function localYmd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function today() { return localYmd(new Date()); }
 // Defensive: a DATE column coming back from Postgres can arrive as either
 // a plain "YYYY-MM-DD" string or a full ISO datetime string like
 // "2026-07-04T00:00:00.000Z" (node-pg hands back a JS Date object for
@@ -378,11 +386,11 @@ function dateOnly(v) {
   if (!v) return null;
   return String(v).slice(0, 10);
 }
-function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split("T")[0]; }
+function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return localYmd(d); }
 
 const SAMPLE_TASKS = [
   { id: generateId(), projectId: null, timeSpent: 0, estimatedMins: 120, title: "Design new landing page", description: "Revamp the homepage with updated branding and copy. Needs to work across mobile and desktop.", priority: "High", status: "In Progress", due: today(), isFrog: true, createdAt: new Date(Date.now() - 2*86400000).toISOString(), completedAt: null, aiBreakdown: null, happiness: null, subtasks: [{ id: generateId(), title: "Wireframe layout", done: true }, { id: generateId(), title: "Write hero copy", done: true }, { id: generateId(), title: "Source imagery", done: false }, { id: generateId(), title: "Dev handoff", done: false }] },
-  { id: generateId(), projectId: null, timeSpent: 0, estimatedMins: 90, title: "Q3 analytics report", description: "Compile performance data and present findings to stakeholders", priority: "High", status: "To Do", due: new Date(Date.now() + 2*86400000).toISOString().split("T")[0], isFrog: false, createdAt: new Date(Date.now() - 5*86400000).toISOString(), completedAt: null, aiBreakdown: null, happiness: null, subtasks: [{ id: generateId(), title: "Pull data from dashboard", done: false }, { id: generateId(), title: "Build slide deck", done: false }] },
+  { id: generateId(), projectId: null, timeSpent: 0, estimatedMins: 90, title: "Q3 analytics report", description: "Compile performance data and present findings to stakeholders", priority: "High", status: "To Do", due: localYmd(new Date(Date.now() + 2*86400000)), isFrog: false, createdAt: new Date(Date.now() - 5*86400000).toISOString(), completedAt: null, aiBreakdown: null, happiness: null, subtasks: [{ id: generateId(), title: "Pull data from dashboard", done: false }, { id: generateId(), title: "Build slide deck", done: false }] },
   { id: generateId(), projectId: null, timeSpent: 0, estimatedMins: 30, title: "Update dependencies", description: "Audit and update all npm packages to latest stable versions", priority: "Low", status: "To Do", due: "", isFrog: false, createdAt: new Date(Date.now() - 86400000).toISOString(), completedAt: null, aiBreakdown: null, happiness: null, subtasks: [] },
 ];
 
@@ -2402,8 +2410,8 @@ function WeeklySummary({ tasks }) {
   }
 
   const { monday, sunday } = getWeekRange(weekOffset);
-  const mondayStr = monday.toISOString().split("T")[0];
-  const sundayStr = sunday.toISOString().split("T")[0];
+  const mondayStr = localYmd(monday);
+  const sundayStr = localYmd(sunday);
 
   const weekLabel = weekOffset === -1
     ? "Last Week"
@@ -2420,7 +2428,7 @@ function WeeklySummary({ tasks }) {
   );
 
   const inProgress = tasks.filter(t => t.status === "In Progress");
-  const overdue = tasks.filter(t => t.due && t.due < new Date().toISOString().split("T")[0] && t.status !== "Done");
+  const overdue = tasks.filter(t => t.due && t.due < localYmd(new Date()) && t.status !== "Done");
   const frogsCompleted = completed.filter(t => t.isFrog);
 
   function formatDate(iso) {
@@ -2473,7 +2481,7 @@ function WeeklySummary({ tasks }) {
       nextMonday.setDate(monday.getDate() + 7);
       const nextSunday = new Date(nextMonday);
       nextSunday.setDate(nextMonday.getDate() + 6);
-      return t.due && t.due >= nextMonday.toISOString().split("T")[0] && t.due <= nextSunday.toISOString().split("T")[0] && t.status !== "Done";
+      return t.due && t.due >= localYmd(nextMonday) && t.due <= localYmd(nextSunday) && t.status !== "Done";
     });
 
     if (upcoming.length > 0) {
@@ -2865,7 +2873,7 @@ function CalendarView({ tasks, onEdit }) {
 
   const todayStr = today();
 
-  function dateStr(d) { return d.toISOString().split("T")[0]; }
+  function dateStr(d) { return localYmd(d); }
 
   // Week view helpers (desktop)
   const weekStart = (() => {
@@ -6286,7 +6294,7 @@ function SharedBoardView({ token }) {
               {colTasks.map(t => {
                 const project = projects.find(p => p.id === t.projectId);
                 const pc = { High: { line: COLORS.high, dim: COLORS.highDim, text: COLORS.high }, Medium: { line: COLORS.medium, dim: COLORS.mediumDim, text: COLORS.medium }, Low: { line: COLORS.low, dim: COLORS.lowDim, text: COLORS.low } }[t.priority] || {};
-                const isOverdue = t.due && t.due < new Date().toISOString().split("T")[0] && t.status !== "Done";
+                const isOverdue = t.due && t.due < localYmd(new Date()) && t.status !== "Done";
                 return (
                   <div key={t.id} style={{ background: t.isFrog ? COLORS.frogDim : COLORS.surface, border: `1px solid ${t.isFrog ? COLORS.frogBorder : COLORS.border}`, borderRadius: 12, marginBottom: 10, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
                     <div style={{ height: 3, background: t.isFrog ? COLORS.frog : pc.line }} />
@@ -7414,12 +7422,12 @@ function App() {
       if (dueDateFilter === "today") ts = ts.filter(t => t.due === todayStr);
       if (dueDateFilter === "week") {
         const end = new Date(now); end.setDate(now.getDate() + 7);
-        ts = ts.filter(t => t.due && t.due >= todayStr && t.due <= end.toISOString().split("T")[0]);
+        ts = ts.filter(t => t.due && t.due >= todayStr && t.due <= localYmd(end));
       }
       if (dueDateFilter === "next_week") {
         const start = new Date(now); start.setDate(now.getDate() + 7);
         const end = new Date(now); end.setDate(now.getDate() + 14);
-        ts = ts.filter(t => t.due && t.due >= start.toISOString().split("T")[0] && t.due <= end.toISOString().split("T")[0]);
+        ts = ts.filter(t => t.due && t.due >= localYmd(start) && t.due <= localYmd(end));
       }
       if (dueDateFilter === "overdue") ts = ts.filter(t => t.due && t.due < todayStr && t.status !== "Done");
       if (dueDateFilter === "no_date") ts = ts.filter(t => !t.due);
@@ -7931,7 +7939,8 @@ function App() {
         {view === "board" && boardView === "list" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
             {STATUS_COLS.map(col => {
-              const colTasks = filteredTasks.filter(t => t.status === col).sort(sortByDueDate);
+              const colTasks = filteredTasks.filter(t => t.status === col)
+                .sort(col === "Done" ? (a, b) => (b.completedAt || "").localeCompare(a.completedAt || "") : sortByDueDate);
               if (colTasks.length === 0) return null;
               const colDotColor2 = { "To Do": COLORS.textMuted, "In Progress": COLORS.medium, "Done": COLORS.frog };
               return (
@@ -7977,7 +7986,8 @@ function App() {
         {view === "board" && boardView === "kanban" && (
           <div className="board-grid">
             {STATUS_COLS.map(col => {
-              const allColTasks = filteredTasks.filter(t => t.status === col).sort(sortByDueDate);
+              const allColTasks = filteredTasks.filter(t => t.status === col)
+                .sort(col === "Done" ? (a, b) => (b.completedAt || "").localeCompare(a.completedAt || "") : sortByDueDate);
               const DONE_CAP = 5;
               const recentCutoff = daysAgo(6);
               const recentDone = col === "Done"
