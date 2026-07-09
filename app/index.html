@@ -7205,6 +7205,7 @@ function App() {
     if (!ok) { setToastMsg("Couldn't delete workspace — try again"); return; }
     const remaining = workspaces.filter(w => w.id !== id);
     setWorkspaces(remaining);
+    setAllShareTokens(prev => prev.filter(t => t.workspace_id !== id));
     if (activeWorkspace?.id === id && remaining.length) await switchWorkspace(remaining[0]);
   }
   function updateTimeSpent(taskId, seconds) { setTasks(ts => ts.map(t => t.id === taskId ? { ...t, timeSpent: seconds } : t)); }
