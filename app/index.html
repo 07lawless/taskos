@@ -4749,10 +4749,16 @@ function GreetingBanner({ user, tasks, activeWorkspace, onOpenWorkspaceSwitcher,
 
 // ── Collection config ─────────────────────────────────────────────────────────
 const BM_COLS = {
-  dev:     { label: 'Development', color: '#4f46e5', bg: '#eeedfb', border: '#c4b5fd', text: '#4338ca', gradient: 'linear-gradient(135deg,#4f46e5,#7c6af7)' },
-  design:  { label: 'Design',      color: '#ec4899', bg: '#fce7f3', border: '#f9a8d4', text: '#be185d', gradient: 'linear-gradient(135deg,#ec4899,#f472b6)' },
-  finance: { label: 'Finance',     color: '#16a34a', bg: '#dcfce7', border: '#86efac', text: '#15803d', gradient: 'linear-gradient(135deg,#16a34a,#22c55e)' },
-  ai:      { label: 'AI & Tools',  color: '#f59e0b', bg: '#fef3c7', border: '#fcd34d', text: '#b45309', gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)' },
+  dev:      { label: 'Development',  color: '#4f46e5', gradient: 'linear-gradient(135deg,#4f46e5,#7c6af7)' },
+  design:   { label: 'Design',       color: '#ec4899', gradient: 'linear-gradient(135deg,#ec4899,#f472b6)' },
+  finance:  { label: 'Finance',      color: '#16a34a', gradient: 'linear-gradient(135deg,#16a34a,#22c55e)' },
+  ai:       { label: 'AI & Tools',   color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#fbbf24)' },
+  social:   { label: 'Social Media', color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#38bdf8)' },
+  marketing:{ label: 'Marketing',    color: '#f97316', gradient: 'linear-gradient(135deg,#f97316,#fb923c)' },
+  news:     { label: 'News',         color: '#64748b', gradient: 'linear-gradient(135deg,#64748b,#94a3b8)' },
+  research: { label: 'Research',     color: '#06b6d4', gradient: 'linear-gradient(135deg,#06b6d4,#22d3ee)' },
+  reading:  { label: 'Reading List', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#a78bfa)' },
+  personal: { label: 'Personal',     color: '#f43f5e', gradient: 'linear-gradient(135deg,#f43f5e,#fb7185)' },
 };
 
 function bmFmtDate(d) {
@@ -4954,7 +4960,7 @@ function BookmarkCard({ bm, onDelete, onToggleStar, onToggleRead, onEdit }) {
 
       {/* Footer */}
       <div style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 14px 12px', marginTop:10, borderTop:`1px solid ${COLORS.border}`, flexWrap:'wrap' }}>
-        {col && <span style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:100, background:col.bg, color:col.text, border:`1px solid ${col.border}` }}>{col.label}</span>}
+        {col && <span style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:100, background:col.color+'22', color:col.color, border:`1px solid ${col.color}55` }}>{col.label}</span>}
         {tags.slice(0,1).map(t => <span key={t} style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:100, background:COLORS.surface3, color:COLORS.textMuted, border:`1px solid ${COLORS.border}` }}>{t}</span>)}
         <span style={{ marginLeft:'auto', fontSize:11, color:COLORS.textMuted, whiteSpace:'nowrap' }}>{bmFmtDate(bm.created_at || bm.date)}</span>
         <div style={{ display:'flex', gap:3 }}>
