@@ -6692,7 +6692,12 @@ function BrandDetailView({ brand, onSaved, onDeleted, onBack }) {
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "6px 8px 6px 6px" }}>
               <input type="color" value={c.hex} onChange={e => updateColor(i, { hex: e.target.value })} style={{ width: 28, height: 28, padding: 0, border: "none", borderRadius: 6, flexShrink: 0 }} />
               <input value={c.label} onChange={e => updateColor(i, { label: e.target.value })} placeholder="Label" style={{ width: 90, border: "none", background: "none", padding: "2px 0", fontSize: 12.5 }} />
-              <span style={{ fontSize: 10.5, color: COLORS.textMuted, fontFamily: "monospace", flexShrink: 0 }}>{c.hex}</span>
+              <input value={c.hex} onChange={e => {
+                  let v = e.target.value;
+                  v = "#" + v.replace(/^#/, "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+                  updateColor(i, { hex: v });
+                }} placeholder="#4f46e5" spellCheck={false}
+                style={{ width: 68, border: "none", background: "none", padding: "2px 0", fontSize: 10.5, color: COLORS.textMuted, fontFamily: "monospace", flexShrink: 0 }} />
               <button onClick={() => removeColor(i)} style={{ background: "none", color: COLORS.textMuted, fontSize: 13, padding: "0 4px", flexShrink: 0 }}>✕</button>
             </div>
           ))}
