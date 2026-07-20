@@ -6952,12 +6952,12 @@ function TimelineView({ authUser, workspaceId }) {
   const [showPhaseTypes, setShowPhaseTypes] = useState(false);
   const [addingPhaseTo, setAddingPhaseTo] = useState(null);
 
-  async function loadAll() {
-    setLoading(true);
+  async function loadAll(silent) {
+    if (!silent) setLoading(true);
     const [p, t] = await Promise.all([api.getTimelineProjects(workspaceId), api.getTimelinePhaseTypes()]);
     if (p) setProjects(p);
     if (t) setPhaseTypes(t);
-    setLoading(false);
+    if (!silent) setLoading(false);
   }
   useEffect(() => { loadAll(); }, [workspaceId]);
 
@@ -6988,12 +6988,12 @@ function TimelineView({ authUser, workspaceId }) {
 
   async function handleSaveProject(p) {
     const saved = await api.saveTimelineProject({ ...p, workspaceId });
-    if (saved) { await loadAll(); setShowNewProject(false); setEditingProject(null); }
+    if (saved) { await loadAll(true); setShowNewProject(false); setEditingProject(null); }
   }
   async function handleDeleteProject(id) {
     if (!window.confirm("Delete this project? It'll move to the Bin and can be restored within 24 hours.")) return;
     await api.deleteTimelineProject(id);
-    await loadAll();
+    await loadAll(true);
     setEditingProject(null);
   }
   async function handleSavePhaseType(t) {
@@ -7004,11 +7004,18 @@ function TimelineView({ authUser, workspaceId }) {
   async function handleDeletePhaseType(id) {
     if (!window.confirm("Delete this tag? Any phase using it will be removed too.")) return;
     await api.deleteTimelinePhaseType(id);
-    await loadAll();
+    await loadAll(true);
   }
   async function handleAddPhase(ph) {
     const saved = await api.saveTimelinePhase(ph);
-    if (saved) { await loadAll(); setAddingPhaseTo(null); }
+    if (saved) { await loadAll(true); setAddingPhaseTo(null); }
+  }
+  async function handleDropTag(project, phaseTypeId) {
+    const type = phaseTypeById[phaseTypeId];
+    if (!type) return;
+    const startDate = tlAddDays(project.target_date.slice(0,10), -type.default_lead_days);
+    const endDate = tlAddDays(startDate, type.default_duration_days);
+    await handleAddPhase({ projectId: project.id, phaseTypeId, startDate, endDate });
   }
 
   // Drag a single phase bar: move (grab middle) or resize (grab an edge).
@@ -7034,7 +7041,7 @@ function TimelineView({ authUser, workspaceId }) {
       const newStart = xToDateStr(parseFloat(barEl.style.left));
       const newEnd = xToDateStr(parseFloat(barEl.style.left) + parseFloat(barEl.style.width));
       await api.updateTimelinePhase(phase.id, newStart, newEnd);
-      loadAll();
+      loadAll(true);
     }
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
@@ -7059,7 +7066,7 @@ function TimelineView({ authUser, workspaceId }) {
       document.removeEventListener("mouseup", onUp);
       const newTargetDate = xToDateStr(parseFloat(msEl.style.left));
       await api.rescheduleTimelineProject(project.id, newTargetDate);
-      loadAll();
+      loadAll(true);
     }
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
@@ -7096,15 +7103,19 @@ function TimelineView({ authUser, workspaceId }) {
       </div>
 
       {phaseTypes.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginBottom: 16 }}>
-          {phaseTypes.map(t => (
-            <span key={t.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.textDim, fontWeight: 600 }}>
-              <span style={{ width: 11, height: 11, borderRadius: 3, background: t.color }} />{t.name}
+        <div style={{ marginBottom: 18 }}>
+          <div style={{ fontSize: 11.5, color: COLORS.textMuted, marginBottom: 8 }}>Drag a tag onto a project below to add a phase instantly:</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {phaseTypes.map(t => (
+              <span key={t.id} draggable onDragStart={e => e.dataTransfer.setData("text/tl-phase-type", t.id)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: "#fff", fontWeight: 700, background: t.color, borderRadius: 100, padding: "5px 12px 5px 10px", cursor: "grab" }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "rgba(255,255,255,.6)" }} />{t.name}
+              </span>
+            ))}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.textDim, fontWeight: 600, padding: "5px 4px" }}>
+              <span style={{ width: 11, height: 11, borderRadius: 3, background: COLORS.text, transform: "rotate(45deg)" }} />Target date
             </span>
-          ))}
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: COLORS.textDim, fontWeight: 600 }}>
-            <span style={{ width: 11, height: 11, borderRadius: 3, background: COLORS.text, transform: "rotate(45deg)" }} />Target date
-          </span>
+          </div>
         </div>
       )}
 
@@ -7124,7 +7135,11 @@ function TimelineView({ authUser, workspaceId }) {
                 {projects.map(p => {
                   const rowHeight = Math.max(64, p.phases.length * (BAR_H + BAR_GAP) - BAR_GAP + ROW_PAD * 2);
                   return (
-                    <div key={p.id} onClick={() => setEditingProject(p)} style={{ minHeight: rowHeight, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 16px", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer" }}>
+                    <div key={p.id} onClick={() => setEditingProject(p)}
+                      onDragOver={e => { e.preventDefault(); e.currentTarget.style.background = COLORS.accentDim; }}
+                      onDragLeave={e => { e.currentTarget.style.background = ""; }}
+                      onDrop={e => { e.preventDefault(); e.currentTarget.style.background = ""; const typeId = e.dataTransfer.getData("text/tl-phase-type"); if (typeId) handleDropTag(p, typeId); }}
+                      style={{ minHeight: rowHeight, display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 16px", borderBottom: `1px solid ${COLORS.border}`, cursor: "pointer", transition: "background .1s" }}>
                       <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
                       {p.location && <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{p.location}</div>}
                       <button onClick={e => { e.stopPropagation(); setAddingPhaseTo(p); }} style={{ alignSelf: "flex-start", marginTop: 4, fontSize: 10.5, fontWeight: 700, color: COLORS.accent, background: "none", padding: 0 }}>+ Add phase</button>
@@ -7144,7 +7159,11 @@ function TimelineView({ authUser, workspaceId }) {
                 {projects.map(p => {
                   const rowHeight = Math.max(64, p.phases.length * (BAR_H + BAR_GAP) - BAR_GAP + ROW_PAD * 2);
                   return (
-                    <div key={p.id} data-project-row={p.id} style={{ minHeight: rowHeight, position: "relative", borderBottom: `1px solid ${COLORS.border}` }}>
+                    <div key={p.id} data-project-row={p.id}
+                      onDragOver={e => { e.preventDefault(); e.currentTarget.style.background = COLORS.accentDim; }}
+                      onDragLeave={e => { e.currentTarget.style.background = ""; }}
+                      onDrop={e => { e.preventDefault(); e.currentTarget.style.background = ""; const typeId = e.dataTransfer.getData("text/tl-phase-type"); if (typeId) handleDropTag(p, typeId); }}
+                      style={{ minHeight: rowHeight, position: "relative", borderBottom: `1px solid ${COLORS.border}`, transition: "background .1s" }}>
                       {p.phases.map((ph, i) => {
                         const type = phaseTypeById[ph.phase_type_id];
                         if (!type) return null;
