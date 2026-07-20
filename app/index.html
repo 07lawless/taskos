@@ -6959,7 +6959,7 @@ function TimelineView({ authUser, workspaceId }) {
     if (t) setPhaseTypes(t);
     if (!silent) setLoading(false);
   }
-  useEffect(() => { loadAll(); }, [workspaceId]);
+  useEffect(() => { if (authUser) loadAll(); else setLoading(false); }, [workspaceId, authUser]);
 
   const phaseTypeById = {};
   phaseTypes.forEach(t => { phaseTypeById[t.id] = t; });
@@ -8750,7 +8750,7 @@ function App() {
         {view === "analytics" && <AnalyticsView tasks={tasks} />}
         {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
         {view === "brands" && authUser && <BrandsView brands={brands} onOpenBrand={b => setView(`brand-${b.id}`)} onNewBrand={() => setView("brand-new")} />}
-        {view === "timeline" && <TimelineView authUser={authUser} workspaceId={activeWorkspace?.id} />}
+        {view === "timeline" && authUser && <TimelineView authUser={authUser} workspaceId={activeWorkspace?.id} />}
         {view === "daily" && <DailyView tasks={tasks} checkins={checkins} onSetStatus={setStatus} onOpenCheckin={() => setShowCheckin(true)} onStartFocus={() => setShowFocus(true)} onOpenTask={t => setEditingTask(t)} />}
         {view === "brand-new" && (
           <BrandDetailView brand={null} onBack={() => setView("brands")} onDeleted={() => setView("brands")}
