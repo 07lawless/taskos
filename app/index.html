@@ -6814,6 +6814,8 @@ function TimelineNewProjectModal({ project, onSave, onClose, onDelete }) {
   );
 }
 
+const TIMELINE_TAG_COLORS = ["#4f46e5","#ec4899","#16a34a","#f59e0b","#0ea5e9","#f97316","#64748b","#06b6d4","#8b5cf6","#f43f5e"];
+
 function TimelinePhaseTypeModal({ phaseTypes, onSave, onDelete, onClose }) {
   const [editingId, setEditingId] = useState(null);
   const [name, setName] = useState("");
@@ -6826,39 +6828,55 @@ function TimelinePhaseTypeModal({ phaseTypes, onSave, onDelete, onClose }) {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: COLORS.surface, borderRadius: 16, width: "100%", maxWidth: 480, maxHeight: "85vh", overflow: "auto", padding: 26, border: `1px solid ${COLORS.border}`, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 700 }}>Phase Tags</h2>
-          <button onClick={onClose} style={{ background: COLORS.surface3, borderRadius: 8, padding: "6px 12px", fontSize: 12.5, color: COLORS.textDim }}>✕ Close</button>
+      <div style={{ background: COLORS.surface, borderRadius: 18, width: "100%", maxWidth: 460, maxHeight: "85vh", overflow: "auto", padding: 28, border: `1px solid ${COLORS.border}`, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Phase Tags</h2>
+            <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginTop: 3 }}>Your own reusable tags — each gets a colour and default timing.</p>
+          </div>
+          <button onClick={onClose} style={{ background: COLORS.surface3, borderRadius: 8, padding: "6px 12px", fontSize: 12.5, color: COLORS.textDim, flexShrink: 0 }}>✕</button>
         </div>
-        <p style={{ fontSize: 12.5, color: COLORS.textMuted, marginBottom: 16 }}>Your own reusable tags — Website, App, Marketing, whatever you need. Each gets a colour and a default lead time so a new phase doesn't start blank.</p>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "20px 0" }}>
           {phaseTypes.map(t => (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "9px 12px" }}>
-              <span style={{ width: 14, height: 14, borderRadius: 4, background: t.color, flexShrink: 0 }} />
-              <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{t.name}</span>
-              <span style={{ fontSize: 10.5, color: COLORS.textMuted }}>{t.default_lead_days}d lead · {t.default_duration_days}d long</span>
-              <button onClick={() => startEdit(t)} style={{ background: "none", color: COLORS.textMuted, fontSize: 12, padding: "2px 6px" }}>✎</button>
-              <button onClick={() => onDelete(t.id)} style={{ background: "none", color: COLORS.high, fontSize: 12, padding: "2px 6px" }}>✕</button>
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 10, borderRadius: 10, padding: "8px 10px 8px 8px" }}>
+              <span style={{ width: 10, height: 10, borderRadius: "50%", background: t.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 13.5, fontWeight: 600, flex: 1 }}>{t.name}</span>
+              <span style={{ fontSize: 11, color: COLORS.textMuted }}>{t.default_lead_days}d lead · {t.default_duration_days}d long</span>
+              <button onClick={() => startEdit(t)} style={{ background: "none", color: COLORS.textMuted, fontSize: 12.5, padding: "4px 6px", borderRadius: 6 }}>✎</button>
+              <button onClick={() => onDelete(t.id)} style={{ background: "none", color: COLORS.high, fontSize: 12.5, padding: "4px 6px", borderRadius: 6 }}>✕</button>
             </div>
           ))}
-          {!phaseTypes.length && <div style={{ fontSize: 12.5, color: COLORS.textMuted, textAlign: "center", padding: "16px 0" }}>No tags yet — add your first one below.</div>}
+          {!phaseTypes.length && <div style={{ fontSize: 12.5, color: COLORS.textMuted, textAlign: "center", padding: "20px 0" }}>No tags yet — add your first one below.</div>}
         </div>
 
         {editingId ? (
-          <div style={{ background: COLORS.surface2, borderRadius: 10, padding: 14, border: `1px solid ${COLORS.border}` }}>
-            <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-              <input type="color" value={color} onChange={e => setColor(e.target.value)} style={{ width: 36, height: 36, padding: 0, border: "none", flexShrink: 0 }} />
-              <input value={name} onChange={e => setName(e.target.value)} placeholder="Tag name — e.g. Marketing" autoFocus style={{ flex: 1 }} />
+          <div style={{ background: COLORS.surface2, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.border}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <span style={{ width: 34, height: 34, borderRadius: 9, background: color, flexShrink: 0, border: `1px solid ${COLORS.border}` }} />
+              <input value={name} onChange={e => setName(e.target.value)} placeholder="Tag name — e.g. Marketing" autoFocus style={{ flex: 1, fontWeight: 600 }} />
             </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+
+            <label style={{ fontSize: 10.5, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 8 }}>COLOUR</label>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+              {TIMELINE_TAG_COLORS.map(c => (
+                <button key={c} onClick={() => setColor(c)} style={{ width: 28, height: 28, borderRadius: "50%", background: c, flexShrink: 0, border: color.toLowerCase() === c ? `2px solid ${COLORS.text}` : `2px solid transparent`, boxShadow: color.toLowerCase() === c ? `0 0 0 2px ${COLORS.surface2}` : "none", outline: color.toLowerCase() === c ? `2px solid ${c}` : "none", outlineOffset: 2 }} />
+              ))}
+            </div>
+            <input value={color} onChange={e => {
+                let v = e.target.value;
+                v = "#" + v.replace(/^#/, "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+                setColor(v);
+              }} placeholder="#4f46e5" spellCheck={false}
+              style={{ width: 110, fontFamily: "monospace", fontSize: 12.5, marginBottom: 16 }} />
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 10.5, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 4 }}>DEFAULT LEAD (DAYS BEFORE TARGET)</label>
+                <label style={{ fontSize: 10.5, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 5 }}>LEAD (DAYS BEFORE TARGET)</label>
                 <input type="number" min="0" value={leadDays} onChange={e => setLeadDays(parseInt(e.target.value) || 0)} />
               </div>
               <div style={{ flex: 1 }}>
-                <label style={{ fontSize: 10.5, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 4 }}>DEFAULT DURATION (DAYS)</label>
+                <label style={{ fontSize: 10.5, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 5 }}>DURATION (DAYS)</label>
                 <input type="number" min="1" value={durationDays} onChange={e => setDurationDays(parseInt(e.target.value) || 1)} />
               </div>
             </div>
@@ -6871,7 +6889,7 @@ function TimelinePhaseTypeModal({ phaseTypes, onSave, onDelete, onClose }) {
             </div>
           </div>
         ) : (
-          <button onClick={startNew} style={{ width: "100%", border: `1.5px dashed ${COLORS.border}`, borderRadius: 10, padding: 12, fontSize: 12.5, fontWeight: 600, color: COLORS.textDim }}>+ New tag</button>
+          <button onClick={startNew} style={{ width: "100%", border: `1.5px dashed ${COLORS.border}`, borderRadius: 12, padding: 13, fontSize: 12.5, fontWeight: 600, color: COLORS.textDim }}>+ New tag</button>
         )}
       </div>
     </div>
