@@ -6784,11 +6784,11 @@ function TimelineNewProjectModal({ project, onSave, onClose, onDelete }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
             <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 5 }}>NAME</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. LAMMA 2027" autoFocus />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Product Launch" autoFocus />
           </div>
           <div>
             <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 5 }}>LOCATION</label>
-            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. NEC, Birmingham" />
+            <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. London, UK" />
           </div>
           <div>
             <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 5 }}>TARGET DATE</label>
@@ -6796,7 +6796,7 @@ function TimelineNewProjectModal({ project, onSave, onClose, onDelete }) {
           </div>
           <div>
             <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, display: "block", marginBottom: 5 }}>NOTE <span style={{ fontWeight: 400, color: COLORS.textMuted }}>(optional)</span></label>
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Launch when NA goes live" />
+            <input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Depends on the venue contract" />
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 20 }}>
