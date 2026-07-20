@@ -6987,7 +6987,7 @@ function TimelineView({ authUser, workspaceId }) {
   { let cur = new Date(rangeStart); while (cur < rangeEnd) { monthCols.push(new Date(cur)); cur.setMonth(cur.getMonth() + 1); } }
 
   async function handleSaveProject(p) {
-    const saved = await api.saveTimelineProject(p);
+    const saved = await api.saveTimelineProject({ ...p, workspaceId });
     if (saved) { await loadAll(); setShowNewProject(false); setEditingProject(null); }
   }
   async function handleDeleteProject(id) {
