@@ -94,12 +94,16 @@
     }
     @media (max-height: 760px) and (min-width: 481px) { .login-preview { display: none; } }
 
-    .auth-loader { position: fixed; inset: 0; z-index: 9998; background: #000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 22px; }
-    .auth-loader::before { content: ""; position: absolute; width: 700px; height: 700px; left: 50%; top: 50%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, rgba(99,102,241,.28), transparent 70%); pointer-events: none; }
+    .auth-loader { position: fixed; inset: 0; z-index: 9998; background: #050507; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 22px; overflow: hidden; }
+    /* Aurora: slow-drifting indigo, green and lilac glow */
+    .auth-loader::before { content: ""; position: absolute; inset: -20%; filter: blur(70px); opacity: .9; pointer-events: none;
+      background: radial-gradient(40% 35% at 25% 30%, rgba(99,102,241,.55), transparent 70%), radial-gradient(35% 30% at 75% 35%, rgba(52,199,89,.35), transparent 70%), radial-gradient(40% 35% at 55% 85%, rgba(196,181,253,.35), transparent 70%);
+      animation: auth-drift 18s ease-in-out infinite alternate; }
+    @keyframes auth-drift { to { transform: translate3d(4%, -3%, 0) scale(1.08) rotate(6deg); } }
     .auth-loader-logo { position: relative; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 24px; letter-spacing: -.5px; font-family: "DM Sans", system-ui, sans-serif; background: linear-gradient(145deg, #6366f1, #4f46e5 60%, #4338ca); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 12px 40px rgba(79,70,229,.35); }
     .auth-loader-spinner { position: relative; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.12); border-top-color: #a5b4fc; border-radius: 50%; animation: auth-spin 0.7s linear infinite; }
     @keyframes auth-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .auth-loader-spinner { animation-duration: 2s; } .login-btn { transition: none; } }
+    @media (prefers-reduced-motion: reduce) { .auth-loader::before { animation: none; } .auth-loader-spinner { animation-duration: 2s; } .login-btn { transition: none; } }
   </style>
 </head>
 <body>
