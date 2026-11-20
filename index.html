@@ -1,769 +1,589 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tasklist.uk - Know exactly what to do today</title>
+<meta name="description" content="Tasklist keeps your day, your time and the brands you work for in one calm place. Eat the frog, track hours by brand and share progress with one link. Free, no account needed to start.">
+<link rel="canonical" href="https://tasklist.uk/">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tasklist.uk/">
+<meta property="og:title" content="Tasklist.uk - Know exactly what to do today">
+<meta property="og:description" content="Plan your day, eat the frog, track hours by brand and share progress with one link. Free, no account needed.">
+<meta property="og:image" content="https://tasklist.uk/icons/favicon-512.png?v=2">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png?v=2">
+<link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png?v=2">
+<link rel="shortcut icon" href="/icons/favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="/icons/favicon-192.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+/* ── Shared tokens ── */
+:root {
+  --ink: #1d1d1f; --ink2: #6e6e73; --ink3: #86868b; --line: #d2d2d7; --paper: #ffffff; --mist: #f5f5f7;
+  --indigo: #4f46e5; --indigo2: #6366f1; --frog: #16a34a; --frog2: #34c759; --amber: #ff9500; --red: #ff3b30; --teal: #30b0c7; --pink: #ff2d55; --gray: #8e8e93;
+  --night: #000; --night2: #101012; --night3: #1d1d1f;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body { background: #000; font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--paper); -webkit-font-smoothing: antialiased; letter-spacing: -.011em; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 3px solid rgba(79,70,229,.45); outline-offset: 3px; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+.tnum { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+.ver { display: none; } .ver.on { display: block; }
 
-  <!-- Favicons -->
-  <link rel="icon" type="image/png" sizes="32x32"  href="/icons/favicon-32.png?v=2" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png?v=2" />
-  <link rel="icon" type="image/png" sizes="512x512" href="/icons/favicon-512.png?v=2" />
-  <link rel="shortcut icon" href="/icons/favicon-32.png?v=2" />
-  <link rel="apple-touch-icon"                      href="/icons/favicon-192.png?v=2" />
+/* Concept switcher (not part of the design) */
+.cbar { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 100; background: rgba(29,29,31,.86); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 999px; padding: 4px; display: flex; gap: 2px; box-shadow: 0 10px 30px rgba(0,0,0,.25); max-width: calc(100vw - 24px); overflow-x: auto; }
+.cbar button { color: rgba(255,255,255,.75); height: 34px; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.cbar button[aria-pressed="true"] { background: #fff; color: #1d1d1f; }
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFR7JQD884"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-YFR7JQD884');
-  </script>
+/* ── Shared: mini app UI (built in HTML so it's crisp and themeable) ── */
+.mac { border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 30px 80px rgba(0,0,0,.18); overflow: hidden; text-align: left; letter-spacing: -.005em; }
+.mac.dark { background: #1c1c1e; box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 30px 80px rgba(0,0,0,.6); color: #f5f5f7; }
+.mac-bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #f5f5f7; border-bottom: 1px solid #e5e5ea; }
+.mac.dark .mac-bar { background: #2c2c2e; border-color: #3a3a3c; }
+.mac-bar i { width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; }
+.mac-bar i:nth-child(2) { background: #febc2e; } .mac-bar i:nth-child(3) { background: #28c840; }
+.mac-bar span { margin: 0 auto; font-size: 11.5px; color: #86868b; font-weight: 600; transform: translateX(-22px); }
+.ui { display: grid; grid-template-columns: 170px minmax(0,1fr) 240px; min-height: 420px; font-size: 12.5px; }
+.ui-side { padding: 12px 8px; background: #fafafa; border-right: 1px solid #ececf0; }
+.mac.dark .ui-side { background: #161618; border-color: #2c2c2e; }
+.ui-sl { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; color: inherit; }
+.ui-sl.on { background: #ececf1; font-weight: 700; }
+.mac.dark .ui-sl.on { background: #2c2c2e; }
+.ui-sl b { margin-left: auto; font-weight: 500; color: #86868b; font-size: 11.5px; }
+.ui-sl .ic { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.ui-h { font-size: 11px; color: #86868b; font-weight: 700; padding: 12px 8px 4px; }
+.ui-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.ui-main { padding: 16px 16px 20px; min-width: 0; }
+.ui-main h4 { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+.ui-main .d { color: #86868b; font-size: 11.5px; }
+.ui-gh { font-size: 11.5px; font-weight: 700; color: #6e6e73; margin: 14px 2px 6px; display: flex; justify-content: space-between; }
+.ui-gh.or { color: #e08600; }
+.ui-grp { border: 1px solid #ececf0; border-radius: 10px; overflow: hidden; background: #fff; }
+.mac.dark .ui-grp { background: #232325; border-color: #2c2c2e; }
+.ui-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-top: 1px solid #f0f0f3; }
+.mac.dark .ui-row { border-color: #2c2c2e; }
+.ui-row:first-child { border-top: 0; }
+.ui-row.sel { background: #eeedfb; }
+.mac.dark .ui-row.sel { background: #2d2850; }
+.ui-ck { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid #c7c7cc; flex-shrink: 0; }
+.ui-ck.on { background: var(--frog2); border-color: var(--frog2); }
+.ui-t { font-weight: 600; font-size: 12.5px; }
+.ui-m { font-size: 10.5px; color: #86868b; display: flex; gap: 8px; margin-top: 1px; flex-wrap: wrap; }
+.ui-m .late { color: #e08600; font-weight: 600; } .ui-m .hi { color: var(--red); font-weight: 700; } .ui-m .ip { color: var(--indigo); font-weight: 600; }
+.ui-insp { border-left: 1px solid #ececf0; padding: 16px 14px; background: #fff; }
+.mac.dark .ui-insp { background: #1c1c1e; border-color: #2c2c2e; }
+.ui-insp h5 { font-size: 14.5px; font-weight: 800; letter-spacing: -.01em; }
+.ui-insp .n { font-size: 11px; color: #86868b; margin-top: 2px; }
+.ui-fl { background: #f5f5f7; border-radius: 9px; margin-top: 10px; overflow: hidden; }
+.mac.dark .ui-fl { background: #2c2c2e; }
+.ui-fr { display: flex; align-items: center; gap: 8px; padding: 7px 9px; font-size: 11.5px; border-top: 1px solid #e8e8ed; }
+.mac.dark .ui-fr { border-color: #3a3a3c; }
+.ui-fr:first-child { border-top: 0; }
+.ui-fr .fi { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 800; }
+.ui-fr .v { margin-left: auto; color: #86868b; }
+.ui-fr .v.ac { color: var(--indigo); } .ui-fr .v.hi { color: var(--red); }
+.ui-sw { width: 26px; height: 16px; border-radius: 99px; background: var(--frog2); margin-left: auto; position: relative; }
+.ui-sw::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; }
+.ui-bar { height: 3px; border-radius: 99px; background: #e5e5ea; margin-top: 4px; overflow: hidden; }
+.ui-bar i { display: block; height: 100%; background: var(--frog2); }
+.ui-start { margin-left: auto; font-size: 10.5px; font-weight: 700; color: #1f9d48; background: rgba(52,199,89,.16); border-radius: 99px; padding: 3px 8px; }
+.pill { display: inline-flex; align-items: center; gap: 10px; background: #000; color: #fff; border-radius: 999px; height: 38px; padding: 0 6px 0 14px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #30d158; animation: pulse 1.6s infinite; }
+.pill .tm { color: #30d158; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pill .st { height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.16); display: inline-flex; align-items: center; font-size: 12px; }
+@keyframes pulse { 50% { opacity: .35; } }
+.phone { width: 260px; border-radius: 40px; background: #000; padding: 10px; box-shadow: 0 30px 80px rgba(0,0,0,.35), inset 0 0 0 2px #2c2c2e; flex-shrink: 0; }
+.phone-s { border-radius: 31px; background: #f2f2f7; overflow: hidden; height: 520px; position: relative; font-size: 12px; }
+.phone-s.dark { background: #000; color: #f5f5f7; }
+.phone-notch { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 84px; height: 24px; border-radius: 99px; background: #000; z-index: 2; }
+.phone-in { padding: 44px 14px 14px; }
+.chips { display: flex; gap: 6px; overflow: hidden; margin: 10px 0; }
+.chips span { flex-shrink: 0; height: 26px; padding: 0 10px; border-radius: 99px; border: 1px solid #e5e5ea; background: #fff; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; }
+.phone-s.dark .chips span { background: #1c1c1e; border-color: #2c2c2e; }
+.chips span.on { background: #e9e9ee; }
+.phone-s.dark .chips span.on { background: #2c2c2e; }
+.bars { display: grid; gap: 10px; }
+.bar { display: grid; grid-template-columns: 110px minmax(0,1fr) 46px; gap: 10px; align-items: center; font-size: 13px; }
+.bar .tr { height: 8px; border-radius: 99px; background: rgba(120,120,128,.16); overflow: hidden; }
+.bar .tr i { display: block; height: 100%; border-radius: 99px; }
+.bar b { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
 
-  <title>Tasklist.uk - Free Task Manager & Productivity App</title>
-  <meta name="description" content="A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method. Sign in and get things done." />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://tasklist.uk" />
+/* ═════════ A · Product page ═════════ */
+.A { background: #fff; }
+.A-nav { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.8); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,.08); }
+.A-nav .wrap { height: 52px; display: flex; align-items: center; gap: 26px; font-size: 13px; }
+.logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; letter-spacing: -.02em; }
+.logo i { width: 24px; height: 24px; border-radius: 7px; background: var(--indigo); color: #fff; font-style: normal; font-size: 10px; display: flex; align-items: center; justify-content: center; letter-spacing: .5px; }
+.A-nav nav { display: flex; gap: 22px; color: #424245; margin-left: auto; }
+.A-nav nav a:hover { color: #000; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 44px; padding: 0 22px; border-radius: 999px; font-size: 16px; font-weight: 600; transition: transform .12s, background .15s; }
+.btn:active { transform: scale(.97); }
+.btn.pri { background: var(--indigo); color: #fff; }
+.btn.pri:hover { background: #4338ca; }
+.btn.sm { height: 30px; padding: 0 14px; font-size: 13px; }
+.lnk { color: var(--indigo); font-size: 17px; font-weight: 500; }
+.lnk:hover { text-decoration: underline; }
+.lnk::after { content: " ›"; }
+.A-hero { text-align: center; padding: 84px 0 0; overflow: hidden; }
+.A-hero h1 { font-size: clamp(42px, 7vw, 80px); line-height: 1.04; font-weight: 800; letter-spacing: -.045em; max-width: 900px; margin: 0 auto; }
+.A-hero p { font-size: clamp(18px, 2.2vw, 24px); color: var(--ink2); max-width: 660px; margin: 22px auto 0; line-height: 1.4; letter-spacing: -.015em; }
+.A-hero .cta { display: flex; gap: 26px; justify-content: center; align-items: center; margin-top: 30px; flex-wrap: wrap; }
+.A-shot { margin: 64px auto -2px; max-width: 1040px; padding: 0 22px; position: relative; }
+.A-shot .pill { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); z-index: 2; }
+.A-facts { border-top: 1px solid #e5e5ea; background: #fff; }
+.A-facts .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 34px 22px; text-align: center; }
+.A-facts b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.A-facts span { color: var(--ink2); font-size: 14px; }
+.A-sec { padding: 120px 0; }
+.A-sec.mist { background: var(--mist); }
+.A-sec h2 { font-size: clamp(34px, 5vw, 56px); line-height: 1.06; font-weight: 800; letter-spacing: -.04em; }
+.A-sec .lede { font-size: clamp(18px, 2vw, 21px); color: var(--ink2); line-height: 1.45; margin-top: 18px; max-width: 560px; }
+.A-sec .lede b { color: var(--ink); font-weight: 600; }
+.A-split { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+.A-split.rev > :first-child { order: 2; }
+.A-card { background: #fff; border-radius: 28px; padding: 28px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 20px 50px rgba(0,0,0,.07); }
+.A-points { margin-top: 26px; display: grid; gap: 14px; }
+.A-points div { display: flex; gap: 12px; font-size: 16px; line-height: 1.45; color: var(--ink2); }
+.A-points div b { color: var(--ink); font-weight: 600; }
+.A-points i { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 14px; color: #fff; }
+.A-head { text-align: center; max-width: 760px; margin: 0 auto 50px; }
+.A-head .lede { margin: 18px auto 0; }
+.bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+.tile { background: #fff; border-radius: 24px; padding: 24px; min-height: 200px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+.tile.s2 { grid-column: span 2; } .tile.s3 { grid-column: span 3; } .tile.s4 { grid-column: span 4; }
+.tile h3 { font-size: 21px; font-weight: 800; letter-spacing: -.025em; line-height: 1.15; }
+.tile p { color: var(--ink2); font-size: 15px; line-height: 1.45; margin-top: 8px; }
+.tile .ti { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: auto; }
+.tile .ti + h3 { margin-top: 26px; }
+.tile.ink { background: #1d1d1f; color: #f5f5f7; } .tile.ink p { color: #a1a1a6; }
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 18px; font-size: 11px; text-align: center; }
+.cal span { padding: 6px 0; border-radius: 8px; color: var(--ink2); }
+.cal span.dot { position: relative; color: var(--ink); font-weight: 700; }
+.cal span.dot::after { content: ""; position: absolute; left: 50%; bottom: 1px; width: 4px; height: 4px; border-radius: 50%; background: var(--indigo); transform: translateX(-50%); }
+.cal span.today { background: var(--indigo); color: #fff; font-weight: 700; }
+.mood { display: flex; gap: 6px; margin-top: 18px; }
+.mood span { flex: 1; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 13px; }
+.A-teams { background: #000; color: #f5f5f7; padding: 130px 0; text-align: center; overflow: hidden; }
+.A-teams .badge { display: inline-block; font-size: 13px; font-weight: 700; color: #a78bfa; background: rgba(167,139,250,.14); border-radius: 999px; padding: 6px 14px; }
+.A-teams h2 { font-size: clamp(38px, 6vw, 72px); font-weight: 800; letter-spacing: -.045em; line-height: 1.04; margin-top: 18px; background: linear-gradient(180deg, #fff 30%, #8e8e93); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.A-teams p { color: #a1a1a6; font-size: clamp(18px, 2vw, 21px); max-width: 620px; margin: 20px auto 0; line-height: 1.45; }
+.avs { display: flex; justify-content: center; margin-top: 50px; }
+.avs span { width: 58px; height: 58px; border-radius: 50%; border: 3px solid #000; margin-left: -14px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; }
+.teamgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 56px; text-align: left; }
+.teamgrid div { background: #1d1d1f; border-radius: 22px; padding: 24px; }
+.teamgrid b { font-size: 18px; letter-spacing: -.02em; }
+.teamgrid p { font-size: 15px; margin: 8px 0 0; color: #a1a1a6; }
+.A-cta { text-align: center; padding: 130px 0; }
+.A-cta h2 { font-size: clamp(38px, 6vw, 64px); font-weight: 800; letter-spacing: -.045em; line-height: 1.05; }
+.foot { background: var(--mist); color: var(--ink2); font-size: 12.5px; padding: 30px 0 90px; }
+.foot .wrap { display: flex; gap: 24px; flex-wrap: wrap; justify-content: space-between; }
+.foot nav { display: flex; gap: 18px; flex-wrap: wrap; }
+.foot a:hover { color: var(--ink); text-decoration: underline; }
 
-  <meta property="og:type"         content="website" />
-  <meta property="og:url"          content="https://tasklist.uk" />
-  <meta property="og:title"        content="Tasklist.uk — Free Task Manager & Productivity App" />
-  <meta property="og:description"  content="A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method." />
-  <meta property="og:image"        content="https://tasklist.uk/og-image.png" />
-  <meta property="og:image:width"  content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:site_name"    content="Tasklist.uk" />
-  <meta property="og:locale"       content="en_GB" />
+/* ═════════ B · Dark story ═════════ */
+.B { background: #000; color: #f5f5f7; }
+.B-nav { position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,.72); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(255,255,255,.08); }
+.B-nav .wrap { height: 52px; display: flex; align-items: center; gap: 26px; font-size: 13px; }
+.B-nav nav { display: flex; gap: 22px; color: #a1a1a6; margin-left: auto; }
+.B-nav nav a:hover { color: #fff; }
+.btn.white { background: #f5f5f7; color: #000; }
+.btn.ghost { color: #2997ff; padding: 0; height: auto; }
+.btn.ghost::after { content: " ›"; }
+.B-hero { min-height: 92vh; display: flex; flex-direction: column; justify-content: center; text-align: center; padding: 90px 0 40px; position: relative; overflow: hidden; }
+.B-hero::before { content: ""; position: absolute; inset: -20% -10% auto; height: 80%; background: radial-gradient(ellipse at 50% 40%, rgba(99,102,241,.35), transparent 60%); pointer-events: none; }
+.B-hero h1 { position: relative; font-size: clamp(56px, 11vw, 136px); font-weight: 800; letter-spacing: -.055em; line-height: .95; }
+.B-hero h1 span { display: block; background: linear-gradient(90deg, #a5b4fc, #c4b5fd 40%, #86efac); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.B-hero p { position: relative; color: #a1a1a6; font-size: clamp(18px, 2.2vw, 24px); max-width: 640px; margin: 28px auto 0; line-height: 1.4; }
+.B-hero .cta { position: relative; display: flex; gap: 26px; justify-content: center; align-items: center; margin-top: 32px; flex-wrap: wrap; }
+.B-devices { position: relative; display: flex; justify-content: center; align-items: flex-end; gap: 0; margin-top: 70px; padding: 0 22px; }
+.B-devices .mac { width: min(860px, 100%); }
+.B-devices .phone { margin-left: -90px; margin-bottom: -40px; transform: scale(.82); transform-origin: bottom left; }
+.story { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 60px; padding-top: 80px; padding-bottom: 40px; }
+.chap { min-height: 82vh; display: flex; flex-direction: column; justify-content: center; opacity: .3; transition: opacity .4s; }
+.chap.act { opacity: 1; }
+.chap .k { font-size: 15px; font-weight: 700; }
+.chap h2 { font-size: clamp(34px, 4.6vw, 56px); font-weight: 800; letter-spacing: -.04em; line-height: 1.05; margin-top: 10px; }
+.chap p { color: #a1a1a6; font-size: 19px; line-height: 1.5; margin-top: 18px; max-width: 460px; }
+.chap .m { display: none; margin-top: 30px; }
+.stick { position: sticky; top: 90px; height: calc(100vh - 120px); display: flex; align-items: center; justify-content: center; }
+.stage { width: 100%; max-width: 520px; position: relative; aspect-ratio: 1 / 1; }
+.scr { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(.97) translateY(10px); transition: opacity .5s, transform .6s cubic-bezier(.2,.8,.2,1); }
+.scr.on { opacity: 1; transform: none; }
+.glass { width: 100%; background: #1c1c1e; border-radius: 28px; padding: 26px; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 30px 80px rgba(0,0,0,.6); }
+.glass h6 { font-size: 13px; color: #8e8e93; font-weight: 700; }
+.glass .big { font-size: 26px; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; }
+.frogcard { background: linear-gradient(160deg, rgba(48,209,88,.22), #1c1c1e 70%); }
+.ring { width: 150px; height: 150px; margin: 22px auto 0; position: relative; }
+.ring svg { transform: rotate(-90deg); }
+.ring div { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring b { font-size: 30px; font-weight: 300; letter-spacing: -.03em; }
+.ring small { color: #8e8e93; font-size: 12px; }
+.sharepage { background: #f5f5f7; color: #1d1d1f; }
+.sharepage h6 { color: #6e6e73; }
+.B-more { padding: 110px 0; border-top: 1px solid #1d1d1f; }
+.B-more h2 { font-size: clamp(34px, 5vw, 56px); font-weight: 800; letter-spacing: -.04em; text-align: center; }
+.B-more .sub { text-align: center; color: #a1a1a6; font-size: 19px; margin-top: 14px; }
+.flist { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px 40px; margin-top: 60px; }
+.flist div { border-top: 1px solid #2c2c2e; padding-top: 18px; }
+.flist b { font-size: 17px; letter-spacing: -.015em; display: flex; gap: 10px; align-items: center; }
+.flist p { color: #8e8e93; font-size: 15px; line-height: 1.45; margin-top: 6px; }
+.B-teams { padding: 120px 0; text-align: center; background: radial-gradient(ellipse at 50% 120%, rgba(167,139,250,.28), transparent 60%); }
+.B-teams h2 { font-size: clamp(40px, 7vw, 88px); font-weight: 800; letter-spacing: -.05em; line-height: 1; }
+.B-teams p { color: #a1a1a6; font-size: 20px; margin: 20px auto 0; max-width: 580px; line-height: 1.45; }
+.B-foot { color: #6e6e73; font-size: 12.5px; padding: 30px 0 40px; border-top: 1px solid #1d1d1f; }
+.B-foot .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.B-foot nav { display: flex; gap: 18px; flex-wrap: wrap; }
 
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content="Tasklist.uk — Free Task Manager & Productivity App" />
-  <meta name="twitter:description" content="A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method." />
-  <meta name="twitter:image"       content="https://tasklist.uk/og-image.png" />
+/* ═════════ C · Quiet ═════════ */
+.C { background: #fbfbfd; }
+.C-nav .wrap { height: 64px; display: flex; align-items: center; justify-content: space-between; }
+.C-nav nav { display: flex; gap: 24px; font-size: 14px; color: var(--ink2); align-items: center; }
+.C-hero { max-width: 760px; margin: 0 auto; padding: 90px 22px 60px; }
+.C-hero h1 { font-size: clamp(44px, 7.5vw, 88px); line-height: 1; font-weight: 800; letter-spacing: -.05em; }
+.C-hero h1 em { font-style: normal; color: var(--ink3); }
+.C-hero p { font-size: 21px; color: var(--ink2); line-height: 1.5; margin-top: 26px; max-width: 580px; }
+.C-hero .cta { margin-top: 32px; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+.C-shot { max-width: 1040px; margin: 0 auto; padding: 0 22px 40px; }
+.C-cols { max-width: 760px; margin: 0 auto; padding: 60px 22px; }
+.C-cols h2 { font-size: 34px; font-weight: 800; letter-spacing: -.035em; }
+.C-cols > p { color: var(--ink2); font-size: 18px; line-height: 1.5; margin-top: 10px; }
+.acc { border-top: 1px solid var(--line); margin-top: 34px; }
+.acc details { border-bottom: 1px solid var(--line); }
+.acc summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 16px; padding: 22px 2px; }
+.acc summary::-webkit-details-marker { display: none; }
+.acc summary .ic { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+.acc summary .tx { flex: 1; min-width: 0; }
+.acc summary b { display: block; font-size: 20px; letter-spacing: -.02em; }
+.acc summary small { color: var(--ink2); font-size: 15px; }
+.acc summary .pl { width: 30px; height: 30px; border-radius: 50%; background: #e8e8ed; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--ink2); transition: transform .25s; flex-shrink: 0; }
+.acc details[open] summary .pl { transform: rotate(45deg); }
+.acc .body { padding: 0 2px 26px 56px; display: grid; gap: 12px; }
+.acc .body div { font-size: 16px; color: var(--ink2); line-height: 1.5; }
+.acc .body div b { color: var(--ink); font-weight: 600; }
+.C-quote { max-width: 760px; margin: 0 auto; padding: 60px 22px; }
+.C-quote blockquote { font-size: clamp(26px, 3.6vw, 38px); line-height: 1.25; letter-spacing: -.03em; font-weight: 700; }
+.C-quote blockquote span { color: var(--ink3); }
+.C-teams { max-width: 760px; margin: 30px auto; padding: 0 22px; }
+.C-teams .box { border-radius: 28px; background: linear-gradient(135deg, #eef0ff, #f6f0ff 60%, #effaf3); padding: 40px; }
+.C-teams .badge { font-size: 13px; font-weight: 700; color: var(--indigo); }
+.C-teams h3 { font-size: 34px; font-weight: 800; letter-spacing: -.035em; margin-top: 8px; }
+.C-teams p { color: var(--ink2); font-size: 17px; line-height: 1.5; margin-top: 10px; max-width: 520px; }
+.C-teams ul { list-style: none; margin-top: 18px; display: grid; gap: 8px; font-size: 16px; }
+.C-teams li::before { content: "○  "; color: var(--indigo); }
+.C-end { max-width: 760px; margin: 0 auto; padding: 90px 22px 70px; }
+.C-end h2 { font-size: clamp(36px, 5vw, 56px); font-weight: 800; letter-spacing: -.045em; line-height: 1.05; }
 
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "WebSite",
-        "@id": "https://tasklist.uk/#website",
-        "url": "https://tasklist.uk",
-        "name": "Tasklist.uk",
-        "description": "Free task manager and productivity app with AI breakdowns and wellbeing tracking.",
-        "inLanguage": "en-GB"
-      },
-      {
-        "@type": "SoftwareApplication",
-        "@id": "https://tasklist.uk/#app",
-        "name": "Tasklist.uk",
-        "url": "https://tasklist.uk",
-        "applicationCategory": "ProductivityApplication",
-        "operatingSystem": "Web",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "GBP"
-        },
-        "description": "A free productivity app with Google sign-in, AI task breakdowns, wellbeing tracking, and the Eat the Frog method.",
-        "featureList": [
-          "AI task breakdowns",
-          "Wellbeing tracking",
-          "Eat the Frog method",
-          "Kanban board",
-          "Calendar view",
-          "Pomodoro focus mode",
-          "Google sign-in",
-          "Cloud sync"
-        ],
-        "screenshot": "https://tasklist.uk/og-image.png",
-        "author": {
-          "@type": "Person",
-          "name": "Daniel Lawless",
-          "url": "https://www.linkedin.com/in/daniel-lawless-4324b8198/"
-        }
-      }
-    ]
-  }
-  </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #f5f5f3;
-      --surface: #ffffff;
-      --surface2: #f0f0ed;
-      --border: #e2e2de;
-      --text: #1c1c1a;
-      --text-dim: #6b6b65;
-      --text-muted: #9d9d96;
-      --accent: #4f46e5;
-      --accent-dim: #eeedfb;
-      --frog: #16a34a;
-      --frog-dim: #dcfce7;
-      --frog-border: #86efac;
-      --radius: 14px;
-      --nav-h: 64px;
-    }
-
-    html { background: var(--bg); scroll-behavior: smooth; }
-    body { font-family: 'DM Sans', system-ui, sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-
-    /* ── Nav ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: var(--nav-h);
-      background: rgba(245,245,243,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-    .nav-inner {
-      max-width: 1100px; margin: 0 auto;
-      height: 100%; padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
-    .nav-logo-mark { width: 34px; height: 34px; background: var(--accent); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: white; letter-spacing: 0; }
-    .nav-logo-text { font-size: 19px; letter-spacing: -0.3px; }
-    .nav-logo-text .logo-task { font-weight: 800; color: var(--text); }
-    .nav-logo-text .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--accent); }
-    .nav-links { display: flex; align-items: center; gap: 8px; }
-    .nav-link { font-size: 14px; font-weight: 500; color: var(--text-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px; transition: color 0.15s, background 0.15s; }
-    .nav-link:hover { color: var(--text); background: var(--surface2); }
-    .nav-link-iconic { display: inline-flex; align-items: center; gap: 6px; }
-    .nav-link-icon { display: none; flex-shrink: 0; }
-    .nav-cta { background: var(--accent); color: white; font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 8px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
-    .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
-
-    /* ── Sections ── */
-    section { padding: 100px 24px; }
-    .container { max-width: 1100px; margin: 0 auto; }
-
-    /* ── Hero ── */
-    .hero { padding-top: calc(var(--nav-h) + 80px); padding-bottom: 80px; padding-left: 24px; padding-right: 24px; text-align: center; }
-    .hero-eyebrow { display: inline-flex; align-items: center; gap: 8px; background: var(--frog-dim); color: var(--frog); border: 1px solid var(--frog-border); font-size: 12px; font-weight: 700; letter-spacing: 0.8px; padding: 5px 12px; border-radius: 100px; text-transform: uppercase; margin-bottom: 28px; }
-    .hero-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(42px, 7vw, 80px); line-height: 1.08; letter-spacing: -2px; color: var(--text); margin-bottom: 24px; max-width: 780px; margin-left: auto; margin-right: auto; }
-    .hero-title em { font-style: italic; color: var(--accent); }
-    .hero-sub { font-size: clamp(16px, 2.5vw, 20px); color: var(--text-dim); max-width: 520px; margin: 0 auto 40px; font-weight: 400; line-height: 1.6; }
-    .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 64px; }
-    .btn-primary { background: var(--accent); color: white; font-size: 15px; font-weight: 600; padding: 13px 28px; border-radius: var(--radius); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 4px 14px rgba(79,70,229,0.3); }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.35); }
-    .btn-secondary { background: var(--surface); color: var(--text); font-size: 15px; font-weight: 500; padding: 13px 24px; border-radius: var(--radius); text-decoration: none; border: 1px solid var(--border); transition: all 0.2s; }
-    .btn-secondary:hover { background: var(--surface2); border-color: #c8c8c2; }
-
-    /* Hero mockup */
-    .hero-mockup { max-width: 900px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 24px 80px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.06); overflow: hidden; }
-    .mockup-bar { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
-    .mockup-dots { display: flex; gap: 6px; }
-    .mockup-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .mockup-url { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text-muted); text-align: center; max-width: 200px; margin: 0 auto; }
-    .mockup-body { padding: 20px; }
-    .mockup-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .mockup-logo { font-size: 13px; font-weight: 800; color: var(--text); }
-    .mockup-nav { display: flex; gap: 6px; }
-    .mockup-nav-item { font-size: 11px; padding: 4px 10px; border-radius: 6px; background: var(--surface2); color: var(--text-dim); font-weight: 500; }
-    .mockup-nav-item.active { background: var(--accent-dim); color: var(--accent); }
-    .mockup-frog { background: var(--frog-dim); border: 1px solid var(--frog-border); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
-    .mockup-frog-label { font-size: 10px; font-weight: 700; color: var(--frog); text-transform: uppercase; letter-spacing: 0.5px; }
-    .mockup-frog-title { font-size: 13px; text-align: left; font-weight: 600; color: var(--text); }
-    .mockup-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .mockup-col-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-    .mockup-col-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .mockup-col-name { font-size: 11px; font-weight: 600; color: var(--text); }
-    .mockup-col-count { font-size: 10px; padding: 1px 6px; border-radius: 10px; background: var(--surface2); color: var(--text-muted); }
-    .mockup-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 6px; }
-    .mockup-card-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; margin-bottom: 5px; letter-spacing: 0.5px; }
-    .mockup-card-title { font-size: 11px; font-weight: 600; color: var(--text); line-height: 1.4; margin-bottom: 6px; }
-    .mockup-progress { height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
-    .mockup-progress-fill { height: 100%; border-radius: 2px; background: var(--accent); }
-
-    /* ── Frog Section ── */
-    .frog-section { background: var(--text); color: white; border-radius: 24px; padding: 80px 60px; margin: 0 24px; max-width: 1100px; margin-left: auto; margin-right: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-    .frog-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #86efac; margin-bottom: 16px; }
-    .frog-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(32px, 4vw, 48px); line-height: 1.1; letter-spacing: -1px; margin-bottom: 20px; }
-    .frog-title em { font-style: italic; color: #86efac; }
-    .frog-body { font-size: 16px; color: rgba(255,255,255,0.65); line-height: 1.7; margin-bottom: 28px; }
-    .frog-quote { border-left: 3px solid #86efac; padding-left: 16px; font-size: 14px; color: rgba(255,255,255,0.5); font-style: italic; line-height: 1.6; }
-    .frog-visual { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; }
-    .frog-task { background: rgba(22,163,74,0.15); border: 1px solid rgba(134,239,172,0.2); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    .frog-task-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .frog-tag { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 100px; background: #16a34a; color: white; text-transform: uppercase; letter-spacing: 0.5px; }
-    .frog-task-title { font-size: 14px; font-weight: 600; color: white; margin-bottom: 12px; }
-    .frog-steps { display: flex; flex-direction: column; gap: 6px; }
-    .frog-step { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.6); }
-    .frog-step-check { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; }
-    .frog-step-check.done { background: #16a34a; }
-    .frog-step-check.todo { border: 1.5px solid rgba(255,255,255,0.2); }
-    .frog-other { display: flex; flex-direction: column; gap: 8px; }
-    .frog-other-task { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
-    .frog-other-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .frog-other-title { font-size: 12px; color: rgba(255,255,255,0.5); }
-
-    /* ── Features Grid ── */
-    .features-section { padding: 100px 24px; }
-    .section-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; text-align: center; }
-    .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(32px, 5vw, 52px); line-height: 1.1; letter-spacing: -1.5px; text-align: center; margin-bottom: 16px; }
-    .section-sub { font-size: 17px; color: var(--text-dim); text-align: center; max-width: 480px; margin: 0 auto 60px; line-height: 1.6; }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; transition: transform 0.2s, box-shadow 0.2s; }
-    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
-    .feature-card.featured { background: var(--accent); border-color: var(--accent); color: white; grid-column: span 2; }
-    .feature-icon { font-size: 28px; margin-bottom: 16px; display: block; }
-    .feature-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
-    .feature-card.featured .feature-title { color: white; }
-    .feature-desc { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
-    .feature-card.featured .feature-desc { color: rgba(255,255,255,0.7); }
-    .feature-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; background: rgba(255,255,255,0.15); color: white; margin-top: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
-
-    /* ── Wellbeing Section ── */
-    .wellbeing-section { padding: 100px 24px; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-    .wellbeing-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-    .wellbeing-metrics-demo { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
-    .metric-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-    .metric-row:last-child { border-bottom: none; }
-    .metric-emoji { font-size: 20px; flex-shrink: 0; width: 32px; text-align: center; }
-    .metric-label { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
-    .metric-bar { flex: 2; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .metric-bar-fill { height: 100%; border-radius: 3px; }
-    .metric-val { font-size: 12px; font-weight: 700; min-width: 28px; text-align: right; }
-    .checkin-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--frog-dim); color: var(--frog); border: 1px solid var(--frog-border); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 100px; margin-top: 16px; }
-
-    /* ── AI Section ── */
-    .ai-section { padding: 100px 24px; }
-
-    /* Levels & Rewards */
-    .rewards-section { padding: 100px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
-    .rewards-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-    .rewards-demo { background: var(--text); color: white; border-radius: 20px; padding: 32px; }
-    .rewards-level-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
-    .rewards-level-badge { width: 56px; height: 56px; flex-shrink: 0; border-radius: 14px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; }
-    .rewards-level-label { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-    .rewards-xp-bar { height: 8px; background: rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
-    .rewards-xp-fill { height: 100%; background: var(--accent); border-radius: 4px; }
-    .rewards-xp-text { font-size: 11px; color: rgba(255,255,255,0.5); }
-    .rewards-streak { display: inline-flex; align-items: center; gap: 8px; background: rgba(217,119,6,0.15); color: #fbbf24; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 100px; margin-bottom: 24px; }
-    .rewards-streak span { color: rgba(255,255,255,0.4); font-weight: 500; }
-    .rewards-divider { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 16px; }
-    .rewards-leaderboard-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
-    .rewards-leader-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; }
-    .rewards-leader-row.highlight { background: rgba(79,70,229,0.2); border-radius: 8px; padding: 8px 10px; margin: 0 -10px; }
-    .rewards-rank { width: 16px; color: rgba(255,255,255,0.4); font-weight: 700; }
-    .rewards-name { flex: 1; font-weight: 600; }
-    .rewards-lvl { color: rgba(255,255,255,0.5); font-size: 12px; }
-    .rewards-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-    .rewards-list li { display: flex; gap: 10px; font-size: 14px; color: var(--text-dim); line-height: 1.5; }
-    .rewards-list li span.dot { color: var(--accent); font-size: 16px; flex-shrink: 0; }
-    .ai-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
-    .ai-demo { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.06); }
-    .ai-demo-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--surface2); }
-    .ai-demo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-    .ai-demo-title { font-size: 12px; font-weight: 700; color: var(--accent); }
-    .ai-demo-body { padding: 18px; }
-    .ai-summary { background: var(--surface2); border-radius: 8px; padding: 12px 14px; font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 14px; border: 1px solid var(--border); }
-    .ai-steps-title { font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
-    .ai-step { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--surface2); }
-    .ai-step:last-child { border-bottom: none; }
-    .ai-step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
-    .ai-step-text { font-size: 12px; color: var(--text); line-height: 1.5; }
-    .ai-warning { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 10px 12px; display: flex; gap: 8px; margin-top: 12px; font-size: 12px; color: #92400e; line-height: 1.5; }
-
-    /* ── Stats ── */
-    .stats-section { padding: 80px 24px; border-top: 1px solid var(--border); }
-    .stats-grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
-    .stat-item { text-align: center; padding: 32px 24px; border-right: 1px solid var(--border); }
-    .stat-item:last-child { border-right: none; }
-    .stat-num { font-family: 'DM Serif Display', Georgia, serif; font-size: 48px; letter-spacing: -2px; color: var(--text); line-height: 1; margin-bottom: 8px; }
-    .stat-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-
-    /* ── CTA ── */
-    .cta-section { padding: 100px 24px; text-align: center; }
-    .cta-card { max-width: 1100px; margin: 0 auto; background: var(--text); color: white; border-radius: 24px; padding: 60px 48px; }
-    .cta-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: #86efac; text-transform: uppercase; margin-bottom: 16px; }
-    .cta-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(28px, 4vw, 44px); line-height: 1.1; letter-spacing: -1px; margin-bottom: 16px; }
-    .cta-title em { font-style: italic; color: #818cf8; }
-    .cta-sub { font-size: 16px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 36px; }
-    .cta-btn { display: inline-flex; align-items: center; gap: 10px; background: white; color: var(--text); font-size: 15px; font-weight: 700; padding: 14px 32px; border-radius: var(--radius); text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
-    .cta-note { font-size: 13px; color: rgba(255,255,255,0.3); margin-top: 16px; }
-
-    /* ── Footer ── */
-    footer { border-top: 1px solid var(--border); padding: 40px 24px; }
-    .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-    .footer-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; }
-    .footer-logo-mark { width: 26px; height: 26px; background: var(--accent); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: white; }
-    .footer-logo-text { font-size: 15px; letter-spacing: -0.3px; }
-    .footer-logo-text .logo-task { font-weight: 800; color: var(--text); }
-    .footer-logo-text .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--accent); }
-    .footer-links { display: flex; align-items: center; gap: 20px; }
-    .footer-link { font-size: 13px; color: var(--text-muted); text-decoration: none; }
-    .footer-link:hover { color: var(--text); }
-    .footer-copy { font-size: 12px; color: var(--text-muted); }
-    .footer-built { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .footer-built a { color: var(--text-muted); text-decoration: none; }
-    .footer-built a:hover { color: var(--text); }
-
-    /* ── Responsive ── */
-    @media (max-width: 900px) {
-      .features-grid { grid-template-columns: 1fr 1fr; }
-      .feature-card.featured { grid-column: span 2; }
-      .frog-section { grid-template-columns: 1fr; padding: 48px 32px; gap: 40px; }
-      .wellbeing-inner { grid-template-columns: 1fr; }
-      .ai-inner { grid-template-columns: 1fr; }
-      .rewards-inner { grid-template-columns: 1fr; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .stat-item:nth-child(2) { border-right: none; }
-      .stat-item:nth-child(3) { border-right: 1px solid var(--border); border-top: 1px solid var(--border); }
-      .stat-item:nth-child(4) { border-top: 1px solid var(--border); }
-    }
-    @media (max-width: 640px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .feature-card.featured { grid-column: span 1; }
-      .nav-links .nav-link { display: none; }
-      .nav-links .nav-link[href="https://tasklist.uk/documentation"],
-      .nav-links .nav-link[href="https://tasklist.uk/blogs"] { display: inline-flex; padding: 8px; }
-      .nav-link-icon { display: inline-block; }
-      .nav-link-text { display: none; }
-      .nav-links { gap: 4px; }
-      .nav-cta { padding: 8px 14px; }
-      .mockup-cols { grid-template-columns: 1fr; }
-      .mockup-cols > div:not(:first-child) { display: none; }
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .cta-card { padding: 40px 28px; }
-      .hero-mockup { border-radius: 12px; }
-    }
-
-    /* ── Animations ── */
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-up { opacity: 0; animation: fadeUp 0.6s ease forwards; }
-    .fade-up-1 { animation-delay: 0.1s; }
-    .fade-up-2 { animation-delay: 0.2s; }
-    .fade-up-3 { animation-delay: 0.3s; }
-    .fade-up-4 { animation-delay: 0.4s; }
-    .fade-up-5 { animation-delay: 0.5s; }
-  </style>
+/* ═════════ D · Combined (A's structure, B's dark look and scroll story) ═════════ */
+.D { background: #000; color: #f5f5f7; }
+.D .grad { background: linear-gradient(90deg, #a5b4fc, #c4b5fd 40%, #86efac); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.D .grad2 { background: linear-gradient(180deg, #fff 30%, #8e8e93); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.D-hero { text-align: center; padding: 96px 0 0; position: relative; overflow: hidden; }
+.D-hero::before { content: ""; position: absolute; inset: -10% -20% auto; height: 70%; background: radial-gradient(ellipse at 50% 35%, rgba(99,102,241,.38), transparent 62%); pointer-events: none; }
+.D-hero h1 { position: relative; font-size: clamp(46px, 8.4vw, 104px); font-weight: 800; letter-spacing: -.05em; line-height: .98; }
+.D-hero h1 span { display: block; }
+.D-hero p { position: relative; color: #a1a1a6; font-size: clamp(18px, 2.2vw, 24px); max-width: 660px; margin: 26px auto 0; line-height: 1.4; }
+.D-hero .cta { position: relative; display: flex; gap: 26px; justify-content: center; align-items: center; margin-top: 32px; flex-wrap: wrap; }
+.D-hero .B-devices { margin-top: 64px; }
+.D-hero .pillw { position: relative; display: flex; justify-content: center; margin: 54px 0 -26px; z-index: 3; }
+.D-facts { border-top: 1px solid #1d1d1f; border-bottom: 1px solid #1d1d1f; margin-top: 70px; }
+.D-facts .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 34px 22px; text-align: center; }
+.D-facts b { display: block; font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
+.D-facts span { color: #8e8e93; font-size: 14px; }
+.D .chap .pts { margin-top: 24px; display: grid; gap: 12px; max-width: 460px; }
+.D .chap .pts div { display: flex; gap: 12px; font-size: 15.5px; line-height: 1.45; color: #a1a1a6; }
+.D .chap .pts b { color: #f5f5f7; font-weight: 600; }
+.D .chap .pts i { width: 24px; height: 24px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 12px; color: #fff; }
+.D-all { padding: 120px 0; position: relative; overflow: hidden; }
+.D-all::before { content: ""; position: absolute; left: 50%; top: 0; width: 900px; height: 500px; transform: translateX(-50%); background: radial-gradient(ellipse at 50% 0%, rgba(134,239,172,.12), transparent 65%); pointer-events: none; }
+.D-all .A-head h2 { font-size: clamp(34px, 5vw, 56px); font-weight: 800; letter-spacing: -.04em; line-height: 1.06; }
+.D-all .A-head .lede { color: #a1a1a6; font-size: 19px; margin-top: 16px; }
+.D .tile { background: #161618; color: #f5f5f7; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+.D .tile p { color: #8e8e93; }
+.D .tile .ti { background: #232326 !important; }
+.D .tile.glow-g { background: linear-gradient(160deg, rgba(48,209,88,.20), #161618 60%); }
+.D .tile.glow-i { background: linear-gradient(160deg, rgba(99,102,241,.26), #161618 60%); }
+.D .tile.glow-p { background: linear-gradient(160deg, rgba(255,55,95,.18), #161618 60%); }
+.D .tile.glow-a { background: linear-gradient(160deg, rgba(255,159,10,.18), #161618 60%); }
+.D .cal span { color: #8e8e93; }
+.D .cal span.dot { color: #f5f5f7; }
+.D .cal span.dot::after { background: #a5b4fc; }
+.D .cal span.today { background: #6366f1; color: #fff; }
+.D .mood span[data-none] { background: #2c2c2e !important; color: #6e6e73 !important; }
+.D-teams { padding: 130px 0; text-align: center; background: radial-gradient(ellipse at 50% 115%, rgba(167,139,250,.30), transparent 60%); border-top: 1px solid #1d1d1f; }
+.D-teams .badge { display: inline-block; font-size: 13px; font-weight: 700; color: #c4b5fd; background: rgba(167,139,250,.14); border-radius: 999px; padding: 6px 14px; }
+.D-teams h2 { font-size: clamp(40px, 7vw, 88px); font-weight: 800; letter-spacing: -.05em; line-height: 1; margin-top: 18px; }
+.D-teams > .wrap > p { color: #a1a1a6; font-size: clamp(18px, 2vw, 21px); max-width: 600px; margin: 20px auto 0; line-height: 1.45; }
+.D-teams .teamgrid div { background: rgba(28,28,30,.8); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+.D-cta { text-align: center; padding: 120px 0 130px; }
+.D-cta h2 { font-size: clamp(42px, 7vw, 88px); font-weight: 800; letter-spacing: -.05em; line-height: 1; }
+.D-cta p { color: #a1a1a6; font-size: 19px; margin-top: 16px; }
+@media (max-width: 680px) { .D-facts .wrap { grid-template-columns: 1fr 1fr; } .D-all, .D-teams, .D-cta { padding: 90px 0; } .D-hero .pillw { margin: 40px 0 -24px; } .D-hero .pillw .pill { font-size: 12px; } .D-hero .pillw .nm { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }
+/* ── Responsive ── */
+@media (max-width: 980px) {
+  .ui { grid-template-columns: 150px minmax(0,1fr); }
+  .ui-insp { display: none; }
+  .A-split, .story { grid-template-columns: 1fr; gap: 36px; }
+  .A-split.rev > :first-child { order: 0; }
+  .bento { grid-template-columns: repeat(2, 1fr); }
+  .tile.s2, .tile.s3, .tile.s4 { grid-column: span 1; }
+  .tile.wide-m { grid-column: span 2; }
+  .flist { grid-template-columns: 1fr 1fr; }
+  .teamgrid { grid-template-columns: 1fr; }
+  .stick { display: none; }
+  .chap { min-height: 0; opacity: 1; padding: 50px 0; }
+  .chap .m { display: block; }
+}
+@media (max-width: 680px) {
+  .A-nav nav, .B-nav nav { display: none; }
+  .A-nav .wrap, .B-nav .wrap { justify-content: space-between; }
+  .C-nav nav a.hide-m { display: none; }
+  .ui { grid-template-columns: 1fr; min-height: 0; }
+  .ui-side { display: flex; gap: 6px; overflow: hidden; border-right: 0; border-bottom: 1px solid #ececf0; padding: 8px; }
+  .ui-side .ui-h, .ui-side .brands { display: none; }
+  .ui-sl { flex-shrink: 0; }
+  .A-facts .wrap { grid-template-columns: 1fr 1fr; }
+  .A-sec { padding: 80px 0; }
+  .A-teams, .A-cta, .B-teams, .B-more { padding: 90px 0; }
+  .bento { grid-template-columns: 1fr; }
+  .tile.wide-m { grid-column: span 1; }
+  .flist { grid-template-columns: 1fr; }
+  .B-devices .phone { display: none; }
+  .bar { grid-template-columns: 96px minmax(0,1fr) 42px; }
+  .acc .body { padding-left: 2px; }
+  .C-teams .box { padding: 28px 22px; }
+  .A-shot .pill { font-size: 12px; }
+  .A-shot .pill .nm { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+</style>
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav>
-    <div class="nav-inner">
-      <a href="/" class="nav-logo">
-        <div class="nav-logo-mark">tl</div>
-        <span class="nav-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
-      </a>
-      <div class="nav-links">
-        <a href="#method" class="nav-link">Method</a>
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#wellbeing" class="nav-link">Wellbeing</a>
-        <a href="https://tasklist.uk/blogs" class="nav-link nav-link-iconic">
-          <svg class="nav-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="7" x2="15" y2="7"></line><line x1="9" y1="11" x2="15" y2="11"></line></svg>
-          <span class="nav-link-text">Blog</span>
-        </a>
-        <a href="https://tasklist.uk/documentation" class="nav-link nav-link-iconic">
-          <svg class="nav-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
-          <span class="nav-link-text">Docs</span>
-        </a>
-        <a href="https://app.tasklist.uk" class="nav-cta">Open App →</a>
-      </div>
-    </div>
-  </nav>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-eyebrow fade-up fade-up-1">
-        🐸 Free to use · Sign in with Google
-      </div>
-      <h1 class="hero-title fade-up fade-up-2">
-        The operating system<br>for <em>getting things done</em>
-      </h1>
-      <p class="hero-sub fade-up fade-up-3">
-        Tasks, wellbeing, and AI — all in one place. Your data synced across every device.
-      </p>
-      <div class="hero-actions fade-up fade-up-4">
-        <a href="https://app.tasklist.uk" class="btn-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm-1.25 17.292l-4.5-4.364 1.857-1.858 2.643 2.506 5.643-5.784 1.857 1.857-7.5 7.643z"/></svg>
-          Get started free
-        </a>
-        <a href="#features" class="btn-secondary">See how it works</a>
-      </div>
 
-      <!-- App mockup -->
-      <div class="hero-mockup fade-up fade-up-5">
-        <div class="mockup-bar">
-          <div class="mockup-dots">
-            <div class="mockup-dot" style="background:#ff5f57"></div>
-            <div class="mockup-dot" style="background:#febc2e"></div>
-            <div class="mockup-dot" style="background:#28c840"></div>
-          </div>
-          <div class="mockup-url">app.tasklist.uk</div>
-        </div>
-        <div class="mockup-body">
-          <div class="mockup-header">
-            <span class="mockup-logo">Tasklist.uk</span>
-            <div class="mockup-nav">
-              <div class="mockup-nav-item active">Board</div>
-              <div class="mockup-nav-item">Calendar</div>
-              <div class="mockup-nav-item">Wellbeing</div>
-              <div class="mockup-nav-item">Analytics</div>
-            </div>
-          </div>
-          <div class="mockup-frog">
-            <span style="font-size:18px">🐸</span>
-            <div>
-              <div class="mockup-frog-label">Eat the Frog — Do this first</div>
-              <div class="mockup-frog-title">Design new landing page</div>
-            </div>
-          </div>
-          <div class="mockup-cols">
-            <div>
-              <div class="mockup-col-head">
-                <div class="mockup-col-dot" style="background:#9d9d96"></div>
-                <span class="mockup-col-name">To Do</span>
-                <span class="mockup-col-count">2</span>
-              </div>
-              <div class="mockup-card">
-                <div class="mockup-card-badge" style="background:#fee2e2;color:#dc2626">HIGH</div>
-                <div class="mockup-card-title">Q3 analytics report</div>
-                <div class="mockup-progress"><div class="mockup-progress-fill" style="width:0%"></div></div>
-              </div>
-              <div class="mockup-card">
-                <div class="mockup-card-badge" style="background:#dbeafe;color:#2563eb">LOW</div>
-                <div class="mockup-card-title">Update dependencies</div>
-              </div>
-            </div>
-            <div>
-              <div class="mockup-col-head">
-                <div class="mockup-col-dot" style="background:#d97706"></div>
-                <span class="mockup-col-name">In Progress</span>
-                <span class="mockup-col-count">1</span>
-              </div>
-              <div class="mockup-card" style="background:#dcfce7;border-color:#86efac">
-                <div class="mockup-card-badge" style="background:#16a34a;color:#fff">🐸 FROG</div>
-                <div class="mockup-card-title">Design new landing page</div>
-                <div class="mockup-progress" style="margin-top:6px"><div class="mockup-progress-fill" style="width:50%;background:#16a34a"></div></div>
-              </div>
-            </div>
-            <div>
-              <div class="mockup-col-head">
-                <div class="mockup-col-dot" style="background:#16a34a"></div>
-                <span class="mockup-col-name">Done</span>
-                <span class="mockup-col-count">1</span>
-              </div>
-              <div class="mockup-card" style="opacity:0.6">
-                <div class="mockup-card-badge" style="background:#f0f0ed;color:#9d9d96">MED</div>
-                <div class="mockup-card-title" style="text-decoration:line-through">Team standup prep ⭐⭐⭐⭐</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+<!-- ═══════════ D · COMBINED ═══════════ -->
+<main class="D" id="vD">
+  <header class="B-nav"><div class="wrap">
+    <a class="logo" href="/" aria-label="Tasklist.uk home"><i>tl</i>tasklist</a>
+    <nav><a href="#d-story">How it works</a><a href="#d-all">Features</a><a href="#d-teams">Teams</a><a href="/documentation">Docs</a><a href="/blogs">Blog</a></nav>
+    <a class="btn white sm" href="https://app.tasklist.uk">Open Tasklist</a>
+  </div></header>
+
+  <section class="D-hero">
+    <div class="wrap">
+      <h1><span>Know exactly</span><span class="grad">what to do today.</span></h1>
+      <p>Tasklist keeps your day, your time and the brands you work for in one calm place. Free to use, and no account needed to start.</p>
+      <div class="cta"><a class="btn white" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="#d-story">See how it works</a></div>
     </div>
+    <div class="pillw"><div class="pill"><span class="dot"></span><span class="nm">🐸 Write Q1 proposal draft</span><span class="tm">24:18</span><span class="st">Stop</span></div></div>
+    <div class="B-devices" style="margin-top:0">
+      <div data-mock="board-dark"></div>
+      <div class="phone"><div class="phone-s dark"><div class="phone-notch"></div><div class="phone-in" data-mock="phone"></div></div></div>
+    </div>
+    <div class="D-facts"><div class="wrap">
+      <div><b>Free</b><span>Everything on this page</span></div>
+      <div><b>No sign-up</b><span>Start as a guest in seconds</span></div>
+      <div><b>Any device</b><span>Desktop, tablet and phone</span></div>
+      <div><b>Light or dark</b><span>Looks right at any hour</span></div>
+    </div></div>
   </section>
 
-  <!-- Stats -->
-  <div class="stats-section">
-    <div class="stats-grid">
-      <div class="stat-item">
-        <div class="stat-num">9<span>+</span></div>
-        <div class="stat-label">Views — Board, Calendar, Notes, Bookmarks, Wellbeing, Analytics & more</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">∞</div>
-        <div class="stat-label">Tasks, synced across all your devices</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">4<span>x</span></div>
-        <div class="stat-label">AI features — breakdowns, plans, journal, due dates</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-num">£<span>0</span></div>
-        <div class="stat-label">Free to use, no subscription required</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Eat the Frog -->
-  <section id="method" style="padding: 80px 24px;">
-    <div class="frog-section">
-      <div>
-        <div class="frog-eyebrow">🐸 The Method</div>
-        <h2 class="frog-title">
-          Eat the <em>frog</em> first.<br>Every single day.
-        </h2>
-        <p class="frog-body">
-          Brian Tracy's famous productivity principle: identify your single most important, most dreaded task — your frog — and do it first. Everything else gets easier after that.
-        </p>
-        <p class="frog-quote">
-          "If it's your job to eat a frog, it's best to do it first thing in the morning. And if it's your job to eat two frogs, it's best to eat the biggest one first."<br>
-          <span style="display:block;margin-top:8px;color:rgba(255,255,255,0.3)">— Mark Twain</span>
-        </p>
-      </div>
-      <div class="frog-visual">
-        <div class="frog-task">
-          <div class="frog-task-top">
-            <span style="font-size:16px">🐸</span>
-            <span class="frog-tag">Today's Frog</span>
-            <span style="font-size:10px;color:rgba(255,255,255,0.4);margin-left:auto">HIGH PRIORITY</span>
-          </div>
-          <div class="frog-task-title">Prepare quarterly investor report</div>
-          <div class="frog-steps">
-            <div class="frog-step">
-              <div class="frog-step-check done">✓</div>
-              <span style="text-decoration:line-through;color:rgba(255,255,255,0.3)">Pull data from dashboard</span>
-            </div>
-            <div class="frog-step">
-              <div class="frog-step-check done">✓</div>
-              <span style="text-decoration:line-through;color:rgba(255,255,255,0.3)">Write executive summary</span>
-            </div>
-            <div class="frog-step">
-              <div class="frog-step-check todo"></div>
-              <span>Build slide deck</span>
-            </div>
-            <div class="frog-step">
-              <div class="frog-step-check todo"></div>
-              <span>Send to stakeholders</span>
-            </div>
-          </div>
+  <section class="wrap story" id="d-story">
+    <div>
+      <article class="chap act" data-s="0">
+        <span class="k" style="color:#a5b4fc">Plan</span>
+        <h2>Today, at a glance.</h2>
+        <p>Today, Upcoming, No date and Overdue sit side by side with the brands you work for.</p>
+        <div class="pts">
+          <div><i style="background:#ff9500">↩</i><span><b>Nothing slips.</b> Unfinished tasks stay on Today with a clear "2 days late" until you finish or reschedule them.</span></div>
+          <div><i style="background:#5856d6">⏎</i><span><b>Built for speed.</b> Right-click any task to reschedule it, start a timer or make it the frog.</span></div>
         </div>
-        <div class="frog-other">
-          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.3);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:4px">Everything else can wait</div>
-          <div class="frog-other-task">
-            <div class="frog-other-dot" style="background:#d97706"></div>
-            <span class="frog-other-title">Update team wiki</span>
-          </div>
-          <div class="frog-other-task">
-            <div class="frog-other-dot" style="background:#2563eb"></div>
-            <span class="frog-other-title">Review pull requests</span>
-          </div>
-          <div class="frog-other-task">
-            <div class="frog-other-dot" style="background:#9d9d96"></div>
-            <span class="frog-other-title">Respond to non-urgent emails</span>
-          </div>
+        <div class="m" data-mock="s0"></div>
+      </article>
+      <article class="chap" data-s="1">
+        <span class="k" style="color:#86efac">Focus</span>
+        <h2>Eat the frog first.</h2>
+        <p>Pick the one task that matters most and do it before anything else. Start the timer when you begin, stop it when you're done, and the time is logged.</p>
+        <div class="pts">
+          <div><i style="background:#30b0c7">✓</i><span><b>Steps keep big jobs moving.</b> Tick them off as you go.</span></div>
+          <div><i style="background:#34c759">◉</i><span><b>Always visible.</b> A small pill at the top shows the timer running wherever you are.</span></div>
         </div>
-      </div>
+        <div class="m" data-mock="s1"></div>
+      </article>
+      <article class="chap" data-s="2">
+        <span class="k" style="color:#fda4af">Track</span>
+        <h2>See where your hours go.</h2>
+        <p>Every minute you log lands on the right brand. Your week shows the split, tasks done and a report you can copy in one tap.</p>
+        <div class="pts">
+          <div><i style="background:#34c759">⏱</i><span><b>Timer or by hand.</b> Add 15 minutes, an hour or any amount for any day.</span></div>
+          <div><i style="background:#ff2d55">⇩</i><span><b>Timesheet export.</b> Download any week as a CSV.</span></div>
+        </div>
+        <div class="m" data-mock="s2"></div>
+      </article>
+      <article class="chap" data-s="3">
+        <span class="k" style="color:#93c5fd">Share</span>
+        <h2>One link for your manager.</h2>
+        <p>A read-only page with what you're working on, what's next and what's done, with hours by brand for this week, last week or the month.</p>
+        <div class="pts">
+          <div><i style="background:#4f46e5">🔗</i><span><b>Always up to date.</b> It updates as you work, so there's no report to write.</span></div>
+          <div><i style="background:#8e8e93">✕</i><span><b>Turn it off any time.</b> Revoke the link from Settings and it stops working at once.</span></div>
+        </div>
+        <div class="m" data-mock="s3"></div>
+      </article>
+      <article class="chap" data-s="4">
+        <span class="k" style="color:#fcd34d">Reflect</span>
+        <h2>Look after yourself, too.</h2>
+        <p>A ten second wellbeing check-in and an end of day recap help you notice patterns, pick tomorrow's frog and switch off properly.</p>
+        <div class="m" data-mock="s4"></div>
+      </article>
     </div>
+    <div class="stick"><div class="stage">
+      <div class="scr on" data-scr="0"></div><div class="scr" data-scr="1"></div><div class="scr" data-scr="2"></div><div class="scr" data-scr="3"></div><div class="scr" data-scr="4"></div>
+    </div></div>
   </section>
 
-  <!-- Features -->
-  <section id="features" class="features-section">
-    <div class="container">
-      <div class="section-eyebrow">Everything you need</div>
-      <h2 class="section-title">Built for the way you actually work</h2>
-      <p class="section-sub">Not just a to-do list. A full productivity system that learns your patterns.</p>
-      <div class="features-grid">
-        <div class="feature-card featured">
-          <span class="feature-icon">✨</span>
-          <div class="feature-title">AI Task Breakdowns</div>
-          <div class="feature-desc">Mark any task as your frog and get an instant AI-powered action plan — a summary of what's involved, numbered steps to completion, and a heads-up on what might derail you.</div>
-          <span class="feature-tag">Powered by Groq</span>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">📅</span>
-          <div class="feature-title">Calendar View</div>
-          <div class="feature-desc" style="color:var(--text-dim)">See your tasks laid out by week. Drag to reschedule. Spot what's overdue at a glance.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🎯</span>
-          <div class="feature-title">Focus Mode</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Lock in on your frog with a full-screen Pomodoro timer. Presets for 25/5, 50/10, or custom.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🤖</span>
-          <div class="feature-title">AI Daily Plan</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Tell the AI how you're feeling today and it'll suggest the optimal order to tackle your tasks based on priority, energy, and deadlines.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">📋</span>
-          <div class="feature-title">Kanban Board</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Drag tasks between To Do, In Progress, and Done. Filter by project, date, or priority. Subtasks with progress tracking.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">📝</span>
-          <div class="feature-title">End-of-Day Journal</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Write a few lines about your day and get a warm, personal AI reflection. Appears automatically at your work end time.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">📊</span>
-          <div class="feature-title">Analytics</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Completion streaks, productivity by day of week, on-time rate, task happiness ratings. Understand your patterns.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">☁️</span>
-          <div class="feature-title">Cloud Sync</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Sign in with Google and your tasks follow you everywhere. Phone, tablet, laptop — always in sync.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🗒️</span>
-          <div class="feature-title">Notes</div>
-          <div class="feature-desc" style="color:var(--text-dim)">A full rich-text editor for meeting notes and ideas. Paste in images, build tables, pin the ones that matter, and search across everything you've written.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🔖</span>
-          <div class="feature-title">Bookmarks</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Save links and reference material. Paste a URL and the title fills in automatically. Organise with collections, tags, and read/unread status.</div>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🤝</span>
-          <div class="feature-title">Teams & Collaboration</div>
-          <div class="feature-desc" style="color:var(--text-dim)">Create a team, share a join code, and work from a shared board. Assign tasks to members and get a full analytics dashboard on how the team's performing.</div>
-        </div>
+  <section class="D-all" id="d-all"><div class="wrap">
+    <div class="A-head"><h2>Everything else, <span class="grad">built in.</span></h2><p class="lede">No plug-ins and no upgrades. It's all there from the first day.</p></div>
+    <div class="bento">
+      <div class="tile s4 wide-m glow-i"><h3>Calendar</h3><p>Your month at a glance. Drag a task to another day to reschedule it.</p><div class="cal" data-mock="cal"></div></div>
+      <div class="tile s2 glow-g"><div class="ti">🐸</div><h3>Focus mode</h3><p>A full screen timer for deep work, with breaks built in.</p></div>
+      <div class="tile s2"><div class="ti">↻</div><h3>Repeating tasks</h3><p>Every day, every other week, the first of the month. Set it once.</p></div>
+      <div class="tile s2"><div class="ti">✨</div><h3>Suggest a date</h3><p>Not sure when to do it? Get a sensible due date suggested.</p></div>
+      <div class="tile s2"><div class="ti">✓</div><h3>Recently completed</h3><p>The last 7 days at a glance, with a searchable archive of the rest.</p></div>
+      <div class="tile s3 glow-p"><h3>Wellbeing check-in</h3><p>Ten seconds a day for mood, energy, stress and sleep. See your week in colour.</p><div class="mood"><span style="background:#34c759">4</span><span style="background:#30b0c7">3</span><span style="background:#34c759">5</span><span style="background:#ff9500">2</span><span style="background:#30b0c7">3</span><span style="background:#34c759">4</span><span data-none>–</span></div></div>
+      <div class="tile s3 glow-a"><h3>End of day recap</h3><p>See what you got done, then pick tomorrow's frog before you switch off.</p><div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:20px"><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">6 completed</span><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">🐸 Frog eaten</span><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">5h 40m logged</span></div></div>
+      <div class="tile s2"><div class="ti">📝</div><h3>Notes and bookmarks</h3><p>Reference material and useful links next to the work.</p></div>
+      <div class="tile s2"><div class="ti">★</div><h3>Levels and rewards</h3><p>Earn XP for finishing tasks and unlock rewards as you level up.</p></div>
+      <div class="tile s2"><div class="ti">⌘K</div><h3>Search everything</h3><p>Jump to any task in a keystroke, from anywhere.</p></div>
+      <div class="tile s2"><div class="ti">⇄</div><h3>Workspaces</h3><p>Keep Personal and Work apart, each with its own tasks and brands.</p></div>
+      <div class="tile s2"><div class="ti">🗑</div><h3>A real bin</h3><p>Deleted something by mistake? Restore it from the bin.</p></div>
+      <div class="tile s2"><div class="ti">💬</div><h3>Shape what's next</h3><p>See every update in What's new and vote on the changes you like.</p></div>
+    </div>
+  </div></section>
+
+  <section class="D-teams" id="d-teams"><div class="wrap">
+    <span class="badge">Coming soon</span>
+    <h2 class="grad2">Better together.</h2>
+    <p>Tasklist for teams is on the way: everything you like about Tasklist, shared with the people you work with.</p>
+    <div class="avs" aria-hidden="true"><span style="background:#4f46e5">A</span><span style="background:#30b0c7">J</span><span style="background:#ff2d55">M</span><span style="background:#34c759">S</span><span style="background:#ff9500">+</span></div>
+    <div class="teamgrid">
+      <div><b>Shared brands</b><p>Everyone logs time to the same brands, so client hours add up in one place.</p></div>
+      <div><b>Assign and follow</b><p>Hand a task to a teammate and see it move from to do to done.</p></div>
+      <div><b>Team hours</b><p>A shared week view of who worked on what, ready for billing.</p></div>
+    </div>
+  </div></section>
+
+  <section class="D-cta"><div class="wrap">
+    <h2>Your day.<br><span class="grad">Sorted.</span></h2>
+    <p>Start as a guest, or sign in with Google to sync across your devices.</p>
+    <div style="margin-top:30px;display:flex;justify-content:center;gap:26px;flex-wrap:wrap;align-items:center"><a class="btn white" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="/documentation">Read the docs</a></div>
+  </div></section>
+  <footer class="B-foot"><div class="wrap"><span>© 2026 Tasklist.uk</span><nav><a href="/documentation">Documentation</a><a href="/blogs">Blog</a><a href="https://app.tasklist.uk">Open the app</a><a href="/privacy">Privacy</a></nav></div></footer>
+</main>
+<script>
+// ── Mock UI pieces, built once and reused across concepts ──
+const P = { nw: ["Northwind", "#5856d6"], bb: ["Bluebird Studio", "#30b0c7"], hc: ["Harbour & Co", "#ff2d55"], in: ["Internal", "#8e8e93"] };
+const row = (t, p, meta, o = {}) => `<div class="ui-row ${o.sel ? "sel" : ""}"><span class="ui-ck ${o.done ? "on" : ""}"></span><div style="min-width:0"><div class="ui-t">${t}</div><div class="ui-m"><span><i class="ui-dot" style="background:${P[p][1]}"></i> ${P[p][0]}</span>${meta}</div></div></div>`;
+function board(dark) {
+  return `<div class="mac ${dark ? "dark" : ""}"><div class="mac-bar"><i></i><i></i><i></i><span>Tasklist</span></div>
+  <div class="ui">
+    <div class="ui-side">
+      <div class="ui-sl on"><span class="ic" style="background:#4f46e5"></span>Today<b>7</b></div>
+      <div class="ui-sl"><span class="ic" style="background:#ff3b30"></span>Upcoming<b>4</b></div>
+      <div class="ui-sl"><span class="ic" style="background:#30b0c7"></span>No date<b>2</b></div>
+      <div class="ui-sl"><span class="ic" style="background:#ff9500"></span>Overdue<b style="color:#e08600;font-weight:700">2</b></div>
+      <div class="ui-sl"><span class="ic" style="background:#34c759"></span>Recently completed<b>12</b></div>
+      <div class="brands"><div class="ui-h">Brands</div>
+      ${Object.values(P).map(([n, c], i) => `<div class="ui-sl"><i class="ui-dot" style="background:${c}"></i>${n}<b>${[4, 3, 2, 1][i]}</b></div>`).join("")}</div>
+    </div>
+    <div class="ui-main">
+      <h4>Today</h4><div class="d">Friday 20 November</div>
+      <div class="ui-gh" style="color:#1f9d48">🐸 Today's frog</div>
+      <div class="ui-grp">${row("Write Q1 proposal draft", "nw", `<span class="hi">High</span><span>1h 30m</span><span>1 of 4 steps</span>`)}</div>
+      <div class="ui-gh or"><span>From earlier days</span><span style="color:#4f46e5">Move all to today</span></div>
+      <div class="ui-grp">${row("Send revised quote", "hc", `<span class="late">2 days late</span><span>20m</span>`)}${row("Fix footer links", "bb", `<span class="late">From yesterday</span>`)}</div>
+      <div class="ui-gh"><span>Today</span><span style="font-weight:500">3h 10m estimated</span></div>
+      <div class="ui-grp">${row("Booking form fixes", "bb", `<span class="ip">In progress</span><span>50m left</span>`, { sel: true })}${row("Prep slides for Thursday", "nw", `<span>45m</span>`)}${row("Approve invoice batch", "in", `<span>15m</span>`)}</div>
+    </div>
+    <div class="ui-insp">
+      <h5>Booking form fixes</h5><div class="n">Validation first, then error states</div>
+      <div class="ui-fl">
+        <div class="ui-fr"><span class="fi" style="background:#34c759">▶</span><div style="flex:1"><b>1h 10m</b> <span style="color:#86868b">of 2h</span><div class="ui-bar"><i style="width:58%"></i></div></div><span class="ui-start">Start</span></div>
+        <div class="ui-fr"><span class="fi" style="background:#34c759">🐸</span>Today's frog<span class="ui-sw" style="background:#e5e5ea"></span></div>
+      </div>
+      <div class="ui-fl">
+        <div class="ui-fr"><span class="fi" style="background:#ff3b30">▦</span>Date<span class="v ac">Today ⌃</span></div>
+        <div class="ui-fr"><span class="fi" style="background:#ff9500">!</span>Priority<span class="v hi">High ⌃</span></div>
+        <div class="ui-fr"><span class="fi" style="background:#30b0c7">●</span>Brand<span class="v">Bluebird ⌃</span></div>
+        <div class="ui-fr"><span class="fi" style="background:#5856d6">◷</span>Estimate<span class="v">2h ⌃</span></div>
       </div>
     </div>
-  </section>
+  </div></div>`;
+}
+const frogCard = (dark) => `<div style="${dark ? "" : "text-align:left"}">
+  <div style="font-size:13px;font-weight:700;color:${dark ? "#86efac" : "#16a34a"}">🐸 Today's frog</div>
+  <div style="font-size:24px;font-weight:800;letter-spacing:-.03em;margin-top:6px">Write Q1 proposal draft</div>
+  <div style="font-size:13px;color:#86868b;margin-top:4px">Northwind · 1h 30m estimate · 1 of 4 steps</div>
+  <div class="ring"><svg width="150" height="150" viewBox="0 0 150 150"><circle cx="75" cy="75" r="66" fill="none" stroke="${dark ? "#2c2c2e" : "#ececf0"}" stroke-width="12"/><circle cx="75" cy="75" r="66" fill="none" stroke="#34c759" stroke-width="12" stroke-linecap="round" stroke-dasharray="414.7" stroke-dashoffset="${414.7 * (1 - .45)}"/></svg><div><b class="tnum">24:18</b><small>running</small></div></div>
+  <div style="display:flex;gap:10px;justify-content:center;margin-top:18px"><span style="height:38px;padding:0 18px;border-radius:99px;background:rgba(255,59,48,.14);color:#ff3b30;font-weight:700;display:inline-flex;align-items:center">Stop</span><span style="height:38px;padding:0 18px;border-radius:99px;background:${dark ? "#2c2c2e" : "#f2f2f7"};font-weight:700;display:inline-flex;align-items:center">Finish</span></div>
+</div>`;
+const hours = (dark) => `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span style="font-size:13px;font-weight:700;color:#86868b">This week</span><span style="font-size:13px;color:#86868b">16 to 22 Nov</span></div>
+  <div style="font-size:42px;font-weight:800;letter-spacing:-.04em" class="tnum">21.8h</div>
+  <div style="font-size:13px;color:#34c759;font-weight:700;margin-bottom:20px">▲ 2.5h on last week</div>
+  <div class="bars">${[["nw", 9.5], ["bb", 6.3], ["hc", 4], ["in", 2]].map(([k, h]) => `<div class="bar"><span>${P[k][0]}</span><span class="tr"><i style="width:${h / 9.5 * 100}%;background:${P[k][1]}"></i></span><b>${h}h</b></div>`).join("")}</div>
+  <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap"><span style="height:34px;padding:0 14px;border-radius:99px;background:#4f46e5;color:#fff;font-weight:700;font-size:13px;display:inline-flex;align-items:center">Copy report</span><span style="height:34px;padding:0 14px;border-radius:99px;background:${dark ? "#2c2c2e" : "#f2f2f7"};font-weight:700;font-size:13px;display:inline-flex;align-items:center">Export CSV</span></div>`;
+const share = () => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:22px;font-weight:800;letter-spacing:-.03em">Alex's work <span style="font-size:11px;font-weight:700;background:#ececf1;color:#6e6e73;border-radius:99px;padding:3px 8px;vertical-align:middle">View only</span></div><span style="font-size:12px;background:#ececf1;border-radius:8px;padding:5px 10px;font-weight:700">This week</span></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0">${[["21.8h", "logged"], ["14", "tasks done"], ["2", "carried over"]].map(([v, l]) => `<div style="background:#f5f5f7;border-radius:12px;padding:10px 12px"><b style="font-size:19px;letter-spacing:-.02em">${v}</b><div style="font-size:11.5px;color:#86868b">${l}</div></div>`).join("")}</div>
+  <div style="font-size:12px;font-weight:700;color:#86868b;margin-bottom:6px">Working on now</div>
+  ${["Booking form fixes|bb|In progress", "Homepage hero refresh|nw|1h so far"].map(s => { const [t, p, m] = s.split("|"); return `<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #f0f0f3;font-size:14px"><i class="ui-dot" style="background:${P[p][1]}"></i><b style="flex:1;font-weight:600">${t}</b><span style="font-size:12px;color:#86868b">${m}</span></div>`; }).join("")}
+  <div style="font-size:12px;font-weight:700;color:#86868b;margin:12px 0 6px">Done this week</div>
+  <div class="bars">${[["nw", 9.5], ["bb", 6.3], ["hc", 4]].map(([k, h]) => `<div class="bar"><span>${P[k][0]}</span><span class="tr"><i style="width:${h / 9.5 * 100}%;background:${P[k][1]}"></i></span><b>${h}h</b></div>`).join("")}</div>`;
+const phone = () => `<div style="font-size:24px;font-weight:800;letter-spacing:-.03em">Today</div><div style="font-size:11px;color:#8e8e93">Friday 20 November</div>
+  <div class="chips"><span class="on">☀ Today 7</span><span>▦ Upcoming</span><span>Overdue 2</span></div>
+  <div style="font-size:11px;font-weight:700;color:#30d158;margin:8px 2px 5px">🐸 Today's frog</div>
+  <div class="ui-grp" style="background:#1c1c1e;border-color:#2c2c2e">${row("Write Q1 proposal", "nw", "<span>1h 30m</span>")}</div>
+  <div style="font-size:11px;font-weight:700;color:#8e8e93;margin:12px 2px 5px">Today</div>
+  <div class="ui-grp" style="background:#1c1c1e;border-color:#2c2c2e">${row("Booking form fixes", "bb", `<span class="ip">In progress</span>`)}${row("Prep slides", "nw", "<span>45m</span>")}${row("Approve invoices", "in", "<span>15m</span>")}${row("Update team rota", "in", "<span>15m</span>")}</div>`;
+const calCells = () => { let h = ["M", "T", "W", "T", "F", "S", "S"].map(d => `<span style="font-weight:700;color:#86868b">${d}</span>`).join(""); for (let i = 0; i < 6; i++) h += "<span></span>"; for (let d = 1; d <= 30; d++) h += `<span class="${d === 20 ? "today" : [3, 7, 11, 18, 24, 27].includes(d) ? "dot" : ""}">${d}</span>`; return h; };
+const wellbeing = () => `<h6>How are you today?</h6><div class="big">Checked in at 09:05</div>
+  <div class="mood" style="margin-top:20px">${[["Mon", 4, "#34c759"], ["Tue", 3, "#30b0c7"], ["Wed", 5, "#34c759"], ["Thu", 2, "#ff9500"], ["Fri", 4, "#34c759"]].map(([d, v, c]) => `<span style="background:${c};flex-direction:column;height:56px;font-size:16px">${v}<small style="font-size:10px;font-weight:600;opacity:.85">${d}</small></span>`).join("")}</div>
+  <div style="margin-top:20px;background:#2c2c2e;border-radius:16px;padding:16px;font-size:15px;line-height:1.45;color:#d1d1d6">💡 Your mood is higher on days you finish your frog before lunch.</div>
+  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">6 completed today</span><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">🐸 Frog eaten</span></div>`;
+const storyMini = () => `<div class="mac dark" style="width:100%"><div class="mac-bar"><i></i><i></i><i></i><span>Today</span></div><div style="padding:16px">
+  <div class="ui-gh or" style="margin-top:0">From earlier days</div><div class="ui-grp">${row("Send revised quote", "hc", `<span class="late">2 days late</span>`)}</div>
+  <div class="ui-gh">Today</div><div class="ui-grp">${row("Booking form fixes", "bb", `<span class="ip">In progress</span>`)}${row("Prep slides for Thursday", "nw", "<span>45m</span>")}${row("Approve invoice batch", "in", "<span>15m</span>")}</div>
+  <div class="ui-gh">Upcoming</div><div class="ui-grp">${row("Checkout UX review", "hc", "<span>Tomorrow</span>")}</div></div></div>`;
+const S = [() => storyMini(), () => `<div class="glass frogcard">${frogCard(true)}</div>`, () => `<div class="glass">${hours(true)}</div>`, () => `<div class="glass sharepage">${share()}</div>`, () => `<div class="glass">${wellbeing()}</div>`];
 
-  <!-- Wellbeing -->
-  <section id="wellbeing" class="wellbeing-section">
-    <div class="wellbeing-inner">
-      <div>
-        <div class="section-eyebrow" style="text-align:left">Wellbeing Tracking</div>
-        <h2 class="section-title" style="text-align:left;font-size:clamp(28px,4vw,44px)">
-          How you feel<br>affects what you get done
-        </h2>
-        <p style="font-size:16px;color:var(--text-dim);line-height:1.7;margin-bottom:24px">
-          Daily check-ins take 30 seconds. Log your mood, energy, stress, sleep, and happiness. Over time, Tasklist reveals the correlations — which days you're most productive, what drains you, what helps.
-        </p>
-        <ul style="list-style:none;display:flex;flex-direction:column;gap:12px">
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> 5 tracked metrics: mood, energy, stress, sleep, happiness</li>
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> 14-day trend charts with correlations</li>
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> Task happiness ratings when you complete work</li>
-          <li style="display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim)"><span style="color:var(--frog);font-size:16px">✓</span> Weekly summary ready to paste into your Monday report</li>
-        </ul>
-      </div>
-      <div class="wellbeing-metrics-demo">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:16px">Today's Check-in</div>
-        <div class="metric-row"><span class="metric-emoji">😊</span><span class="metric-label">Mood</span><div class="metric-bar"><div class="metric-bar-fill" style="width:80%;background:#8b5cf6"></div></div><span class="metric-val" style="color:#8b5cf6">4/5</span></div>
-        <div class="metric-row"><span class="metric-emoji">⚡</span><span class="metric-label">Energy</span><div class="metric-bar"><div class="metric-bar-fill" style="width:60%;background:#10b981"></div></div><span class="metric-val" style="color:#10b981">3/5</span></div>
-        <div class="metric-row"><span class="metric-emoji">😤</span><span class="metric-label">Stress</span><div class="metric-bar"><div class="metric-bar-fill" style="width:40%;background:#ef4444"></div></div><span class="metric-val" style="color:#ef4444">2/5</span></div>
-        <div class="metric-row"><span class="metric-emoji">😴</span><span class="metric-label">Sleep</span><div class="metric-bar"><div class="metric-bar-fill" style="width:100%;background:#3b82f6"></div></div><span class="metric-val" style="color:#3b82f6">5/5</span></div>
-        <div class="metric-row"><span class="metric-emoji">😄</span><span class="metric-label">Happiness</span><div class="metric-bar"><div class="metric-bar-fill" style="width:80%;background:#f59e0b"></div></div><span class="metric-val" style="color:#f59e0b">4/5</span></div>
-        <div class="checkin-badge">✓ Checked in today</div>
-      </div>
-    </div>
-  </section>
+document.querySelectorAll('[data-mock="board"]').forEach(e => e.innerHTML = board(false));
+document.querySelectorAll('[data-mock="board-dark"]').forEach(e => e.innerHTML = board(true));
+document.querySelectorAll('[data-mock="frog"]').forEach(e => e.innerHTML = frogCard(false));
+document.querySelectorAll('[data-mock="hours"]').forEach(e => e.innerHTML = hours(false));
+document.querySelectorAll('[data-mock="share"]').forEach(e => e.innerHTML = share());
+document.querySelectorAll('[data-mock="cal"]').forEach(e => e.innerHTML = calCells());
+document.querySelectorAll('[data-mock="phone"]').forEach(e => e.innerHTML = phone());
+document.querySelectorAll("[data-scr]").forEach(e => e.innerHTML = S[+e.dataset.scr]());
+for (let i = 0; i < 5; i++) document.querySelectorAll(`[data-mock="s${i}"]`).forEach(e => e.innerHTML = S[i]());
 
-  <!-- Levels & Rewards -->
-  <section class="rewards-section">
-    <div class="rewards-inner">
-      <div>
-        <div class="section-eyebrow" style="text-align:left">Levels & Rewards</div>
-        <h2 class="section-title" style="text-align:left;font-size:clamp(28px,4vw,44px)">
-          Productivity that<br>actually feels like progress
-        </h2>
-        <p style="font-size:16px;color:var(--text-dim);line-height:1.7;margin-bottom:24px">
-          Every task you complete earns XP. Level up, build a streak, and unlock rewards along the way — it's the same to-do list, just one that notices when you're putting the work in.
-        </p>
-        <ul class="rewards-list">
-          <li><span class="dot">✓</span> XP and levels up to 50, boosted by frog tasks, subtasks, and streaks</li>
-          <li><span class="dot">✓</span> Streaks that build day-to-day and increase your XP bonus</li>
-          <li><span class="dot">✓</span> Unlockable accent themes — Sunset, Ocean, Royal, Inferno</li>
-          <li><span class="dot">✓</span> Prestige at level 50 — reset your level, keep your streak and rewards</li>
-          <li><span class="dot">✓</span> A scoreboard ranked by prestige, then level, then XP — never shows email addresses</li>
-        </ul>
-      </div>
-      <div class="rewards-demo">
-        <div class="rewards-level-row">
-          <div class="rewards-level-badge">17</div>
-          <div style="flex:1">
-            <div class="rewards-level-label">Level 17</div>
-            <div class="rewards-xp-bar"><div class="rewards-xp-fill" style="width:64%"></div></div>
-            <div class="rewards-xp-text">3,240 / 5,000 XP</div>
-          </div>
-        </div>
-        <div class="rewards-streak">🔥 12-day streak <span>+20% XP bonus</span></div>
-        <div class="rewards-divider"></div>
-        <div class="rewards-leaderboard-title">Scoreboard</div>
-        <div class="rewards-leader-row"><span class="rewards-rank">1</span><span>🥇</span><span class="rewards-name">Ava</span><span class="rewards-lvl">Lvl 42</span></div>
-        <div class="rewards-leader-row"><span class="rewards-rank">2</span><span>🥈</span><span class="rewards-name">Sam</span><span class="rewards-lvl">Lvl 38</span></div>
-        <div class="rewards-leader-row highlight"><span class="rewards-rank">3</span><span>🥉</span><span class="rewards-name">You</span><span class="rewards-lvl">Lvl 17</span></div>
-      </div>
-    </div>
-  </section>
+// B: swap the pinned screen as each chapter scrolls into the middle of the window
+const io = new IntersectionObserver(es => es.forEach(en => {
+  if (!en.isIntersecting) return;
+  const story = en.target.closest(".story"), i = en.target.dataset.s;
+  story.querySelectorAll(".chap").forEach(c => c.classList.toggle("act", c === en.target));
+  story.querySelectorAll("[data-scr]").forEach(s => s.classList.toggle("on", s.dataset.scr === i));
+}), { rootMargin: "-45% 0px -45% 0px" });
+document.querySelectorAll(".chap").forEach(c => io.observe(c));
 
-  <!-- AI Breakdown demo -->
-  <section class="ai-section">
-    <div class="ai-inner">
-      <div class="ai-demo">
-        <div class="ai-demo-header">
-          <div class="ai-demo-dot"></div>
-          <span class="ai-demo-title">✨ AI Breakdown</span>
-        </div>
-        <div class="ai-demo-body">
-          <div class="ai-summary">
-            This task involves redesigning the main marketing page to better communicate the product's value. It matters because it's the first thing potential users see — conversion depends on it.
-          </div>
-          <div class="ai-steps-title">Action Plan — 2/5 done</div>
-          <div style="height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-bottom:12px">
-            <div style="height:100%;width:40%;background:var(--frog);border-radius:2px"></div>
-          </div>
-          <div class="ai-step"><div class="ai-step-num" style="background:var(--frog-dim);color:var(--frog)">✓</div><span class="ai-step-text" style="text-decoration:line-through;color:var(--text-muted)">Audit current page — identify what's not working</span></div>
-          <div class="ai-step"><div class="ai-step-num" style="background:var(--frog-dim);color:var(--frog)">✓</div><span class="ai-step-text" style="text-decoration:line-through;color:var(--text-muted)">Write new hero headline and subheading</span></div>
-          <div class="ai-step"><div class="ai-step-num">3</div><span class="ai-step-text">Sketch wireframe — above the fold layout</span></div>
-          <div class="ai-step"><div class="ai-step-num">4</div><span class="ai-step-text">Source or create feature visuals</span></div>
-          <div class="ai-step"><div class="ai-step-num">5</div><span class="ai-step-text">Dev handoff with annotated designs</span></div>
-          <div class="ai-warning">
-            <span>⚠️</span>
-            <div><strong>Watch out:</strong> Scope creep is the main risk here — set a clear boundary between redesign and full rebuild before starting.</div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div class="section-eyebrow" style="text-align:left">AI Breakdowns</div>
-        <h2 class="section-title" style="text-align:left;font-size:clamp(28px,4vw,44px)">
-          Turn any task into<br>a clear action plan
-        </h2>
-        <p style="font-size:16px;color:var(--text-dim);line-height:1.7;margin-bottom:24px">
-          Mark a task as your frog, hit "Break it down" and get an AI-generated plan in seconds — a plain-English summary of what's involved, numbered steps you can check off, and a warning about the most likely thing to go wrong.
-        </p>
-        <p style="font-size:16px;color:var(--text-dim);line-height:1.7;margin-bottom:28px">
-          Also works for due date suggestions, daily planning, and end-of-day journalling — all powered by Groq's Llama model.
-        </p>
-        <a href="https://app.tasklist.uk" class="btn-primary" style="display:inline-flex">Try it now →</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA -->
-  <section class="cta-section">
-    <div class="cta-card">
-      <div class="cta-eyebrow">Free · No credit card · Sign in with Google</div>
-      <h2 class="cta-title">
-        Your most productive day<br>starts with <em>one decision</em>
-      </h2>
-      <p class="cta-sub">
-        Pick your frog. Break it down. Get it done. Everything else follows.
-      </p>
-      <a href="https://app.tasklist.uk" class="cta-btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-        Continue with Google
-      </a>
-      <div class="cta-note">Your data is stored securely and never sold or shared.</div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer>
-    <div class="footer-inner">
-      <a href="/" class="footer-logo">
-        <div class="footer-logo-mark">tl</div>
-        <span class="footer-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
-      </a>
-      <div class="footer-built">
-        <a href="https://tasklist.uk/blogs" class="footer-link">Blog</a>
-        <a href="https://tasklist.uk/documentation" class="footer-link">Documentation</a>
-        <a href="https://tasklist.uk/privacy" class="footer-link">Privacy</a>
-        <span>Built with</span>
-        <a href="https://groq.com" target="_blank" rel="noopener">Groq</a>
-        <a href="https://hetzner.com" target="_blank" rel="noopener">Hetzner</a>
-        <a href="https://github.com/07lawless/taskos" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://www.linkedin.com/in/daniel-lawless-4324b8198/" target="_blank" rel="noopener">Daniel Lawless</a>
-      </div>
-      <span class="footer-copy">© 2026 Tasklist.uk</span>
-    </div>
-  </footer>
-
+</script>
 </body>
 </html>
