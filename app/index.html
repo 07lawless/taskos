@@ -53,41 +53,61 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* Sign-in page (matches the tasklist.uk homepage hero) */
-    .login-overlay { position: fixed; inset: 0; height: 100dvh; z-index: 9999; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #000; color: #f5f5f7; font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
-    .login-overlay::before { content: ""; position: fixed; width: 900px; height: 900px; left: 50%; top: 62%; transform: translate(-50%, -50%); background: radial-gradient(closest-side, rgba(99,102,241,.34), rgba(52,199,89,.10) 55%, transparent 75%); pointer-events: none; }
+    .login-overlay { position: fixed; inset: 0; height: 100dvh; z-index: 9999; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--al-bg); color: var(--al-ink); font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+    .al-bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+    .login-overlay .al-bg::after { content: ""; position: absolute; inset: 0; background-image: var(--al-grain); background-size: 160px 160px; opacity: .09; mix-blend-mode: overlay; }
+    .login-overlay.dark .al-bg::after { opacity: .07; mix-blend-mode: normal; }
     .login-inner > * { flex-shrink: 0; }
     .login-inner { flex-shrink: 0; position: relative; width: 100%; min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: max(env(safe-area-inset-top), 48px) 24px max(env(safe-area-inset-bottom), 32px); }
     .login-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 24px; letter-spacing: -.5px; background: linear-gradient(145deg, #6366f1, #4f46e5 60%, #4338ca); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 12px 40px rgba(79,70,229,.35); margin-bottom: 26px; }
     .login-h1 { font-size: clamp(38px, 6.4vw, 72px); font-weight: 700; letter-spacing: -.04em; line-height: 1.02; margin: 0; }
     .login-h1 span { display: block; }
-    .login-h1 .w { background: linear-gradient(180deg, #fff 30%, #8e8e93); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .login-h1 .grad { background: linear-gradient(90deg, #a5b4fc, #c4b5fd 40%, #86efac); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .06em; }
-    .login-lede { font-size: 18px; color: #a1a1a6; max-width: 460px; margin: 18px auto 34px; line-height: 1.5; }
+    .login-h1 .w { background: linear-gradient(180deg, #1d1d1f 30%, #6e6e73); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .login-h1 .grad { background: linear-gradient(90deg, #4f46e5, #7c3aed 45%, #16a34a); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: .06em; }
+    .login-lede { font-size: 18px; color: var(--al-dim); max-width: 460px; margin: 18px auto 34px; line-height: 1.5; }
     .login-acts { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 340px; }
-    .login-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 52px; border-radius: 100px; background: #fff; color: #1d1d1f; font-size: 16px; font-weight: 700; text-decoration: none; transition: box-shadow .15s, transform .12s; }
-    .login-btn:hover { box-shadow: 0 0 0 6px rgba(255,255,255,.12); }
+    .login-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 52px; border-radius: 100px; background: #1d1d1f; color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; transition: box-shadow .15s, transform .12s; }
+    .login-btn:hover { box-shadow: 0 0 0 6px rgba(0,0,0,.08); }
     .login-btn:active { transform: scale(.98); }
-    .login-btn:focus-visible, .login-guest-btn:focus-visible, .login-legal a:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 3px; }
-    .login-guest-btn { background: none; border: none; color: #a5b4fc; font-family: inherit; font-size: 15px; font-weight: 600; padding: 10px 6px; cursor: pointer; border-radius: 10px; }
-    .login-guest-btn:hover { color: #c7d2fe; }
-    .login-guest-note { display: none; background: #1c1c1e; color: #a1a1a6; font-size: 13.5px; line-height: 1.5; border-radius: 14px; padding: 12px 14px; text-align: left; }
+    .login-btn:focus-visible, .login-guest-btn:focus-visible, .login-legal a:focus-visible { outline: 2px solid #4f46e5; outline-offset: 3px; }
+    .login-guest-btn { background: none; border: none; color: #4f46e5; font-family: inherit; font-size: 15px; font-weight: 600; padding: 10px 6px; cursor: pointer; border-radius: 10px; }
+    .login-guest-btn:hover { color: #4338ca; }
+    .login-guest-note { display: none; background: rgba(255,255,255,.72); border: 1px solid rgba(0,0,0,.06); color: #6e6e73; font-size: 13.5px; line-height: 1.5; border-radius: 14px; padding: 12px 14px; text-align: left; }
     .login-guest-note.show { display: block; }
-    .login-preview { margin-top: 44px; width: min(520px, 100%); background: linear-gradient(160deg, rgba(99,102,241,.22), #161618 60%); border: 1px solid #2c2c2e; border-radius: 22px; padding: 16px; text-align: left; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+    .login-preview { margin-top: 44px; width: min(520px, 100%); background: rgba(255,255,255,.66); backdrop-filter: blur(20px) saturate(1.3); -webkit-backdrop-filter: blur(20px) saturate(1.3); border: 1px solid rgba(255,255,255,.8); border-radius: 22px; padding: 16px; text-align: left; box-shadow: 0 30px 80px rgba(60,60,120,.14); }
     .login-pv-h { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 4px 12px; }
     .login-pv-h b { font-size: 20px; letter-spacing: -.4px; }
-    .login-pv-h span { font-size: 13px; color: #86868b; }
-    .login-pv-frog { display: flex; align-items: center; gap: 12px; background: rgba(52,199,89,.12); border: 1px solid rgba(52,199,89,.28); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+    .login-pv-h span { font-size: 13px; color: #8e8e93; }
+    .login-pv-frog { display: flex; align-items: center; gap: 12px; background: rgba(52,199,89,.12); border: 1px solid rgba(22,163,74,.25); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
     .login-pv-frog .f { width: 34px; height: 34px; border-radius: 10px; background: rgba(52,199,89,.2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
     .login-pv-frog b { font-size: 14.5px; display: block; }
-    .login-pv-frog small { font-size: 12px; color: #86efac; }
-    .login-pv-frog .t { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700; color: #86efac; }
-    .login-pv-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-top: 1px solid #2c2c2e; font-size: 14.5px; }
+    .login-pv-frog small { font-size: 12px; color: #15803d; }
+    .login-pv-frog .t { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700; color: #15803d; }
+    .login-pv-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-top: 1px solid rgba(0,0,0,.07); font-size: 14.5px; }
     .login-pv-frog + .login-pv-row { border-top: none; }
-    .login-pv-row i { width: 18px; height: 18px; border-radius: 50%; border: 1.6px solid #636366; flex-shrink: 0; }
-    .login-pv-row em { font-style: normal; margin-left: auto; font-size: 12.5px; color: #86868b; white-space: nowrap; }
-    .login-pv-row em.late { color: #ff9f0a; }
-    .login-legal { color: #6e6e73; margin-top: 34px; font-size: 12.5px; line-height: 1.5; }
-    .login-legal a { color: #a1a1a6; text-decoration: none; font-weight: 600; }
+    .login-pv-row i { width: 18px; height: 18px; border-radius: 50%; border: 1.6px solid #aeaeb2; flex-shrink: 0; }
+    .login-pv-row em { font-style: normal; margin-left: auto; font-size: 12.5px; color: #8e8e93; white-space: nowrap; }
+    .login-pv-row em.late { color: #c2410c; }
+    .login-legal { color: #86868b; margin-top: 34px; font-size: 12.5px; line-height: 1.5; }
+    .login-legal a { color: #4f46e5; text-decoration: none; font-weight: 600; }
+    /* Sign-in page in dark mode */
+    .login-overlay.dark .login-h1 .w { background: linear-gradient(180deg, #fff 30%, #8e8e93); -webkit-background-clip: text; background-clip: text; }
+    .login-overlay.dark .login-h1 .grad { background: linear-gradient(90deg, #a5b4fc, #c4b5fd 40%, #86efac); -webkit-background-clip: text; background-clip: text; }
+    .login-overlay.dark .login-btn { background: #fff; color: #1d1d1f; }
+    .login-overlay.dark .login-btn:hover { box-shadow: 0 0 0 6px rgba(255,255,255,.12); }
+    .login-overlay.dark .login-guest-btn { color: #a5b4fc; }
+    .login-overlay.dark .login-guest-btn:hover { color: #c7d2fe; }
+    .login-overlay.dark .login-guest-note { background: rgba(28,28,30,.8); border-color: rgba(255,255,255,.06); color: #a1a1a6; }
+    .login-overlay.dark .login-preview { background: rgba(22,22,24,.62); border-color: rgba(255,255,255,.08); box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+    .login-overlay.dark .login-pv-frog { border-color: rgba(52,199,89,.28); }
+    .login-overlay.dark .login-pv-frog small, .login-overlay.dark .login-pv-frog .t { color: #86efac; }
+    .login-overlay.dark .login-pv-row { border-top-color: #2c2c2e; }
+    .login-overlay.dark .login-pv-frog + .login-pv-row { border-top: none; }
+    .login-overlay.dark .login-pv-row i { border-color: #636366; }
+    .login-overlay.dark .login-pv-row em.late { color: #ff9f0a; }
+    .login-overlay.dark .login-legal { color: #6e6e73; }
+    .login-overlay.dark .login-legal a { color: #a1a1a6; }
+    .login-overlay.dark .login-btn:focus-visible, .login-overlay.dark .login-guest-btn:focus-visible { outline-color: #a5b4fc; }
     @media (max-width: 480px) {
       .login-lede { font-size: 16px; margin: 14px auto 28px; }
       .login-preview { margin-top: 34px; }
@@ -97,10 +117,11 @@
     /* Loading screen: "Paper" wordmark over a soft aurora. Each glow is its own
        layer with an eased fall-off (no blur filter), and a fine grain on top
        dithers the gradients so they don't band into visible steps. */
-    .auth-loader { --al-bg: #f5f5f7; --al-ink: #1d1d1f; --al-dim: #6e6e73; --al-track: rgba(0,0,0,.08); --al-dot: #4f46e5;
-      --al-a: 165,180,252; --al-b: 216,180,254; --al-c: 134,239,172; --al-o: .75;
+    .auth-loader, .login-overlay { --al-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); --al-bg: #f5f5f7; --al-ink: #1d1d1f; --al-dim: #6e6e73; --al-track: rgba(0,0,0,.08); --al-dot: #4f46e5;
+      --al-a: 165,180,252; --al-b: 216,180,254; --al-c: 134,239,172; --al-o: .75; }
+    .auth-loader {
       position: fixed; inset: 0; z-index: 9998; background: var(--al-bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 26px; overflow: hidden; font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
-    .auth-loader.dark { --al-bg: #050507; --al-ink: #f5f5f7; --al-dim: #a1a1a6; --al-track: rgba(255,255,255,.12); --al-dot: #a5b4fc;
+    .auth-loader.dark, .login-overlay.dark { --al-bg: #050507; --al-ink: #f5f5f7; --al-dim: #a1a1a6; --al-track: rgba(255,255,255,.12); --al-dot: #a5b4fc;
       --al-a: 79,70,229; --al-b: 124,58,237; --al-c: 22,163,74; --al-o: .55; }
     .al-blob { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform; }
     .al-blob.a { width: 95vmax; height: 95vmax; left: -30vmax; top: -40vmax; background: radial-gradient(closest-side, rgba(var(--al-a),var(--al-o)) 0%, rgba(var(--al-a),calc(var(--al-o)*.72)) 22%, rgba(var(--al-a),calc(var(--al-o)*.42)) 45%, rgba(var(--al-a),calc(var(--al-o)*.16)) 68%, rgba(var(--al-a),.03) 86%, rgba(var(--al-a),0) 100%); animation: al-a 22s ease-in-out infinite alternate; }
@@ -109,7 +130,7 @@
     @keyframes al-a { to { transform: translate3d(12vmax, 8vmax, 0) scale(1.1); } }
     @keyframes al-b { to { transform: translate3d(-10vmax, 10vmax, 0) scale(.92); } }
     @keyframes al-c { to { transform: translate3d(8vmax, -8vmax, 0) scale(1.08); } }
-    .auth-loader::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 160px 160px; opacity: .09; mix-blend-mode: overlay; }
+    .auth-loader::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: var(--al-grain); background-size: 160px 160px; opacity: .09; mix-blend-mode: overlay; }
     .auth-loader.dark::after { opacity: .07; mix-blend-mode: normal; }
     .al-word { position: relative; z-index: 1; display: flex; overflow: hidden; padding: 0 2px 6px; font-size: clamp(44px, 9vw, 76px); font-weight: 700; letter-spacing: -.05em; color: var(--al-ink); line-height: 1.05; }
     .al-word span { display: inline-block; transform: translateY(105%); animation: al-up .7s cubic-bezier(.2,.9,.25,1) forwards; }
@@ -136,11 +157,8 @@
     <div class="al-track"><i></i></div>
     <div class="al-line">Getting your day ready</div>
   </div>
-  <script>
-    // Match the loader to the saved theme straight away (light unless set to dark).
-    try { if ((localStorage.getItem("vtm_theme_v1") || "light") === "dark") document.getElementById("auth-loader").classList.add("dark"); } catch (e) {}
-  </script>
   <div id="login-overlay" class="login-overlay" style="display:none">
+    <div class="al-bg" aria-hidden="true"><div class="al-blob a"></div><div class="al-blob b"></div><div class="al-blob c"></div></div>
     <main class="login-inner">
       <div class="login-icon" aria-hidden="true">tl</div>
       <h1 class="login-h1"><span class="w">Know exactly</span><span class="grad">what to do today.</span></h1>
@@ -168,6 +186,10 @@
       <p class="login-legal">Your data is stored securely and never sold or shared. <a href="https://tasklist.uk/privacy" target="_blank" rel="noopener">Privacy policy</a></p>
     </main>
   </div>
+  <script>
+    // Match the loading screen and sign-in page to the saved theme straight away (light unless set to dark).
+    try { if ((localStorage.getItem("vtm_theme_v1") || "light") === "dark") ["auth-loader", "login-overlay"].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add("dark"); }); } catch (e) {}
+  </script>
   <script>
     // Apply theme before React renders to avoid flash
     (function() {
