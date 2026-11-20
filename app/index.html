@@ -94,24 +94,52 @@
     }
     @media (max-height: 760px) and (min-width: 481px) { .login-preview { display: none; } }
 
-    .auth-loader { position: fixed; inset: 0; z-index: 9998; background: #050507; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 22px; overflow: hidden; }
-    /* Aurora: slow-drifting indigo, green and lilac glow */
-    .auth-loader::before { content: ""; position: absolute; inset: -20%; filter: blur(70px); opacity: .9; pointer-events: none;
-      background: radial-gradient(40% 35% at 25% 30%, rgba(99,102,241,.55), transparent 70%), radial-gradient(35% 30% at 75% 35%, rgba(52,199,89,.35), transparent 70%), radial-gradient(40% 35% at 55% 85%, rgba(196,181,253,.35), transparent 70%);
-      animation: auth-drift 18s ease-in-out infinite alternate; }
-    @keyframes auth-drift { to { transform: translate3d(4%, -3%, 0) scale(1.08) rotate(6deg); } }
-    .auth-loader-logo { position: relative; width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 24px; letter-spacing: -.5px; font-family: "DM Sans", system-ui, sans-serif; background: linear-gradient(145deg, #6366f1, #4f46e5 60%, #4338ca); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 12px 40px rgba(79,70,229,.35); }
-    .auth-loader-spinner { position: relative; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.12); border-top-color: #a5b4fc; border-radius: 50%; animation: auth-spin 0.7s linear infinite; }
-    @keyframes auth-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .auth-loader::before { animation: none; } .auth-loader-spinner { animation-duration: 2s; } .login-btn { transition: none; } }
+    /* Loading screen: "Paper" wordmark over a soft aurora. Each glow is its own
+       layer with an eased fall-off (no blur filter), and a fine grain on top
+       dithers the gradients so they don't band into visible steps. */
+    .auth-loader { --al-bg: #f5f5f7; --al-ink: #1d1d1f; --al-dim: #6e6e73; --al-track: rgba(0,0,0,.08); --al-dot: #4f46e5;
+      --al-a: 165,180,252; --al-b: 216,180,254; --al-c: 134,239,172; --al-o: .75;
+      position: fixed; inset: 0; z-index: 9998; background: var(--al-bg); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 26px; overflow: hidden; font-family: "DM Sans", system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+    .auth-loader.dark { --al-bg: #050507; --al-ink: #f5f5f7; --al-dim: #a1a1a6; --al-track: rgba(255,255,255,.12); --al-dot: #a5b4fc;
+      --al-a: 79,70,229; --al-b: 124,58,237; --al-c: 22,163,74; --al-o: .55; }
+    .al-blob { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform; }
+    .al-blob.a { width: 95vmax; height: 95vmax; left: -30vmax; top: -40vmax; background: radial-gradient(closest-side, rgba(var(--al-a),var(--al-o)) 0%, rgba(var(--al-a),calc(var(--al-o)*.72)) 22%, rgba(var(--al-a),calc(var(--al-o)*.42)) 45%, rgba(var(--al-a),calc(var(--al-o)*.16)) 68%, rgba(var(--al-a),.03) 86%, rgba(var(--al-a),0) 100%); animation: al-a 22s ease-in-out infinite alternate; }
+    .al-blob.b { width: 80vmax; height: 80vmax; right: -30vmax; top: -20vmax; background: radial-gradient(closest-side, rgba(var(--al-c),var(--al-o)) 0%, rgba(var(--al-c),calc(var(--al-o)*.7)) 22%, rgba(var(--al-c),calc(var(--al-o)*.4)) 45%, rgba(var(--al-c),calc(var(--al-o)*.15)) 68%, rgba(var(--al-c),.03) 86%, rgba(var(--al-c),0) 100%); animation: al-b 26s ease-in-out infinite alternate; }
+    .al-blob.c { width: 90vmax; height: 90vmax; left: 5vmax; bottom: -55vmax; background: radial-gradient(closest-side, rgba(var(--al-b),var(--al-o)) 0%, rgba(var(--al-b),calc(var(--al-o)*.7)) 22%, rgba(var(--al-b),calc(var(--al-o)*.4)) 45%, rgba(var(--al-b),calc(var(--al-o)*.15)) 68%, rgba(var(--al-b),.03) 86%, rgba(var(--al-b),0) 100%); animation: al-c 30s ease-in-out infinite alternate; }
+    @keyframes al-a { to { transform: translate3d(12vmax, 8vmax, 0) scale(1.1); } }
+    @keyframes al-b { to { transform: translate3d(-10vmax, 10vmax, 0) scale(.92); } }
+    @keyframes al-c { to { transform: translate3d(8vmax, -8vmax, 0) scale(1.08); } }
+    .auth-loader::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 160px 160px; opacity: .09; mix-blend-mode: overlay; }
+    .auth-loader.dark::after { opacity: .07; mix-blend-mode: normal; }
+    .al-word { position: relative; z-index: 1; display: flex; overflow: hidden; padding: 0 2px 6px; font-size: clamp(44px, 9vw, 76px); font-weight: 700; letter-spacing: -.05em; color: var(--al-ink); line-height: 1.05; }
+    .al-word span { display: inline-block; transform: translateY(105%); animation: al-up .7s cubic-bezier(.2,.9,.25,1) forwards; }
+    .al-word .dot { color: var(--al-dot); }
+    @keyframes al-up { to { transform: none; } }
+    .al-track { position: relative; z-index: 1; width: min(220px, 56vw); height: 3px; border-radius: 2px; background: var(--al-track); overflow: hidden; }
+    .al-track i { position: absolute; top: 0; bottom: 0; width: 38%; border-radius: 2px; background: var(--al-ink); animation: al-slide 1.5s cubic-bezier(.65,0,.35,1) .45s infinite; transform: translateX(-110%); }
+    @keyframes al-slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(290%); } }
+    .al-line { position: relative; z-index: 1; font-size: 15px; color: var(--al-dim); opacity: 0; transform: translateY(6px); animation: al-in .6s ease .6s forwards; }
+    @keyframes al-in { to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) {
+      .al-blob { animation: none; }
+      .al-word span, .al-line { animation-duration: .01ms; animation-delay: 0s; }
+      .al-track i { animation-duration: 3s; }
+    }
+    @media (prefers-reduced-motion: reduce) { .login-btn { transition: none; } }
   </style>
 </head>
 <body>
   <div id="root"></div>
   <div id="auth-loader" class="auth-loader" role="status" aria-label="Loading Tasklist">
-    <div class="auth-loader-logo">tl</div>
-    <div class="auth-loader-spinner"></div>
+    <div class="al-blob a"></div><div class="al-blob b"></div><div class="al-blob c"></div>
+    <div class="al-word" aria-hidden="true"><span style="animation-delay:0ms">T</span><span style="animation-delay:45ms">a</span><span style="animation-delay:90ms">s</span><span style="animation-delay:135ms">k</span><span style="animation-delay:180ms">l</span><span style="animation-delay:225ms">i</span><span style="animation-delay:270ms">s</span><span style="animation-delay:315ms">t</span><span class="dot" style="animation-delay:360ms">.</span></div>
+    <div class="al-track"><i></i></div>
+    <div class="al-line">Getting your day ready</div>
   </div>
+  <script>
+    // Match the loader to the saved theme straight away (light unless set to dark).
+    try { if ((localStorage.getItem("vtm_theme_v1") || "light") === "dark") document.getElementById("auth-loader").classList.add("dark"); } catch (e) {}
+  </script>
   <div id="login-overlay" class="login-overlay" style="display:none">
     <main class="login-inner">
       <div class="login-icon" aria-hidden="true">tl</div>
