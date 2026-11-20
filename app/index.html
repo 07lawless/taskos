@@ -1181,6 +1181,137 @@ const css = `
     .ib-gh-acts .ib-tbtn { min-height: 36px; padding: 0 6px; }
     .bm-filters > button { min-height: 36px; }
   }
+  /* Brand kits */
+  .bk { padding-bottom: 48px; }
+  .bk .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .bk-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .bk-head h1 { font-size: clamp(26px, 3.5vw, 34px); font-weight: 700; letter-spacing: -.8px; line-height: 1.1; color: var(--c-text); }
+  .bk-head p { font-size: 14px; color: var(--c-text-muted); margin-top: 4px; }
+  .bk-btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 100px; padding: 9px 16px; font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; border: none; background: var(--c-surface3); color: var(--c-text); }
+  .bk-btn.pri { background: var(--c-accent); color: #fff; }
+  .bk-btn.pri:disabled { opacity: .6; }
+  .bk-btn.glass { background: rgba(255,255,255,.2); color: inherit; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .bk-link { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--c-accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; padding: 6px 2px; }
+  .bk-link.red { color: var(--c-high); }
+  .bk-dim { color: var(--c-text-muted); font-size: 13px; font-weight: 500; }
+  .bk-back { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--c-accent); font: inherit; font-weight: 600; font-size: 14px; padding: 6px 0; margin-bottom: 12px; cursor: pointer; }
+  .bk-empty { text-align: center; padding: 56px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--c-text-muted); font-size: 14px; max-width: 460px; margin: 0 auto; line-height: 1.5; }
+  .bk-empty b { font-size: 17px; color: var(--c-text); }
+  .bk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+  .bk-card { text-align: left; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; padding: 0; cursor: pointer; color: var(--c-text); font: inherit; transition: transform .15s, box-shadow .15s; }
+  .bk-card:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(20,20,40,.1); }
+  .bk-cover { height: 170px; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; }
+  .bk-strip { display: flex; height: 10px; }
+  .bk-strip i { flex: 1; }
+  .bk-card-b { padding: 14px 16px 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex: 1; }
+  .bk-card-b h4 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-card-b p { font-size: 13px; color: var(--c-text-muted); margin-top: 3px; }
+  .bk-card-b .bk-work-mini { color: var(--c-text-dim); }
+  .bk-aa { font-size: 30px; line-height: 1; color: var(--c-text-dim); font-weight: 700; flex-shrink: 0; }
+  .bk-card-new { border-style: dashed; align-items: center; justify-content: center; flex-direction: row; gap: 8px; min-height: 250px; color: var(--c-text-muted); font-weight: 600; background: transparent; }
+  .bk-card-new:hover { color: var(--c-accent); border-color: var(--c-accent); }
+  .bk-logo-img { max-width: 100%; max-height: 96px; object-fit: contain; display: block; }
+  .bk-plate { background: #fff; border-radius: 18px; padding: 22px 30px; display: flex; align-items: center; justify-content: center; max-width: min(78%, 420px); box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .bk-cover .bk-plate { padding: 14px 20px; border-radius: 14px; max-width: 80%; }
+  .bk-plate .bk-logo-img { height: 72px; width: auto; max-width: min(340px, 60vw); max-height: none; }
+  .bk-cover .bk-plate .bk-logo-img { height: 48px; max-width: 200px; }
+  .bk-hero-sm .bk-plate .bk-logo-img { height: 56px; }
+  .bk-wordmark { font-weight: 700; letter-spacing: -.5px; line-height: 1.05; text-align: center; overflow-wrap: anywhere; }
+  .bk-hero { border-radius: 22px; min-height: 260px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 56px 24px; }
+  .bk-hero-sm { min-height: 150px; padding: 28px 24px; margin-bottom: 18px; }
+  .bk-hero-tag { position: absolute; left: 22px; bottom: 16px; font-size: 13px; font-weight: 600; opacity: .8; text-decoration: none; }
+  .bk-hero-acts { position: absolute; right: 14px; top: 14px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .bk-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .bk-title h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -1px; line-height: 1.05; color: var(--c-text); }
+  .bk-title p { color: var(--c-text-muted); font-size: 14.5px; margin-top: 5px; }
+  .bk-work { font-size: 13px; color: var(--c-text-muted); }
+  .bk-work button { background: transparent; border: none; color: var(--c-accent); font: inherit; font-weight: 600; cursor: pointer; padding: 4px 0; }
+  .bk-sec { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 32px 0 12px; }
+  .bk-sec h3 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; color: var(--c-text); }
+  .bk-sec > span { font-size: 13px; color: var(--c-text-muted); }
+  .bk-add-row { width: 100%; display: flex; align-items: center; gap: 8px; border: 1.5px dashed var(--c-border); border-radius: 14px; padding: 18px; color: var(--c-text-muted); background: transparent; font: inherit; font-weight: 600; cursor: pointer; }
+  .bk-add-row:hover { color: var(--c-accent); border-color: var(--c-accent); }
+  .bk-logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .bk-logo-t { border-radius: 16px; border: 1px solid var(--c-border); overflow: hidden; background: var(--c-surface); }
+  .bk-stage { height: 150px; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .bk-stage img { height: 64px; width: auto; max-width: 100%; object-fit: contain; }
+  .bk-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 8px 8px 12px; border-top: 1px solid var(--c-border); }
+  .bk-meta b { display: block; font-size: 13px; color: var(--c-text); }
+  .bk-meta small { font-size: 12px; color: var(--c-text-muted); }
+  .bk-checker { background-color: #fff; background-image: linear-gradient(45deg, #ececf0 25%, transparent 25%), linear-gradient(-45deg, #ececf0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ececf0 75%), linear-gradient(-45deg, transparent 75%, #ececf0 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
+  .bk-icon-btn { width: 36px; height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: var(--c-text-muted); background: transparent; border: none; cursor: pointer; flex-shrink: 0; font-size: 15px; }
+  .bk-icon-btn:hover { background: var(--c-surface3); color: var(--c-text); }
+  .bk-icon-btn:disabled { opacity: .3; cursor: default; }
+  .bk-cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .bk-col { border-radius: 16px; overflow: hidden; border: 1px solid var(--c-border); background: var(--c-surface); text-align: left; padding: 0; cursor: pointer; font: inherit; color: var(--c-text); transition: transform .12s; }
+  .bk-col:hover { transform: translateY(-2px); }
+  .bk-chip { height: 104px; display: flex; align-items: flex-end; padding: 10px 12px; font-size: 12px; font-weight: 700; }
+  .bk-col-i { padding: 10px 12px 12px; display: grid; gap: 3px; }
+  .bk-col-i b { font-size: 14px; }
+  .bk-col-i span { font-size: 12.5px; color: var(--c-text-dim); }
+  .bk-types { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .bk-type { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; padding: 20px; min-width: 0; color: var(--c-text); }
+  .bk-type-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .bk-type-top small { font-size: 12.5px; color: var(--c-text-muted); font-weight: 600; }
+  .bk-copy { background: transparent; border: none; color: var(--c-accent); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 4px 0; }
+  .bk-big { font-size: clamp(44px, 6vw, 72px); line-height: 1; margin: 10px 0 14px; letter-spacing: -1px; }
+  .bk-glyphs { font-size: 17px; color: var(--c-text-dim); letter-spacing: 1px; margin-bottom: 14px; overflow-wrap: anywhere; }
+  .bk-scale { display: grid; gap: 8px; border-top: 1px solid var(--c-border); padding-top: 12px; }
+  .bk-scale div { display: flex; align-items: baseline; gap: 12px; white-space: nowrap; overflow: hidden; }
+  .bk-scale span { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--c-text-muted); width: 58px; flex-shrink: 0; }
+  .bk-scale em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
+  .bk-files, .bk-box { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 14px; overflow: hidden; }
+  .bk-file { display: flex; align-items: center; gap: 12px; padding: 10px 14px; min-height: 58px; width: 100%; }
+  .bk-file + .bk-file { border-top: 1px solid var(--c-border); }
+  .bk-file-add { color: var(--c-accent); font: inherit; font-weight: 600; background: transparent; border: none; cursor: pointer; text-align: left; }
+  .bk-ext { width: 38px; height: 38px; border-radius: 10px; background: var(--c-surface3); display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; color: var(--c-text-dim); flex-shrink: 0; }
+  .bk-file-t { flex: 1; min-width: 0; }
+  .bk-file-t b { display: block; font-weight: 500; color: var(--c-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-file-t small { font-size: 12.5px; color: var(--c-text-muted); }
+  .bk-guide { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .bk-g { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; padding: 18px; }
+  .bk-g h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--c-text); }
+  .bk-g p, .bk-g li { font-size: 14px; color: var(--c-text-dim); line-height: 1.55; white-space: pre-wrap; }
+  .bk-g ul { list-style: none; display: grid; gap: 6px; }
+  .bk-g li { display: flex; gap: 8px; }
+  .bk-g li i { font-style: normal; font-weight: 800; width: 14px; flex-shrink: 0; }
+  .bk-g li i.ok { color: var(--c-frog); } .bk-g li i.no { color: var(--c-high); }
+  .bk-links { display: grid; gap: 8px; }
+  .bk-links a { color: var(--c-accent); font-weight: 600; text-decoration: none; font-size: 14px; overflow-wrap: anywhere; }
+  /* Kit editor */
+  .bk-edit { max-width: 860px; margin: 0 auto; }
+  .bk-edit-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .bk-edit-bar .bk-back { margin: 0; }
+  .bk-edit-acts { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .bk-err { color: var(--c-high); background: var(--c-high-dim); border-radius: 10px; padding: 10px 14px; font-size: 14px; margin-bottom: 14px; }
+  .bk-form { display: grid; gap: 24px; }
+  .bk-form h3 { font-size: 15px; font-weight: 700; color: var(--c-text); margin: 0 0 8px 4px; display: flex; gap: 8px; align-items: baseline; }
+  .bk-hint { font-size: 12.5px; color: var(--c-text-muted); margin: 8px 4px 0; }
+  .bk-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 14px; min-height: 52px; }
+  .bk-row + .bk-row { border-top: 1px solid var(--c-border); }
+  .bk-row > span:first-child:not(.bk-ext):not(.bk-logo-thumb) { width: 104px; flex-shrink: 0; font-size: 14.5px; color: var(--c-text); }
+  .bk-row input:not([type=color]) { flex: 1; min-width: 0; border: none !important; box-shadow: none !important; background: transparent !important; padding: 8px 0 !important; border-radius: 0; }
+  .bk-row input[type=color] { width: 34px; height: 34px; padding: 0; border: 1px solid var(--c-border); border-radius: 9px; flex-shrink: 0; background: none; cursor: pointer; }
+  .bk-col-acts { display: flex; gap: 2px; flex-shrink: 0; }
+  .bk-add-in { width: 100%; color: var(--c-accent); font: inherit; font-weight: 600; background: transparent; border: none; cursor: pointer; gap: 8px; }
+  .bk-logo-row { gap: 14px; }
+  .bk-logo-thumb { width: 56px; height: 56px; border-radius: 12px; border: 1px solid var(--c-border); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .bk-logo-thumb img { max-width: 85%; max-height: 85%; object-fit: contain; }
+  .bk-pad { padding: 14px; display: grid; gap: 14px; }
+  .bk-lab { display: grid; gap: 6px; font-size: 14px; font-weight: 600; color: var(--c-text); }
+  .bk-lab small { font-weight: 500; color: var(--c-text-muted); font-size: 12.5px; }
+  .bk-lab textarea { min-height: 0; font-weight: 400; }
+  .bk-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 760px) {
+    .bk-types, .bk-two { grid-template-columns: 1fr; }
+    .bk-hero { min-height: 220px; padding: 64px 18px 44px; }
+    .bk-hero-acts { left: 12px; right: 12px; justify-content: flex-end; }
+    .bk-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bk-logos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bk-stage { height: 110px; }
+    .bk-row > span:first-child:not(.bk-ext):not(.bk-logo-thumb) { width: 86px; }
+    .bk-col-row input[aria-label="Hex code"] { width: 84px !important; }
+  }
   /* Notes: dated list */
   .nl { padding-bottom: 40px; }
   .nl-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
@@ -5557,6 +5688,8 @@ function WorkHoursSetupModal({ onSave, onSkip }) {
 const CHANGELOG = [
   { id: "2026-11-20-tidy-up", date: "2026-11-20", tag: "removed", title: "A simpler Tasklist",
     body: "A few things have gone to keep the app focused: the end of day recap, the happiness rating after finishing a task, the daily check-in popup and the Daily page. Check in from Wellbeing whenever you like. On a phone, Analytics now sits in the bottom bar." },
+  { id: "2026-11-20-brand-kits", date: "2026-11-20", tag: "new", title: "Brand kits",
+    body: "Brands is now a gallery of brand kits. Each kit shows the logo on white, its brand colour, dark and transparent backgrounds, colours you can tap to copy with hex, RGB and a readability check, a type sample, files to download, and guidelines for tone of voice, dos and don'ts, and links. Name a kit the same as a task brand to see its open tasks and hours." },
   { id: "2026-11-20-notes-list", date: "2026-11-20", tag: "improved", title: "Notes are now a dated list",
     body: "Notes show as a simple list, newest first and grouped by month, with each note's date on the left. Pinned notes stay at the top, and search covers titles and text." },
   { id: "2026-11-20-phone-fixes", date: "2026-11-20", tag: "fixed", title: "Better on your phone",
@@ -6020,206 +6153,390 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
-function BrandDetailView({ brand, onSaved, onDeleted, onBack }) {
+// ── Brand kits ──────────────────────────────────────────────────────────────
+// A gallery of kits (logo on its main colour, palette strip, heading font)
+// and a page per brand: logo on four backgrounds, colours with hex, RGB and a
+// readability label, a type specimen, files and written guidelines.
+// Guidelines, description and website are sent to the server as `details`;
+// until the server stores them they're also kept on this device.
+const BK_DETAILS_KEY = "tl_brand_details_v1";
+function bkReadLocal() { try { return JSON.parse(localStorage.getItem(BK_DETAILS_KEY) || "{}") || {}; } catch (e) { return {}; } }
+function bkDetails(b) {
+  if (!b) return {};
+  let d = b.details;
+  if (typeof d === "string") { try { d = JSON.parse(d); } catch (e) { d = null; } }
+  const local = b.id != null ? bkReadLocal()[b.id] : null;
+  return { ...(local || {}), ...(d && typeof d === "object" ? d : {}) };
+}
+function bkSaveLocal(id, details) {
+  try { const all = bkReadLocal(); all[id] = details; localStorage.setItem(BK_DETAILS_KEY, JSON.stringify(all)); } catch (e) {}
+}
+function bkHex(h) { const v = String(h || "").trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : /^#[0-9a-f]{3}$/i.test(v) ? "#" + v.slice(1).split("").map(c => c + c).join("") : null; }
+function bkRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
+function bkLum(h) { return bkRgb(h).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }).reduce((a, v, i) => a + v * [.2126, .7152, .0722][i], 0); }
+function bkOn(h) { return bkLum(h) > .45 ? "#1a1a24" : "#ffffff"; }
+function bkContrast(a, b) { const x = bkLum(a) + .05, y = bkLum(b) + .05; return Math.max(x, y) / Math.min(x, y); }
+function bkGrade(h) {
+  const w = bkContrast(h, "#ffffff"), k = bkContrast(h, "#000000"), best = Math.max(w, k);
+  return `${best >= 4.5 ? "Easy to read" : best >= 3 ? "Large text only" : "Hard to read"} on ${w >= k ? "white" : "black"}`;
+}
+function bkColors(b) { return (b && Array.isArray(b.colors) ? b.colors : []).map(c => ({ label: c.label || "", hex: bkHex(c.hex) })).filter(c => c.hex); }
+function bkPrimary(b) { const c = bkColors(b); return c.length ? c[0].hex : "#4f46e5"; }
+function bkDarkest(b) { const c = bkColors(b); const d = [...c].sort((x, y) => bkLum(x.hex) - bkLum(y.hex))[0]; return d && bkLum(d.hex) < .08 ? d.hex : "#16161d"; }
+function bkLogo(b) { return (b && Array.isArray(b.files) ? b.files : []).find(f => f.kind === "logo") || null; }
+function bkAssets(b) { return (b && Array.isArray(b.files) ? b.files : []).filter(f => f.kind === "file"); }
+function bkUrl(f) { return `/uploads/brands/${f.filename}`; }
+function bkExt(f) { const m = String(f.original_name || f.filename || "").match(/\.([a-z0-9]+)$/i); return m ? m[1].toUpperCase().slice(0, 4) : (f.mime_type === "application/pdf" ? "PDF" : "FILE"); }
+function bkLinkedProject(b, projects) {
+  const n = String(b?.name || "").trim().toLowerCase();
+  return n ? (projects || []).find(p => String(p.name || "").trim().toLowerCase() === n) || null : null;
+}
+function bkWork(b, projects, tasks) {
+  const p = bkLinkedProject(b, projects);
+  if (!p) return null;
+  const mine = (tasks || []).filter(t => t && String(t.projectId) === String(p.id));
+  const mon = inMonday(today());
+  return { project: p, open: mine.filter(t => t.status !== "Done").length, week: mine.reduce((a, t) => a + sumMins(t.timeLogs, mon), 0) };
+}
+function bkDownload(files) {
+  files.forEach((f, i) => setTimeout(() => {
+    const a = document.createElement("a"); a.href = bkUrl(f); a.download = f.original_name || f.filename; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+  }, i * 350));
+}
+const BK_ICON = {
+  back: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>,
+  plus: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
+  down: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v12M6 11l6 6 6-6M4 20h16"/></svg>,
+  edit: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>,
+  x: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>,
+};
+
+// Wordmark used when a brand has no logo yet: the name in its heading font.
+function BkMark({ brand, color, size = 40 }) {
+  const logo = bkLogo(brand);
+  // Logos sit on a white plate so they read on any brand colour.
+  if (logo) return <span className="bk-plate"><img src={bkUrl(logo)} alt={`${brand.name} logo`} className="bk-logo-img" /></span>;
+  return <span className="bk-wordmark" style={{ fontFamily: `'${brand.heading_font || "DM Sans"}', 'DM Sans', sans-serif`, color, fontSize: size }}>{brand.name || "Untitled"}</span>;
+}
+
+function BrandsView({ brands, projects, tasks, onOpenBrand, onNewBrand }) {
+  useEffect(() => { (brands || []).forEach(b => loadBrandFont(b.heading_font)); }, [brands]);
+  return (
+    <div className="bk">
+      <div className="bk-head">
+        <div>
+          <h1>Brand kits</h1>
+          <p>Logos, colours, fonts and files for every brand you work on</p>
+        </div>
+        <button className="bk-btn pri" onClick={onNewBrand}>{BK_ICON.plus} New brand</button>
+      </div>
+      {(brands || []).length === 0 ? (
+        <div className="bk-empty">
+          <b>No brand kits yet</b>
+          <span>Keep each brand's logo, colours, fonts and files in one place, ready to copy or download.</span>
+          <button className="bk-btn pri" onClick={onNewBrand}>{BK_ICON.plus} Create a kit</button>
+        </div>
+      ) : (
+        <div className="bk-grid">
+          {brands.map(b => {
+            const cols = bkColors(b), p = bkPrimary(b), assets = bkAssets(b), w = bkWork(b, projects, tasks);
+            const fonts = b.heading_font && b.body_font && b.heading_font !== b.body_font ? `${b.heading_font} + ${b.body_font}` : (b.heading_font || b.body_font || "No fonts");
+            return (
+              <button key={b.id} className="bk-card" onClick={() => onOpenBrand(b)}>
+                <div className="bk-cover" style={{ background: p }}><BkMark brand={b} color={bkOn(p)} size={30} /></div>
+                {cols.length > 0 && <div className="bk-strip">{cols.slice(0, 8).map((c, i) => <i key={i} style={{ background: c.hex }} />)}</div>}
+                <div className="bk-card-b">
+                  <div style={{ minWidth: 0 }}>
+                    <h4>{b.name}</h4>
+                    <p>{cols.length} colour{cols.length === 1 ? "" : "s"} · {fonts} · {assets.length} file{assets.length === 1 ? "" : "s"}</p>
+                    {w && <p className="bk-work-mini">{w.open} open task{w.open === 1 ? "" : "s"}{w.week ? ` · ${fmtMins(w.week)} this week` : ""}</p>}
+                  </div>
+                  <span className="bk-aa" style={{ fontFamily: `'${b.heading_font || "DM Sans"}', 'DM Sans', sans-serif` }}>Aa</span>
+                </div>
+              </button>
+            );
+          })}
+          <button className="bk-card bk-card-new" onClick={onNewBrand}>{BK_ICON.plus} New brand</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// View a kit; "Edit kit" swaps to the editor in place. New brands open in the editor.
+function BrandDetailView({ brand, projects, tasks, onSaved, onDeleted, onBack, onSeeBoard }) {
+  const [editing, setEditing] = useState(!brand);
+  if (editing) return <BrandKitEditor brand={brand} onBack={brand ? () => setEditing(false) : onBack} onDeleted={onDeleted}
+    onSaved={id => { onSaved(id); if (brand) setEditing(false); }} />;
+  return <BrandKitPage brand={brand} projects={projects} tasks={tasks} onBack={onBack} onEdit={() => setEditing(true)} onSeeBoard={onSeeBoard} />;
+}
+
+function BrandKitPage({ brand: b, projects, tasks, onBack, onEdit, onSeeBoard }) {
+  const [copied, setCopied] = useState(null);
+  useEffect(() => { loadBrandFont(b.heading_font); loadBrandFont(b.body_font); }, [b.heading_font, b.body_font]);
+  const cols = bkColors(b), p = bkPrimary(b), logo = bkLogo(b), assets = bkAssets(b), d = bkDetails(b), w = bkWork(b, projects, tasks);
+  const hf = b.heading_font || "DM Sans", bf = b.body_font || "DM Sans";
+  const copy = (key, text) => { try { navigator.clipboard.writeText(text); } catch (e) {} setCopied(key); setTimeout(() => setCopied(c => c === key ? null : c), 1300); };
+  const dos = (d.dos || []).filter(Boolean), donts = (d.donts || []).filter(Boolean), links = (d.links || []).filter(l => l && l.url);
+  const hasGuides = d.voice || dos.length || donts.length || links.length;
+  const href = u => /^https?:\/\//i.test(u) ? u : "https://" + u;
+  const stages = [["On white", "#ffffff"], ["On brand colour", p], ["On dark", bkDarkest(b)], ["Transparent", null]];
+  const all = [logo, ...assets].filter(Boolean);
+
+  return (
+    <div className="bk">
+      <button className="bk-back" onClick={onBack}>{BK_ICON.back} Brand kits</button>
+      <div className="bk-hero" style={{ background: p, color: bkOn(p) }}>
+        <BkMark brand={b} color={bkOn(p)} size={56} />
+        {d.website && <a className="bk-hero-tag" href={href(d.website)} target="_blank" rel="noopener noreferrer" style={{ color: bkOn(p) }}>{d.website.replace(/^https?:\/\//i, "")}</a>}
+        <div className="bk-hero-acts">
+          {all.length > 0 && <button className="bk-btn glass" onClick={() => bkDownload(all)}>{BK_ICON.down} Download all</button>}
+          <button className="bk-btn glass" onClick={onEdit}>{BK_ICON.edit} Edit kit</button>
+        </div>
+      </div>
+      <div className="bk-title">
+        <div style={{ minWidth: 0 }}>
+          <h2>{b.name}</h2>
+          {d.description && <p>{d.description}</p>}
+        </div>
+        {w && (
+          <span className="bk-work">{w.open} open task{w.open === 1 ? "" : "s"}{w.week ? ` · ${fmtMins(w.week)} this week` : ""} · <button onClick={() => onSeeBoard(w.project)}>See on board</button></span>
+        )}
+      </div>
+
+      <div className="bk-sec"><h3>Logo</h3><span>{logo ? (logo.original_name || "Logo") : "None yet"}</span></div>
+      {logo ? (
+        <div className="bk-logos">
+          {stages.map(([label, bg]) => (
+            <div key={label} className="bk-logo-t">
+              <div className={`bk-stage ${bg ? "" : "bk-checker"}`} style={bg ? { background: bg } : null}><img src={bkUrl(logo)} alt="" /></div>
+              <div className="bk-meta"><span><b>{label}</b><small>{bkExt(logo)}</small></span><a className="bk-icon-btn" href={bkUrl(logo)} download={logo.original_name || logo.filename} aria-label={`Download logo`}>{BK_ICON.down}</a></div>
+            </div>
+          ))}
+        </div>
+      ) : <button className="bk-add-row" onClick={onEdit}>{BK_ICON.plus} Upload a logo</button>}
+
+      <div className="bk-sec"><h3>Colours</h3><span>{cols.length ? "Tap to copy" : "None yet"}</span></div>
+      {cols.length ? (
+        <div className="bk-cols">
+          {cols.map((c, i) => (
+            <button key={i} className="bk-col" onClick={() => copy("c" + i, c.hex.toUpperCase())} aria-label={`Copy ${c.label || "colour"} ${c.hex}`}>
+              <div className="bk-chip" style={{ background: c.hex, color: bkOn(c.hex) }}>{copied === "c" + i ? "Copied" : bkGrade(c.hex)}</div>
+              <div className="bk-col-i"><b>{c.label || "Colour"}</b><span className="mono">{c.hex.toUpperCase()}</span><span className="mono">RGB {bkRgb(c.hex).join(", ")}</span></div>
+            </button>
+          ))}
+        </div>
+      ) : <button className="bk-add-row" onClick={onEdit}>{BK_ICON.plus} Add colours</button>}
+
+      <div className="bk-sec"><h3>Typography</h3><span>{hf === bf ? hf : `${hf} and ${bf}`}</span></div>
+      <div className="bk-types">
+        {[["Headings", hf, 700, [["H1", 40, b.name || "Heading"], ["H2", 28, "Built for the long run"], ["H3", 20, "Section heading"]]],
+          ["Body", bf, 400, [["Lead", 19, "A short introduction to the page."], ["Body", 16, "The quick brown fox jumps over the lazy dog."], ["Small", 13, "Captions, labels and footnotes."]]]].map(([role, font, wt, rows]) => (
+          <div key={role} className="bk-type">
+            <div className="bk-type-top"><small>{role} · {font}</small><button className="bk-copy" onClick={() => copy(role, font)}>{copied === role ? "Copied" : "Copy name"}</button></div>
+            <div className="bk-big" style={{ fontFamily: `'${font}', 'DM Sans', sans-serif`, fontWeight: wt }}>Aa</div>
+            <div className="bk-glyphs" style={{ fontFamily: `'${font}', 'DM Sans', sans-serif`, fontWeight: wt }}>ABCDEFGHIJKLM abcdefghijklm 0123456789</div>
+            <div className="bk-scale" style={{ fontFamily: `'${font}', 'DM Sans', sans-serif` }}>
+              {rows.map(([lab, sz, txt]) => <div key={lab}><span>{lab} {sz}</span><em style={{ fontSize: sz, fontWeight: wt }}>{txt}</em></div>)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bk-sec"><h3>Files</h3><span>{assets.length} of {MAX_FILES_PER_BRAND}</span></div>
+      <div className="bk-files">
+        {assets.map(f => (
+          <div key={f.id} className="bk-file">
+            <span className="bk-ext">{bkExt(f)}</span>
+            <span className="bk-file-t"><b>{f.original_name || f.filename}</b><small>{formatFileSize(f.size_bytes || 0)}</small></span>
+            <a className="bk-link" href={bkUrl(f)} download={f.original_name || f.filename}>{BK_ICON.down} Download</a>
+          </div>
+        ))}
+        <button className="bk-file bk-file-add" onClick={onEdit}>{BK_ICON.plus} {assets.length ? "Add a file" : "Upload guidelines, templates or images"}</button>
+      </div>
+
+      <div className="bk-sec"><h3>Guidelines</h3><button className="bk-link" onClick={onEdit}>{hasGuides ? "Edit" : "Add"}</button></div>
+      {hasGuides ? (
+        <div className="bk-guide">
+          {d.voice && <div className="bk-g"><h4>Tone of voice</h4><p>{d.voice}</p></div>}
+          {dos.length > 0 && <div className="bk-g"><h4>Do</h4><ul>{dos.map((x, i) => <li key={i}><i className="ok">✓</i>{x}</li>)}</ul></div>}
+          {donts.length > 0 && <div className="bk-g"><h4>Don't</h4><ul>{donts.map((x, i) => <li key={i}><i className="no">✕</i>{x}</li>)}</ul></div>}
+          {links.length > 0 && <div className="bk-g"><h4>Links</h4><div className="bk-links">{links.map((l, i) => <a key={i} href={href(l.url)} target="_blank" rel="noopener noreferrer">{l.label || l.url.replace(/^https?:\/\//i, "")}</a>)}</div></div>}
+        </div>
+      ) : <button className="bk-add-row" onClick={onEdit}>{BK_ICON.plus} Add tone of voice, dos and don'ts, and links</button>}
+    </div>
+  );
+}
+
+function BrandKitEditor({ brand, onSaved, onDeleted, onBack }) {
+  const d0 = bkDetails(brand);
   const [name, setName] = useState(brand?.name || "");
-  const [headingFont, setHeadingFont] = useState(brand?.heading_font || "DM Serif Display");
+  const [headingFont, setHeadingFont] = useState(brand?.heading_font || "DM Sans");
   const [bodyFont, setBodyFont] = useState(brand?.body_font || "DM Sans");
-  const [colors, setColors] = useState(brand?.colors || [{ hex: "#4f46e5", label: "Primary" }]);
+  const [colors, setColors] = useState(() => { const c = bkColors(brand); return c.length ? c : [{ hex: "#4f46e5", label: "Primary" }]; });
   const [files, setFiles] = useState(brand?.files || []);
   const [brandId, setBrandId] = useState(brand?.id || null);
+  const [description, setDescription] = useState(d0.description || "");
+  const [website, setWebsite] = useState(d0.website || "");
+  const [voice, setVoice] = useState(d0.voice || "");
+  const [dos, setDos] = useState((d0.dos || []).join("\n"));
+  const [donts, setDonts] = useState((d0.donts || []).join("\n"));
+  const [links, setLinks] = useState((d0.links || []).map(l => l.label ? `${l.label} | ${l.url}` : l.url).join("\n"));
   const [saving, setSaving] = useState(false);
-  const [uploadErr, setUploadErr] = useState(null);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingFile, setUploadingFile] = useState(false);
+  const [err, setErr] = useState(null);
+  const [uploading, setUploading] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(false);
 
   useEffect(() => { loadBrandFont(headingFont); }, [headingFont]);
   useEffect(() => { loadBrandFont(bodyFont); }, [bodyFont]);
-
   const logo = files.find(f => f.kind === "logo");
   const assets = files.filter(f => f.kind === "file");
-  const primary = colors[0]?.hex || COLORS.accent;
+  const p = bkHex(colors[0]?.hex) || "#4f46e5";
 
-  function addColor() { setColors(c => [...c, { hex: "#000000", label: "" }]); }
-  function updateColor(i, patch) { setColors(c => c.map((col, idx) => idx === i ? { ...col, ...patch } : col)); }
-  function removeColor(i) { setColors(c => c.filter((_, idx) => idx !== i)); }
-
-  // Brand metadata (name/fonts/colors) needs to exist server-side before any
-  // file can be attached to it, since uploads are keyed by brand id — so
-  // saving the name first (creating the brand row) is a prerequisite for
-  // the upload buttons to do anything, not a separate optional step.
+  const lines = s => s.split("\n").map(x => x.trim()).filter(Boolean);
+  const details = () => ({
+    description: description.trim(), website: website.trim(), voice: voice.trim(), dos: lines(dos), donts: lines(donts),
+    links: lines(links).map(l => { const [a, b] = l.split("|").map(x => x.trim()); return b ? { label: a, url: b } : { label: "", url: a }; }),
+  });
   async function ensureSaved() {
-    const result = await api.saveBrand({ id: brandId, name: name.trim(), headingFont, bodyFont, colors });
-    if (result) { setBrandId(result.id); return result.id; }
+    const det = details();
+    const result = await api.saveBrand({ id: brandId, name: name.trim(), headingFont, bodyFont, colors: colors.map(c => ({ hex: bkHex(c.hex) || "#000000", label: c.label })), details: det });
+    if (result) { setBrandId(result.id); bkSaveLocal(result.id, det); return result.id; }
     return null;
   }
-
-  async function handleSave() {
-    if (!name.trim()) return;
-    setSaving(true);
-    const id = await ensureSaved();
+  async function save() {
+    if (!name.trim()) { setErr("Give the brand a name."); return; }
+    setSaving(true); setErr(null);
+    const id = await ensureSaved().catch(() => null);
     setSaving(false);
-    if (id) onSaved(id);
+    if (id) onSaved(id); else setErr("Couldn't save the kit. Try again.");
   }
-
-  async function handleUpload(fileList, kind) {
-    setUploadErr(null);
+  async function upload(fileList, kind) {
+    setErr(null);
     const file = fileList?.[0];
     if (!file) return;
-    if (file.size > MAX_BRAND_FILE_BYTES) { setUploadErr(`That file is ${formatFileSize(file.size)} — the limit is ${formatFileSize(MAX_BRAND_FILE_BYTES)}.`); return; }
-    if (kind === "file" && assets.length >= MAX_FILES_PER_BRAND) { setUploadErr(`Maximum ${MAX_FILES_PER_BRAND} files per brand — remove one first.`); return; }
-    if (!name.trim()) { setUploadErr("Give the brand a name first."); return; }
-
-    if (kind === "logo") setUploadingLogo(true); else setUploadingFile(true);
+    if (file.size > MAX_BRAND_FILE_BYTES) { setErr(`That file is ${formatFileSize(file.size)}. The limit is ${formatFileSize(MAX_BRAND_FILE_BYTES)}.`); return; }
+    if (kind === "file" && assets.length >= MAX_FILES_PER_BRAND) { setErr(`You can keep up to ${MAX_FILES_PER_BRAND} files per brand. Remove one first.`); return; }
+    if (!name.trim()) { setErr("Give the brand a name first."); return; }
+    setUploading(kind);
     try {
       const id = brandId || await ensureSaved();
       if (!id) throw new Error("Couldn't save the brand");
-      const uploaded = await api.uploadBrandFile(id, file, kind);
-      setFiles(prev => [...prev.filter(f => !(kind === "logo" && f.kind === "logo")), uploaded]);
-      if (!brandId) onSaved(id); // first save (triggered by an upload rather than the Save button) still needs to register the brand in the sidebar
-    } catch (e) {
-      setUploadErr(e.message);
-    } finally {
-      setUploadingLogo(false); setUploadingFile(false);
-    }
+      const up = await api.uploadBrandFile(id, file, kind);
+      setFiles(prev => [...prev.filter(f => !(kind === "logo" && f.kind === "logo")), up]);
+    } catch (e) { setErr(e.message || "Upload failed"); }
+    finally { setUploading(null); }
   }
-
-  async function handleDeleteFile(fileId) {
+  async function removeFile(fileId) {
     if (!brandId) return;
     setFiles(prev => prev.filter(f => f.id !== fileId));
     await api.deleteBrandFile(brandId, fileId).catch(console.error);
   }
-
-  async function handleDeleteBrand() {
+  async function del() {
     if (!brandId) { onBack(); return; }
     const ok = await api.deleteBrand(brandId).catch(() => false);
-    if (!ok) { setUploadErr("Couldn't delete this brand — try again."); return; }
+    if (!ok) { setErr("Couldn't delete this brand. Try again."); return; }
     onDeleted();
   }
+  const setCol = (i, patch) => setColors(cs => cs.map((c, k) => k === i ? { ...c, ...patch } : c));
+  const moveCol = (i, dir) => setColors(cs => { const a = [...cs]; const j = i + dir; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; });
 
   return (
-    <div style={{ maxWidth: 720, margin: "0 auto", paddingBottom: 60 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-        <button onClick={onBack} style={{ background: "none", color: COLORS.textDim, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-          All brands
-        </button>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <button onClick={handleDeleteBrand} style={{ background: "none", color: COLORS.high, fontSize: 12.5, fontWeight: 600 }}>{brandId ? "Delete brand" : "Cancel"}</button>
-          <button onClick={handleSave} disabled={!name.trim() || saving} style={{ background: COLORS.accent, color: "#fff", borderRadius: 10, padding: "9px 22px", fontSize: 13.5, fontWeight: 700, opacity: !name.trim() || saving ? 0.6 : 1 }}>
-            {saving ? "Saving…" : "Save"}
-          </button>
+    <div className="bk bk-edit">
+      <div className="bk-edit-bar">
+        <button className="bk-back" onClick={onBack}>{BK_ICON.back} {brand ? "Back to kit" : "Brand kits"}</button>
+        <div className="bk-edit-acts">
+          {brandId && (confirmDel
+            ? <><span className="bk-dim">Move to bin?</span><button className="bk-link" onClick={() => setConfirmDel(false)}>Keep</button><button className="bk-link red" onClick={del}>Move to bin</button></>
+            : <button className="bk-link red" onClick={() => setConfirmDel(true)}>Delete brand</button>)}
+          <button className="bk-btn pri" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save kit"}</button>
         </div>
       </div>
 
-      {/* Header — logo/initial, name, and a soft wash of the brand's own primary colour */}
-      <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "22px 24px", borderRadius: 18, background: `${primary}10`, border: `1px solid ${primary}30`, marginBottom: 24 }}>
-        <div style={{ width: 64, height: 64, borderRadius: 16, flexShrink: 0, overflow: "hidden", background: logo ? COLORS.surface : primary, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${COLORS.border}` }}>
-          {logo
-            ? <img src={`/uploads/brands/${logo.filename}`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-            : <span style={{ fontSize: 24, fontWeight: 800, color: "#fff" }}>{(name || "?").slice(0, 1).toUpperCase()}</span>}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. tasklist.uk"
-            style={{ background: "none", border: "none", padding: 0, fontFamily: `'${headingFont}', serif`, fontSize: 28, fontWeight: 400, color: COLORS.text, width: "100%" }} />
-          <div style={{ fontFamily: `'${bodyFont}', sans-serif`, fontSize: 13, color: COLORS.textDim, marginTop: 4 }}>The quick brown fox jumps over the lazy dog.</div>
-        </div>
+      <div className="bk-hero bk-hero-sm" style={{ background: p, color: bkOn(p) }}>
+        {logo ? <span className="bk-plate"><img src={bkUrl(logo)} alt="" className="bk-logo-img" /></span> : <span className="bk-wordmark" style={{ fontFamily: `'${headingFont}', 'DM Sans', sans-serif`, color: bkOn(p), fontSize: 44 }}>{name || "Brand name"}</span>}
       </div>
+      {err && <div className="bk-err" role="alert">{err}</div>}
 
-      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-        <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", display: "block", marginBottom: 12 }}>Logo</label>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 12, border: `1px solid ${COLORS.border}`, background: COLORS.surface2, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" }}>
-            {logo ? <img src={`/uploads/brands/${logo.filename}`} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ fontSize: 22, color: COLORS.textMuted }}>🖼️</span>}
+      <div className="bk-form">
+        <section>
+          <h3>About</h3>
+          <div className="bk-box">
+            <label className="bk-row"><span>Name</span><input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Northwind" autoFocus={!brand} /></label>
+            <label className="bk-row"><span>Description</span><input value={description} onChange={e => setDescription(e.target.value)} placeholder="What you do for them" /></label>
+            <label className="bk-row"><span>Website</span><input value={website} onChange={e => setWebsite(e.target.value)} placeholder="example.com" inputMode="url" /></label>
           </div>
-          <div>
-            <label style={{ display: "inline-block", background: COLORS.accentDim, color: COLORS.accent, borderRadius: 8, padding: "9px 16px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>
-              {uploadingLogo ? "Uploading…" : logo ? "Replace logo" : "Upload logo"}
-              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" style={{ display: "none" }}
-                onChange={e => handleUpload(e.target.files, "logo")} disabled={uploadingLogo} />
-            </label>
-            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 6 }}>PNG, JPG, WebP, SVG or GIF · max {formatFileSize(MAX_BRAND_FILE_BYTES)}</div>
-          </div>
-        </div>
-      </div>
+          <p className="bk-hint">Use the same name as the brand on your tasks to show its open tasks and hours here.</p>
+        </section>
 
-      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-          <div>
-            <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Heading font</label>
-            <input value={headingFont} onChange={e => setHeadingFont(e.target.value)} list="brand-font-suggestions" placeholder="Any font name — e.g. Gotham, Futura" />
+        <section>
+          <h3>Logo</h3>
+          <div className="bk-box bk-row bk-logo-row">
+            <span className="bk-logo-thumb bk-checker">{logo ? <img src={bkUrl(logo)} alt="Logo" /> : null}</span>
+            <span className="bk-dim" style={{ flex: 1 }}>{logo ? (logo.original_name || "Logo") : "PNG, JPG, WebP, SVG or GIF, up to " + formatFileSize(MAX_BRAND_FILE_BYTES)}</span>
+            <label className="bk-btn sec">{uploading === "logo" ? "Uploading…" : logo ? "Replace" : "Upload"}
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif" hidden onChange={e => { upload(e.target.files, "logo"); e.target.value = ""; }} disabled={!!uploading} /></label>
           </div>
-          <div>
-            <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", display: "block", marginBottom: 8 }}>Body font</label>
-            <input value={bodyFont} onChange={e => setBodyFont(e.target.value)} list="brand-font-suggestions" placeholder="Any font name" />
-          </div>
-          <datalist id="brand-font-suggestions">
-            {BRAND_FONT_OPTIONS.map(f => <option key={f} value={f} />)}
-          </datalist>
-        </div>
-        <p style={{ fontSize: 11.5, color: COLORS.textMuted, marginTop: 10, marginBottom: 0 }}>
-          Type any font name — if it's a free Google Font we'll preview it live above; custom/licensed fonts still save correctly, they just won't preview here.
-        </p>
-      </div>
+        </section>
 
-      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-        <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase", display: "block", marginBottom: 12 }}>Colour palette</label>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-          {colors.map((c, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: COLORS.surface2, border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: "6px 8px 6px 6px" }}>
-              <input type="color" value={c.hex} onChange={e => updateColor(i, { hex: e.target.value })} style={{ width: 28, height: 28, padding: 0, border: "none", borderRadius: 6, flexShrink: 0 }} />
-              <input value={c.label} onChange={e => updateColor(i, { label: e.target.value })} placeholder="Label" style={{ width: 90, border: "none", background: "none", padding: "2px 0", fontSize: 12.5 }} />
-              <input value={c.hex} onChange={e => {
-                  let v = e.target.value;
-                  v = "#" + v.replace(/^#/, "").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
-                  updateColor(i, { hex: v });
-                }} placeholder="#4f46e5" spellCheck={false}
-                style={{ width: 68, border: "none", background: "none", padding: "2px 0", fontSize: 10.5, color: COLORS.textMuted, fontFamily: "monospace", flexShrink: 0 }} />
-              <button onClick={() => removeColor(i)} style={{ background: "none", color: COLORS.textMuted, fontSize: 13, padding: "0 4px", flexShrink: 0 }}>✕</button>
+        <section>
+          <h3>Colours <span className="bk-dim">The first one is the main colour</span></h3>
+          <div className="bk-box">
+            {colors.map((c, i) => (
+              <div key={i} className="bk-row bk-col-row">
+                <input type="color" value={bkHex(c.hex) || "#000000"} onChange={e => setCol(i, { hex: e.target.value })} aria-label="Pick colour" />
+                <input value={c.label} onChange={e => setCol(i, { label: e.target.value })} placeholder={i === 0 ? "Primary" : "Name"} aria-label="Colour name" />
+                <input className="mono" value={c.hex || ""} onChange={e => setCol(i, { hex: "#" + e.target.value.replace(/^#/, "").replace(/[^0-9a-f]/gi, "").slice(0, 6) })} aria-label="Hex code" spellCheck={false} style={{ width: 104, flex: "none" }} />
+                <span className="bk-col-acts">
+                  <button className="bk-icon-btn" onClick={() => moveCol(i, -1)} disabled={i === 0} aria-label="Move up">↑</button>
+                  <button className="bk-icon-btn" onClick={() => setColors(cs => cs.filter((_, k) => k !== i))} aria-label="Remove colour">{BK_ICON.x}</button>
+                </span>
+              </div>
+            ))}
+            <button className="bk-row bk-add-in" onClick={() => setColors(cs => [...cs, { hex: "#000000", label: "" }])}>{BK_ICON.plus} Add a colour</button>
+          </div>
+        </section>
+
+        <section>
+          <h3>Fonts</h3>
+          <div className="bk-box">
+            <label className="bk-row"><span>Headings</span><input value={headingFont} onChange={e => setHeadingFont(e.target.value)} list="bk-fonts" placeholder="e.g. Inter" /></label>
+            <label className="bk-row"><span>Body</span><input value={bodyFont} onChange={e => setBodyFont(e.target.value)} list="bk-fonts" placeholder="e.g. Inter" /></label>
+            <datalist id="bk-fonts">{BRAND_FONT_OPTIONS.map(f => <option key={f} value={f} />)}</datalist>
+          </div>
+          <p className="bk-hint">Any font name works. Free Google Fonts preview on the kit page.</p>
+        </section>
+
+        <section>
+          <h3>Files <span className="bk-dim">{assets.length} of {MAX_FILES_PER_BRAND}</span></h3>
+          <div className="bk-box">
+            {assets.map(f => (
+              <div key={f.id} className="bk-row">
+                <span className="bk-ext">{bkExt(f)}</span>
+                <span className="bk-file-t"><b>{f.original_name || f.filename}</b><small>{formatFileSize(f.size_bytes || 0)}</small></span>
+                <button className="bk-icon-btn" onClick={() => removeFile(f.id)} aria-label={`Remove ${f.original_name || "file"}`}>{BK_ICON.x}</button>
+              </div>
+            ))}
+            {assets.length < MAX_FILES_PER_BRAND && (
+              <label className="bk-row bk-add-in">{BK_ICON.plus} {uploading === "file" ? "Uploading…" : "Upload a PDF or image"}
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif,application/pdf" hidden onChange={e => { upload(e.target.files, "file"); e.target.value = ""; }} disabled={!!uploading} /></label>
+            )}
+          </div>
+        </section>
+
+        <section>
+          <h3>Guidelines</h3>
+          <div className="bk-box bk-pad">
+            <label className="bk-lab">Tone of voice<textarea rows={2} value={voice} onChange={e => setVoice(e.target.value)} placeholder="How the brand sounds, in a sentence or two" /></label>
+            <div className="bk-two">
+              <label className="bk-lab">Do <small>One per line</small><textarea rows={4} value={dos} onChange={e => setDos(e.target.value)} placeholder={"Use sentence case\nGive the logo space"} /></label>
+              <label className="bk-lab">Don't <small>One per line</small><textarea rows={4} value={donts} onChange={e => setDonts(e.target.value)} placeholder={"Stretch the logo\nUse more than two fonts"} /></label>
             </div>
-          ))}
-          <button onClick={addColor} style={{ border: `1.5px dashed ${COLORS.border}`, borderRadius: 10, padding: "0 16px", fontSize: 12.5, fontWeight: 600, color: COLORS.textDim, minHeight: 42 }}>+ Add</button>
-        </div>
-      </div>
-
-      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 14, padding: 18, marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-          <label style={{ fontSize: 11, color: COLORS.textMuted, fontWeight: 700, letterSpacing: 0.4, textTransform: "uppercase" }}>Files</label>
-          <span style={{ fontSize: 11, color: COLORS.textMuted }}>{assets.length}/{MAX_FILES_PER_BRAND} · max {formatFileSize(MAX_BRAND_FILE_BYTES)} each</span>
-        </div>
-        {assets.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 10, marginBottom: 12 }}>
-            {assets.map(f => {
-              const isImage = f.mime_type !== "application/pdf";
-              return (
-                <div key={f.id} style={{ position: "relative", border: `1px solid ${COLORS.border}`, borderRadius: 10, overflow: "hidden", background: COLORS.surface2 }}>
-                  <button onClick={() => handleDeleteFile(f.id)} title="Remove"
-                    style={{ position: "absolute", top: 5, right: 5, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 12, lineHeight: 1, zIndex: 1 }}>✕</button>
-                  <a href={`/uploads/brands/${f.filename}`} target="_blank" rel="noopener" style={{ display: "block", textDecoration: "none", color: "inherit" }}>
-                    <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", background: isImage ? COLORS.surface : COLORS.surface3 }}>
-                      {isImage
-                        ? <img src={`/uploads/brands/${f.filename}`} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
-                        : <span style={{ fontSize: 30 }}>📄</span>}
-                    </div>
-                    <div style={{ padding: "6px 8px", borderTop: `1px solid ${COLORS.border}` }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: COLORS.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.original_name}</div>
-                      <div style={{ fontSize: 10, color: COLORS.textMuted }}>{formatFileSize(f.size_bytes)}</div>
-                    </div>
-                  </a>
-                </div>
-              );
-            })}
+            <label className="bk-lab">Links <small>One per line, as Name | link</small><textarea rows={3} value={links} onChange={e => setLinks(e.target.value)} placeholder={"Shared drive | drive.example.com/brand\nexample.com"} /></label>
           </div>
-        )}
-        {assets.length < MAX_FILES_PER_BRAND && (
-          <label style={{ display: "inline-block", border: `1.5px dashed ${COLORS.border}`, borderRadius: 10, padding: "9px 16px", fontSize: 12.5, fontWeight: 600, color: COLORS.textDim, cursor: "pointer" }}>
-            {uploadingFile ? "Uploading…" : "+ Add file"}
-            <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif,application/pdf" style={{ display: "none" }}
-              onChange={e => handleUpload(e.target.files, "file")} disabled={uploadingFile} />
-          </label>
-        )}
+        </section>
       </div>
-
-      {uploadErr && <div style={{ fontSize: 12.5, color: COLORS.high, background: COLORS.highDim, borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>{uploadErr}</div>}
     </div>
   );
 }
@@ -6886,63 +7203,6 @@ function InspectorBoard({ tasks, projects, onEdit, onSetStatus, onSetDue, onPatc
   );
 }
 
-function BrandsView({ brands, onOpenBrand, onNewBrand }) {
-  return (
-    <div style={{ paddingBottom: 40 }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: `1px solid ${COLORS.border}` }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.textMuted, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
-          {new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <h1 style={{ fontFamily: "'DM Sans', system-ui, sans-serif", fontSize: "clamp(24px,3.5vw,34px)", fontWeight: 700, letterSpacing: "-0.8px", lineHeight: 1.15, color: COLORS.text }}>
-            Your brands
-          </h1>
-          <button onClick={onNewBrand} style={{ background: COLORS.accent, color: "#fff", borderRadius: 9, padding: "8px 16px", fontSize: 13, fontWeight: 700, border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            New Brand
-          </button>
-        </div>
-      </div>
-
-      {!brands.length && (
-        <div style={{ textAlign: "center", padding: "60px 20px", color: COLORS.textDim }}>
-          <div style={{ fontSize: 34, marginBottom: 10 }}>🎨</div>
-          No brands yet. Create one to keep its fonts, colours, and logo all in one place.
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
-        {brands.map(b => {
-          const logo = b.files?.find(f => f.kind === "logo");
-          const primary = b.colors?.[0]?.hex || COLORS.accent;
-          const fileCount = b.files?.filter(f => f.kind === "file").length || 0;
-          return (
-            <button key={b.id} onClick={() => onOpenBrand(b)} style={{ textAlign: "left", background: COLORS.surface, border: `1px solid ${COLORS.border}`, borderRadius: 16, overflow: "hidden" }}>
-              <div style={{ height: 6, background: primary }} />
-              <div style={{ padding: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, overflow: "hidden", background: logo ? COLORS.surface2 : primary, border: `1px solid ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {logo
-                      ? <img src={`/uploads/brands/${logo.filename}`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-                      : <span style={{ color: "#fff", fontSize: 17, fontWeight: 800 }}>{b.name.slice(0, 1).toUpperCase()}</span>}
-                  </div>
-                  <div style={{ fontFamily: `'${b.heading_font || "DM Serif Display"}', serif`, fontSize: 16, fontWeight: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", gap: 5 }}>
-                    {(b.colors || []).slice(0, 5).map((c, i) => <div key={i} style={{ width: 15, height: 15, borderRadius: 5, background: c.hex, border: `1px solid ${COLORS.border}` }} title={c.label} />)}
-                  </div>
-                  <div style={{ fontSize: 11, color: COLORS.textMuted }}>{fileCount} file{fileCount === 1 ? "" : "s"}</div>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 function App() {
   const [tasks, setTasks] = useState(() => { try { const s = localStorage.getItem(STORAGE_KEY); return s ? JSON.parse(s) : SAMPLE_TASKS; } catch { return SAMPLE_TASKS; } });
@@ -7561,6 +7821,8 @@ function App() {
   }
   function saveCheckin(entry) { setCheckins(prev => { const filtered = prev.filter(c => c.date !== entry.date); return [...filtered, entry]; }); if (authUser) api.saveCheckin(entry).catch(console.error); }
   function saveWorkHours(wh) { setWorkHours(wh); if (authUser) api.saveSettings({ workHours: wh, theme }).catch(console.error); }
+  // Opens the board on a task brand's list (used from a brand kit page).
+  function seeBrandOnBoard(p) { try { localStorage.setItem(IB_LIST_KEY, "brand:" + p.id); } catch (e) {} setView("board"); }
   function reloadBrands() { api.getBrands().then(data => { if (data) setBrands(data); }).catch(console.error); }
 
   // First-login flow: work hours setup → welcome screen → spotlight tour.
@@ -8194,17 +8456,17 @@ function App() {
         {view === "wellbeing" && <WellbeingView key={theme} checkins={checkins} tasks={tasks} projects={projects} workHours={workHours} onSaveCheckin={saveCheckin} />}
         {view === "analytics" && <AnalyticsView key={theme} tasks={tasks} projects={projects} workHours={workHours} user={{ firstName: authUser?.firstName || authUser?.first_name || user?.firstName || "" }} />}
         {view === "bookmarks" && <BookmarksView bookmarks={bookmarks} onAdd={addBookmark} onDelete={deleteBookmark} onToggleStar={toggleBookmarkStar} onToggleRead={toggleBookmarkRead} setEditingBookmark={setEditingBookmark} workspaces={workspaces} activeWorkspace={activeWorkspace} />}
-        {view === "brands" && authUser && <BrandsView brands={brands} onOpenBrand={b => setView(`brand-${b.id}`)} onNewBrand={() => setView("brand-new")} />}
+        {view === "brands" && authUser && <BrandsView brands={brands} projects={projects} tasks={tasks} onOpenBrand={b => setView(`brand-${b.id}`)} onNewBrand={() => setView("brand-new")} />}
         {view === "brand-new" && (
-          <BrandDetailView brand={null} onBack={() => setView("brands")} onDeleted={() => setView("brands")}
-            onSaved={id => { reloadBrands(); setView(`brand-${id}`); }} />
+          <BrandDetailView brand={null} projects={projects} tasks={tasks} onBack={() => setView("brands")} onDeleted={() => setView("brands")}
+            onSaved={id => { reloadBrands(); setView(`brand-${id}`); }} onSeeBoard={seeBrandOnBoard} />
         )}
         {view.startsWith("brand-") && view !== "brand-new" && (() => {
           const b = brands.find(br => `brand-${br.id}` === view);
           if (!b) return null;
           return (
-            <BrandDetailView key={b.id} brand={b} onBack={() => setView("brands")} onDeleted={() => { reloadBrands(); setView("brands"); setToastMsg("Brand moved to bin"); }}
-              onSaved={() => reloadBrands()} />
+            <BrandDetailView key={b.id} brand={b} projects={projects} tasks={tasks} onBack={() => setView("brands")} onDeleted={() => { reloadBrands(); setView("brands"); setToastMsg("Brand moved to bin"); }}
+              onSaved={() => reloadBrands()} onSeeBoard={seeBrandOnBoard} />
           );
         })()}
         {view === "notes" && <NotesView notes={notes} onNew={() => setShowNewNote(true)} setEditingNote={setEditingNote} onDelete={deleteNote} onTogglePin={toggleNotePin} workspaces={workspaces} />}
