@@ -447,6 +447,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .W .D-cta > .wrap { position: relative; z-index: 1; }
 .W .B-foot { color: #86868b; border-top-color: #e5e5ea; background: #fff; }
 .W .B-foot a:hover { color: #1d1d1f; }
+
+/* Live timer pill in the hero */
+.pill button.st { color: #fff; cursor: pointer; transition: background .15s, transform .12s; }
+.pill button.st:hover { background: rgba(255,255,255,.26); }
+.pill button.st:active { transform: scale(.95); }
+.pill.paused .dot { background: #8e8e93; animation: none; }
+.pill.paused .tm { color: #c7c7cc; }
+.pill.paused button.st { background: #30d158; color: #000; }
+.pill.paused button.st:hover { background: #4ade80; }
 </style>
 </head>
 <body>
@@ -472,7 +481,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <p>Tasklist keeps your day, your time and the brands you work for in one calm place. Free to use, and no account needed to start.</p>
       <div class="cta"><a class="btn dark" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="#d-story">See how it works</a></div>
     </div>
-    <div class="pillw"><div class="pill"><span class="dot"></span><span class="nm">🐸 Write Q1 proposal draft</span><span class="tm">24:18</span><span class="st">Stop</span></div></div>
+    <div class="pillw"><div class="pill" id="heroPill"><span class="dot"></span><span class="nm">🐸 Write Q1 proposal draft</span><span class="tm" id="heroTm">24:18</span><button type="button" class="st" id="heroSt" aria-label="Stop the timer">Stop</button></div></div>
     <div class="B-devices" style="margin-top:0">
       <div data-mock="board"></div>
     </div>
@@ -489,7 +498,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <article class="chap act" data-s="0">
         <span class="k" style="color:#4f46e5">Plan</span>
         <h2>Today, at a glance.</h2>
-        <p>Today, Upcoming, No date and Overdue sit side by side with the brands you work for.</p>
+        <p>Open it and you see what's due today. What's coming up and what's slipped are one click away, and you can filter by brand whenever you need to.</p>
         <div class="pts">
           <div><i style="background:#ff9500">↩</i><span><b>Nothing slips.</b> Unfinished tasks stay on Today with a clear "2 days late" until you finish or reschedule them.</span></div>
           <div><i style="background:#5856d6">⏎</i><span><b>Built for speed.</b> Right-click any task to reschedule it, start a timer or make it the frog.</span></div>
@@ -669,6 +678,22 @@ const io = new IntersectionObserver(es => es.forEach(en => {
   story.querySelectorAll("[data-scr]").forEach(s => s.classList.toggle("on", s.dataset.scr === i));
 }), { rootMargin: "-45% 0px -45% 0px" });
 document.querySelectorAll(".chap").forEach(c => io.observe(c));
+
+
+// Hero timer pill: counts up live; Stop pauses it, Start picks up where it left off.
+(() => {
+  const pill = document.getElementById("heroPill"), tm = document.getElementById("heroTm"), btn = document.getElementById("heroSt");
+  if (!pill) return;
+  let secs = 24 * 60 + 18, running = true;
+  const fmt = n => { const h = Math.floor(n / 3600), m = Math.floor(n / 60) % 60, s = n % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0"); };
+  setInterval(() => { if (running) { secs++; tm.textContent = fmt(secs); } }, 1000);
+  btn.addEventListener("click", () => {
+    running = !running;
+    pill.classList.toggle("paused", !running);
+    btn.textContent = running ? "Stop" : "Start";
+    btn.setAttribute("aria-label", running ? "Stop the timer" : "Start the timer");
+  });
+})();
 
 // Phone menu
 (() => {
