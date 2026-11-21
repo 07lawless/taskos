@@ -379,6 +379,73 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   .A-shot .pill { font-size: 12px; }
   .A-shot .pill .nm { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* ═════════ White version: same layout, light surfaces and a soft aurora ═════════ */
+.W { background: #fff; color: #1d1d1f; }
+.W .grad { background: linear-gradient(90deg, #4f46e5, #7c3aed 45%, #16a34a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.W .grad2 { background: linear-gradient(180deg, #1d1d1f 30%, #6e6e73); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.aur { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aur i { position: absolute; border-radius: 50%; will-change: transform; }
+.aur .a { width: 1100px; height: 1100px; left: -380px; top: -520px; background: radial-gradient(closest-side, rgba(165,180,252,0.8) 0%, rgba(165,180,252,0.576) 22%, rgba(165,180,252,0.336) 45%, rgba(165,180,252,0.128) 68%, rgba(165,180,252,.02) 86%, rgba(165,180,252,0) 100%); animation: aur-a 24s ease-in-out infinite alternate; }
+.aur .b { width: 900px; height: 900px; right: -340px; top: -260px; background: radial-gradient(closest-side, rgba(134,239,172,0.75) 0%, rgba(134,239,172,0.540) 22%, rgba(134,239,172,0.315) 45%, rgba(134,239,172,0.120) 68%, rgba(134,239,172,.02) 86%, rgba(134,239,172,0) 100%); animation: aur-b 28s ease-in-out infinite alternate; }
+.aur .c { width: 1000px; height: 1000px; left: 50%; margin-left: -500px; top: 360px; background: radial-gradient(closest-side, rgba(216,180,254,0.65) 0%, rgba(216,180,254,0.468) 22%, rgba(216,180,254,0.273) 45%, rgba(216,180,254,0.104) 68%, rgba(216,180,254,.02) 86%, rgba(216,180,254,0) 100%); animation: aur-c 32s ease-in-out infinite alternate; }
+.aur.soft { opacity: .7; }
+.aur.soft .c { top: auto; bottom: -640px; }
+.aur::after { content: ""; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 160px 160px; opacity: .08; mix-blend-mode: overlay; }
+@keyframes aur-a { to { transform: translate3d(120px, 80px, 0) scale(1.08); } }
+@keyframes aur-b { to { transform: translate3d(-110px, 110px, 0) scale(.94); } }
+@keyframes aur-c { to { transform: translate3d(90px, -60px, 0) scale(1.06); } }
+.W .D-hero::before { display: none; }
+.W .D-hero > .wrap, .W .D-hero .B-devices, .W .D-hero .D-facts { position: relative; z-index: 1; }
+.W .D-hero .pillw { z-index: 3; }
+.W .D-hero p, .W .D-cta p, .W .D-all .A-head .lede, .W .D-teams > .wrap > p { color: #6e6e73; }
+.W .B-nav .links { color: #6e6e73; }
+.W .B-nav .links a:hover { color: #1d1d1f; }
+.W .logo { color: #1d1d1f; }
+.btn.dark { background: #1d1d1f; color: #fff; }
+.btn.dark:hover { background: #000; }
+.W .btn.ghost { color: #4f46e5; }
+.W .menu-btn { color: #1d1d1f; background: rgba(0,0,0,.05); }
+@media (max-width: 680px) {
+  .W .menu-panel { background: rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 20px 50px rgba(0,0,0,.14); }
+  .W .menu-panel a { color: #1d1d1f; }
+  .W .menu-panel a:hover, .W .menu-panel a:focus-visible { background: rgba(0,0,0,.05); }
+}
+.W .mac { box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 40px 90px rgba(60,60,120,.18); }
+.W .phone { box-shadow: 0 30px 80px rgba(60,60,120,.25), inset 0 0 0 2px #2c2c2e; }
+.W .D-facts { border-color: rgba(0,0,0,.08); background: rgba(255,255,255,.55); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.W .D-facts span { color: #6e6e73; }
+.W .chap p { color: #6e6e73; }
+.W .chap .pts div { color: #6e6e73; }
+.W .chap .pts b { color: #1d1d1f; }
+.W .glass { background: #fff; color: #1d1d1f; box-shadow: 0 0 0 1px rgba(0,0,0,.05), 0 30px 80px rgba(60,60,120,.14); }
+.W .frogcard { background: linear-gradient(160deg, rgba(52,199,89,.16), #fff 65%); }
+.W .sharepage { background: #fff; }
+.W .ring small { color: #86868b; }
+.W .D-all { background: #f5f5f7; }
+.W .D-all::before { background: radial-gradient(ellipse at 50% 0%, rgba(134,239,172,.25), transparent 65%); }
+.W .tile { background: #fff; color: #1d1d1f; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 12px 30px rgba(0,0,0,.05); }
+.W .tile p { color: #6e6e73; }
+.W .tile .ti { background: #f5f5f7 !important; }
+.W .tile.glow-g { background: linear-gradient(160deg, rgba(52,199,89,.16), #fff 60%); }
+.W .tile.glow-i { background: linear-gradient(160deg, rgba(99,102,241,.14), #fff 60%); }
+.W .tile.glow-p { background: linear-gradient(160deg, rgba(255,55,95,.12), #fff 60%); }
+.W .tile.glow-a { background: linear-gradient(160deg, rgba(255,159,10,.14), #fff 60%); }
+.W .tile.glow-a span { background: #f5f5f7 !important; }
+.W .cal span { color: #86868b; }
+.W .cal span.dot { color: #1d1d1f; }
+.W .cal span.dot::after { background: #4f46e5; }
+.W .cal span.today { background: #4f46e5; color: #fff; }
+.W .mood span[data-none] { background: #e5e5ea !important; color: #8e8e93 !important; }
+.W .D-teams { background: radial-gradient(ellipse at 50% 115%, rgba(196,181,253,.45), transparent 60%), #fff; border-top: 1px solid #e5e5ea; }
+.W .D-teams .badge { color: #6d28d9; background: rgba(124,58,237,.1); }
+.W .avs span { border-color: #fff; }
+.W .D-teams .teamgrid div { background: rgba(255,255,255,.8); box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.05); color: #1d1d1f; }
+.W .teamgrid p { color: #6e6e73; }
+.W .D-cta { position: relative; overflow: hidden; }
+.W .D-cta > .wrap { position: relative; z-index: 1; }
+.W .B-foot { color: #86868b; border-top-color: #e5e5ea; background: #fff; }
+.W .B-foot a:hover { color: #1d1d1f; }
 </style>
 </head>
 <body>
@@ -386,11 +453,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 
 <!-- ═══════════ D · COMBINED ═══════════ -->
-<main class="D" id="vD">
+<main class="D W" id="vD">
   <header class="B-nav"><div class="wrap">
     <a class="logo" href="/" aria-label="Tasklist.uk home"><i>tl</i>tasklist</a>
     <nav class="links" aria-label="Main"><a href="#d-story">How it works</a><a href="#d-all">Features</a><a href="#d-teams">Teams</a><a href="/documentation">Docs</a><a href="/blogs">Blog</a></nav>
-    <a class="btn white sm" href="https://app.tasklist.uk">Open Tasklist</a>
+    <a class="btn dark sm" href="https://app.tasklist.uk">Open Tasklist</a>
     <button class="menu-btn" aria-label="Menu" aria-expanded="false" aria-controls="menuPanel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 8h16M4 16h16"/></svg></button>
   </div>
   <nav class="menu-panel" id="menuPanel" aria-label="Menu">
@@ -398,15 +465,15 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   </nav></header>
 
   <section class="D-hero">
+    <div class="aur" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
     <div class="wrap">
       <h1><span>Know exactly</span><span class="grad">what to do today.</span></h1>
       <p>Tasklist keeps your day, your time and the brands you work for in one calm place. Free to use, and no account needed to start.</p>
-      <div class="cta"><a class="btn white" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="#d-story">See how it works</a></div>
+      <div class="cta"><a class="btn dark" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="#d-story">See how it works</a></div>
     </div>
     <div class="pillw"><div class="pill"><span class="dot"></span><span class="nm">🐸 Write Q1 proposal draft</span><span class="tm">24:18</span><span class="st">Stop</span></div></div>
     <div class="B-devices" style="margin-top:0">
-      <div data-mock="board-dark"></div>
-      <div class="phone"><div class="phone-s dark"><div class="phone-notch"></div><div class="phone-in" data-mock="phone"></div></div></div>
+      <div data-mock="board"></div>
     </div>
     <div class="D-facts"><div class="wrap">
       <div><b>Free</b><span>Everything on this page</span></div>
@@ -419,7 +486,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   <section class="wrap story" id="d-story">
     <div>
       <article class="chap act" data-s="0">
-        <span class="k" style="color:#a5b4fc">Plan</span>
+        <span class="k" style="color:#4f46e5">Plan</span>
         <h2>Today, at a glance.</h2>
         <p>Today, Upcoming, No date and Overdue sit side by side with the brands you work for.</p>
         <div class="pts">
@@ -429,7 +496,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         <div class="m" data-mock="s0"></div>
       </article>
       <article class="chap" data-s="1">
-        <span class="k" style="color:#86efac">Focus</span>
+        <span class="k" style="color:#16a34a">Focus</span>
         <h2>Eat the frog first.</h2>
         <p>Pick the one task that matters most and do it before anything else. Start the timer when you begin, stop it when you're done, and the time is logged.</p>
         <div class="pts">
@@ -439,7 +506,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         <div class="m" data-mock="s1"></div>
       </article>
       <article class="chap" data-s="2">
-        <span class="k" style="color:#fda4af">Track</span>
+        <span class="k" style="color:#e11d48">Track</span>
         <h2>See where your hours go.</h2>
         <p>Every minute you log lands on the right brand. Your week shows the split, tasks done and a report you can copy in one tap.</p>
         <div class="pts">
@@ -449,9 +516,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         <div class="m" data-mock="s2"></div>
       </article>
       <article class="chap" data-s="3">
-        <span class="k" style="color:#93c5fd">Share</span>
+        <span class="k" style="color:#2563eb">Share</span>
         <h2>One link for your manager.</h2>
-        <p>A read-only page with what you're working on, what's next and what's done, with hours by brand for this week, last week or the month.</p>
+        <p>A read-only page with Today, Upcoming and Overdue, plus what's done and hours by brand for this week, last week or the month.</p>
         <div class="pts">
           <div><i style="background:#4f46e5">🔗</i><span><b>Always up to date.</b> It updates as you work, so there's no report to write.</span></div>
           <div><i style="background:#8e8e93">✕</i><span><b>Turn it off any time.</b> Revoke the link from Settings and it stops working at once.</span></div>
@@ -459,7 +526,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         <div class="m" data-mock="s3"></div>
       </article>
       <article class="chap" data-s="4">
-        <span class="k" style="color:#fcd34d">Reflect</span>
+        <span class="k" style="color:#d97706">Reflect</span>
         <h2>Look after yourself, too.</h2>
         <p>A ten second wellbeing check-in for mood, energy, stress and sleep. See your week in colour, with one useful insight once there's enough to go on.</p>
         <div class="m" data-mock="s4"></div>
@@ -476,16 +543,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       <div class="tile s4 wide-m glow-i"><h3>Calendar</h3><p>Your month at a glance. Drag a task to another day to reschedule it.</p><div class="cal" data-mock="cal"></div></div>
       <div class="tile s2 glow-g"><div class="ti">🐸</div><h3>Focus mode</h3><p>A full screen timer for deep work, with breaks built in.</p></div>
       <div class="tile s2"><div class="ti">↻</div><h3>Repeating tasks</h3><p>Every day, every other week, the first of the month. Set it once.</p></div>
-      <div class="tile s2"><div class="ti">✨</div><h3>Suggest a date</h3><p>Not sure when to do it? Get a sensible due date suggested.</p></div>
+      <div class="tile s2"><div class="ti">📅</div><h3>Suggest a date</h3><p>Not sure when to do it? Get a sensible due date suggested.</p></div>
       <div class="tile s2"><div class="ti">✓</div><h3>Recently completed</h3><p>The last 7 days at a glance, with a searchable archive of the rest.</p></div>
       <div class="tile s3 glow-p"><h3>Wellbeing check-in</h3><p>Ten seconds a day for mood, energy, stress and sleep. See your week in colour.</p><div class="mood"><span style="background:#34c759">4</span><span style="background:#30b0c7">3</span><span style="background:#34c759">5</span><span style="background:#ff9500">2</span><span style="background:#30b0c7">3</span><span style="background:#34c759">4</span><span data-none>–</span></div></div>
-      <div class="tile s3 glow-a"><h3>Your week</h3><p>Hours logged, tasks completed and hours by brand, with a weekly report you can copy in one tap.</p><div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:20px"><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">21.8h logged</span><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">14 tasks done</span><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">Copy report</span></div></div>
+      <div class="tile s3 glow-a"><h3>Your week</h3><p>Hours logged, tasks completed and hours by brand, with a weekly report you can copy in one tap.</p><div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:20px"><span style="background:#fff;border-radius:99px;padding:6px 12px;font-size:13px">21.8h logged</span><span style="background:#fff;border-radius:99px;padding:6px 12px;font-size:13px">14 tasks done</span><span style="background:#fff;border-radius:99px;padding:6px 12px;font-size:13px">Copy report</span></div></div>
       <div class="tile s2"><div class="ti">📝</div><h3>Notes and bookmarks</h3><p>Reference material and useful links next to the work.</p></div>
       <div class="tile s2"><div class="ti">★</div><h3>Levels and rewards</h3><p>Earn XP for finishing tasks and unlock rewards as you level up.</p></div>
       <div class="tile s2"><div class="ti">⌘K</div><h3>Search everything</h3><p>Jump to any task in a keystroke, from anywhere.</p></div>
       <div class="tile s2"><div class="ti">⇄</div><h3>Workspaces</h3><p>Keep Personal and Work apart, each with its own tasks and brands.</p></div>
       <div class="tile s2"><div class="ti">🗑</div><h3>A real bin</h3><p>Deleted something by mistake? Restore it from the bin.</p></div>
-      <div class="tile s2"><div class="ti">💬</div><h3>Shape what's next</h3><p>See every update in What's new and vote on the changes you like.</p></div>
+      <div class="tile s2"><div class="ti">🎨</div><h3>Brand kits</h3><p>Logos, colours, fonts and files for every brand, ready to copy or download.</p></div>
     </div>
   </div></section>
 
@@ -501,10 +568,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     </div>
   </div></section>
 
-  <section class="D-cta"><div class="wrap">
+  <section class="D-cta"><div class="aur soft" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div><div class="wrap">
     <h2>Your day.<br><span class="grad">Sorted.</span></h2>
     <p>Start as a guest, or sign in with Google to sync across your devices.</p>
-    <div style="margin-top:30px;display:flex;justify-content:center;gap:26px;flex-wrap:wrap;align-items:center"><a class="btn white" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="/documentation">Read the docs</a></div>
+    <div style="margin-top:30px;display:flex;justify-content:center;gap:26px;flex-wrap:wrap;align-items:center"><a class="btn dark" href="https://app.tasklist.uk">Open Tasklist</a><a class="btn ghost" href="/documentation">Read the docs</a></div>
   </div></section>
   <footer class="B-foot"><div class="wrap"><span>© 2026 Tasklist.uk</span><nav><a href="/documentation">Documentation</a><a href="/blogs">Blog</a><a href="https://app.tasklist.uk">Open the app</a><a href="/privacy">Privacy</a></nav></div></footer>
 </main>
@@ -561,27 +628,27 @@ const hours = (dark) => `<div style="display:flex;justify-content:space-between;
   <div class="bars">${[["nw", 9.5], ["bb", 6.3], ["hc", 4], ["in", 2]].map(([k, h]) => `<div class="bar"><span>${P[k][0]}</span><span class="tr"><i style="width:${h / 9.5 * 100}%;background:${P[k][1]}"></i></span><b>${h}h</b></div>`).join("")}</div>
   <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap"><span style="height:34px;padding:0 14px;border-radius:99px;background:#4f46e5;color:#fff;font-weight:700;font-size:13px;display:inline-flex;align-items:center">Copy report</span><span style="height:34px;padding:0 14px;border-radius:99px;background:${dark ? "#2c2c2e" : "#f2f2f7"};font-weight:700;font-size:13px;display:inline-flex;align-items:center">Export CSV</span></div>`;
 const share = () => `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div style="font-size:22px;font-weight:800;letter-spacing:-.03em">Alex's work <span style="font-size:11px;font-weight:700;background:#ececf1;color:#6e6e73;border-radius:99px;padding:3px 8px;vertical-align:middle">View only</span></div><span style="font-size:12px;background:#ececf1;border-radius:8px;padding:5px 10px;font-weight:700">This week</span></div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0">${[["21.8h", "logged"], ["14", "tasks done"], ["2", "carried over"]].map(([v, l]) => `<div style="background:#f5f5f7;border-radius:12px;padding:10px 12px"><b style="font-size:19px;letter-spacing:-.02em">${v}</b><div style="font-size:11.5px;color:#86868b">${l}</div></div>`).join("")}</div>
-  <div style="font-size:12px;font-weight:700;color:#86868b;margin-bottom:6px">Working on now</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0">${[["21.8h", "logged"], ["14", "tasks done"], ["2", "overdue now"]].map(([v, l]) => `<div style="background:#f5f5f7;border-radius:12px;padding:10px 12px"><b style="font-size:19px;letter-spacing:-.02em">${v}</b><div style="font-size:11.5px;color:#86868b">${l}</div></div>`).join("")}</div>
+  <div style="font-size:12px;font-weight:700;color:#86868b;margin-bottom:6px">Today</div>
   ${["Booking form fixes|bb|In progress", "Homepage hero refresh|nw|1h so far"].map(s => { const [t, p, m] = s.split("|"); return `<div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #f0f0f3;font-size:14px"><i class="ui-dot" style="background:${P[p][1]}"></i><b style="flex:1;font-weight:600">${t}</b><span style="font-size:12px;color:#86868b">${m}</span></div>`; }).join("")}
   <div style="font-size:12px;font-weight:700;color:#86868b;margin:12px 0 6px">Done this week</div>
   <div class="bars">${[["nw", 9.5], ["bb", 6.3], ["hc", 4]].map(([k, h]) => `<div class="bar"><span>${P[k][0]}</span><span class="tr"><i style="width:${h / 9.5 * 100}%;background:${P[k][1]}"></i></span><b>${h}h</b></div>`).join("")}</div>`;
 const phone = () => `<div style="font-size:24px;font-weight:800;letter-spacing:-.03em">Today</div><div style="font-size:11px;color:#8e8e93">Friday 20 November</div>
   <div class="chips"><span class="on">☀ Today 7</span><span>▦ Upcoming</span><span>Overdue 2</span></div>
-  <div style="font-size:11px;font-weight:700;color:#30d158;margin:8px 2px 5px">🐸 Today's frog</div>
-  <div class="ui-grp" style="background:#1c1c1e;border-color:#2c2c2e">${row("Write Q1 proposal", "nw", "<span>1h 30m</span>")}</div>
+  <div style="font-size:11px;font-weight:700;color:#16a34a;margin:8px 2px 5px">🐸 Today's frog</div>
+  <div class="ui-grp">${row("Write Q1 proposal", "nw", "<span>1h 30m</span>")}</div>
   <div style="font-size:11px;font-weight:700;color:#8e8e93;margin:12px 2px 5px">Today</div>
-  <div class="ui-grp" style="background:#1c1c1e;border-color:#2c2c2e">${row("Booking form fixes", "bb", `<span class="ip">In progress</span>`)}${row("Prep slides", "nw", "<span>45m</span>")}${row("Approve invoices", "in", "<span>15m</span>")}${row("Update team rota", "in", "<span>15m</span>")}</div>`;
+  <div class="ui-grp">${row("Booking form fixes", "bb", `<span class="ip">In progress</span>`)}${row("Prep slides", "nw", "<span>45m</span>")}${row("Approve invoices", "in", "<span>15m</span>")}${row("Update team rota", "in", "<span>15m</span>")}</div>`;
 const calCells = () => { let h = ["M", "T", "W", "T", "F", "S", "S"].map(d => `<span style="font-weight:700;color:#86868b">${d}</span>`).join(""); for (let i = 0; i < 6; i++) h += "<span></span>"; for (let d = 1; d <= 30; d++) h += `<span class="${d === 20 ? "today" : [3, 7, 11, 18, 24, 27].includes(d) ? "dot" : ""}">${d}</span>`; return h; };
 const wellbeing = () => `<h6>How are you today?</h6><div class="big">Checked in at 09:05</div>
   <div class="mood" style="margin-top:20px">${[["Mon", 4, "#34c759"], ["Tue", 3, "#30b0c7"], ["Wed", 5, "#34c759"], ["Thu", 2, "#ff9500"], ["Fri", 4, "#34c759"]].map(([d, v, c]) => `<span style="background:${c};flex-direction:column;height:56px;font-size:16px">${v}<small style="font-size:10px;font-weight:600;opacity:.85">${d}</small></span>`).join("")}</div>
-  <div style="margin-top:20px;background:#2c2c2e;border-radius:16px;padding:16px;font-size:15px;line-height:1.45;color:#d1d1d6">💡 Your mood is higher on days you finish your frog before lunch.</div>
-  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">6 completed today</span><span style="background:#2c2c2e;border-radius:99px;padding:6px 12px;font-size:13px">🐸 Frog eaten</span></div>`;
-const storyMini = () => `<div class="mac dark" style="width:100%"><div class="mac-bar"><i></i><i></i><i></i><span>Today</span></div><div style="padding:16px">
+  <div style="margin-top:20px;background:#f5f5f7;border-radius:16px;padding:16px;font-size:15px;line-height:1.45;color:#3a3a3c">💡 Your mood is higher on days you finish your frog before lunch.</div>
+  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><span style="background:#f2f2f7;border-radius:99px;padding:6px 12px;font-size:13px">6 completed today</span><span style="background:#f2f2f7;border-radius:99px;padding:6px 12px;font-size:13px">🐸 Frog eaten</span></div>`;
+const storyMini = () => `<div class="mac" style="width:100%"><div class="mac-bar"><i></i><i></i><i></i><span>Today</span></div><div style="padding:16px">
   <div class="ui-gh or" style="margin-top:0">From earlier days</div><div class="ui-grp">${row("Send revised quote", "hc", `<span class="late">2 days late</span>`)}</div>
   <div class="ui-gh">Today</div><div class="ui-grp">${row("Booking form fixes", "bb", `<span class="ip">In progress</span>`)}${row("Prep slides for Thursday", "nw", "<span>45m</span>")}${row("Approve invoice batch", "in", "<span>15m</span>")}</div>
   <div class="ui-gh">Upcoming</div><div class="ui-grp">${row("Checkout UX review", "hc", "<span>Tomorrow</span>")}</div></div></div>`;
-const S = [() => storyMini(), () => `<div class="glass frogcard">${frogCard(true)}</div>`, () => `<div class="glass">${hours(true)}</div>`, () => `<div class="glass sharepage">${share()}</div>`, () => `<div class="glass">${wellbeing()}</div>`];
+const S = [() => storyMini(), () => `<div class="glass frogcard">${frogCard(false)}</div>`, () => `<div class="glass">${hours(false)}</div>`, () => `<div class="glass sharepage">${share()}</div>`, () => `<div class="glass">${wellbeing()}</div>`];
 
 document.querySelectorAll('[data-mock="board"]').forEach(e => e.innerHTML = board(false));
 document.querySelectorAll('[data-mock="board-dark"]').forEach(e => e.innerHTML = board(true));
