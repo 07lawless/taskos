@@ -65,7 +65,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .ui-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
 .ui-main { padding: 16px 16px 20px; min-width: 0; }
 .ui-main h4 { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
-.ui-main .d { color: #86868b; font-size: 11.5px; }
+.ui-main .ui-date { color: #86868b; font-size: 11.5px; background: none; }
 .ui-gh { font-size: 11.5px; font-weight: 700; color: #6e6e73; margin: 14px 2px 6px; display: flex; justify-content: space-between; }
 .ui-gh.or { color: #e08600; }
 .ui-grp { border: 1px solid #ececf0; border-radius: 10px; overflow: hidden; background: #fff; }
@@ -606,7 +606,7 @@ function board(dark) {
       ${Object.values(P).map(([n, c], i) => `<div class="ui-sl"><i class="ui-dot" style="background:${c}"></i>${n}<b>${[4, 3, 2, 1][i]}</b></div>`).join("")}</div>
     </div>
     <div class="ui-main">
-      <h4>Today</h4><div class="d">Friday 20 November</div>
+      <h4>Today</h4><div class="ui-date">Friday 20 November</div>
       <div class="ui-gh" style="color:#1f9d48">🐸 Today's frog</div>
       <div class="ui-grp">${row("Write Q1 proposal draft", "nw", `<span class="hi">High</span><span>1h 30m</span><span>1 of 4 steps</span>`)}</div>
       <div class="ui-gh or"><span>From earlier days</span><span style="color:#4f46e5">Move all to today</span></div>
