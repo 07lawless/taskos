@@ -1,857 +1,543 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#4f46e5" />
-  <title>Tasklist.uk Documentation - Tasks, AI, Wellbeing & More</title>
-  <meta name="description" content="Complete guide to Tasklist.uk — task management, AI breakdowns, frog task method, wellbeing tracking, workspaces, notes, bookmarks, teams, levels & rewards, and analytics." />
-  <meta name="keywords" content="tasklist, task manager, documentation, eat the frog, AI breakdown, wellbeing tracker, productivity app, workspaces, notes, bookmarks, teams, levels, XP" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://tasklist.uk/documentation" />
-  <meta property="og:title" content="Tasklist.uk Documentation" />
-  <meta property="og:description" content="Everything you need to master Tasklist.uk — tasks, AI planning, wellbeing, workspaces, bookmarks and analytics." />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://tasklist.uk/documentation" />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Tasklist.uk Documentation" />
-  <meta name="twitter:description" content="Complete guide to Tasklist.uk — task management, AI breakdowns, wellbeing tracking and more." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%234f46e5'/><text x='16' y='22' font-family='system-ui,sans-serif' font-weight='700' font-size='14' fill='white' text-anchor='middle' letter-spacing='1.5'>tl</text></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --nav-h: 64px;
-      --c-bg: #f4f4f6;
-      --c-surface: #ffffff;
-      --c-surface2: #f9f9fb;
-      --c-surface3: #efeff2;
-      --c-border: #e0e0e6;
-      --c-border-hover: #c8c8d4;
-      --c-text: #1a1a24;
-      --c-text-dim: #6b6b80;
-      --c-text-muted: #9090a0;
-      --c-accent: #4f46e5;
-      --c-accent-hover: #4338ca;
-      --c-accent-dim: #eeedfb;
-      --c-frog: #16a34a;
-      --c-frog-dim: #dcfce7;
-      --c-frog-border: #86efac;
-      --c-high: #dc2626;
-      --c-high-dim: #fee2e2;
-      --c-medium: #d97706;
-      --c-medium-dim: #fef3c7;
-      --c-low: #2563eb;
-      --c-low-dim: #dbeafe;
-      --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
-      --shadow-md: 0 8px 24px rgba(26,26,36,0.08);
-      --radius-sm: 10px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tasklist.uk Docs - How everything works</title>
+<meta name="description" content="How Tasklist.uk works: the board, today's frog, timers and time by brand, calendar, notes, bookmarks, brand kits, wellbeing, your week, sharing, guest mode and privacy.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://tasklist.uk/documentation">
+<meta property="og:title" content="Tasklist.uk Docs">
+<meta property="og:description" content="Everything Tasklist does, explained.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tasklist.uk/documentation">
+<meta property="og:image" content="https://tasklist.uk/icons/favicon-512.png?v=2">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/favicon-192.png?v=2">
+<link rel="apple-touch-icon" href="/icons/favicon-192.png?v=2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1d1d1f; --ink2: #6e6e73; --ink3: #86868b; --line: #e5e5ea; --mist: #f5f5f7; --paper: #fff;
+  --indigo: #4f46e5; --violet: #7c3aed; --frog: #16a34a; --amber: #ff9500; --red: #ff3b30; --teal: #30b0c7; --pink: #ff2d55; --blue: #007aff; --purple: #5856d6; --gray: #8e8e93; --green: #34c759;
+  --nav: 60px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--nav) + 20px); }
+body { background: var(--paper); color: var(--ink); font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; letter-spacing: -.011em; line-height: 1.55; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 3px solid rgba(79,70,229,.45); outline-offset: 3px; border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+.grad { background: linear-gradient(90deg, #4f46e5, #7c3aed 45%, #16a34a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+kbd { font-family: inherit; font-size: 12.5px; font-weight: 600; background: var(--mist); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
 
-    [data-theme="dark"] {
-      --c-bg: #0f0f14;
-      --c-surface: #1a1a24;
-      --c-surface2: #1f1f2e;
-      --c-surface3: #252535;
-      --c-border: #2e2e42;
-      --c-border-hover: #3d3d58;
-      --c-text: #e8e8f0;
-      --c-text-dim: #9090a8;
-      --c-text-muted: #6b6b85;
-      --c-accent: #7c6af7;
-      --c-accent-hover: #9585ff;
-      --c-accent-dim: #2d2850;
-      --c-frog: #22c97a;
-      --c-frog-dim: #0d3d25;
-      --c-frog-border: #1a6640;
-      --c-high: #f87171;
-      --c-high-dim: #3d1515;
-      --c-medium: #fbbf24;
-      --c-medium-dim: #3d2a0d;
-      --c-low: #60a5fa;
-      --c-low-dim: #0d2a3d;
-      --shadow-sm: 0 1px 4px rgba(0,0,0,0.18);
-      --shadow-md: 0 10px 30px rgba(0,0,0,0.26);
-    }
+/* Nav */
+.nav { position: sticky; top: 0; z-index: 50; height: var(--nav); background: rgba(255,255,255,.78); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid rgba(0,0,0,.06); }
+.nav .in { max-width: 1180px; margin: 0 auto; height: 100%; padding: 0 22px; display: flex; align-items: center; gap: 24px; }
+.word { font-size: 23px; font-weight: 700; letter-spacing: -.05em; line-height: 1; }
+.word .dot { color: var(--indigo); }
+.word small { font-size: 15px; font-weight: 600; letter-spacing: -.01em; color: var(--ink3); margin-left: 8px; }
+.nav .links { display: flex; gap: 22px; margin-left: auto; font-size: 14px; color: var(--ink2); }
+.nav .links a:hover { color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 34px; padding: 0 16px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 14px; font-weight: 600; white-space: nowrap; transition: background .15s, transform .12s; }
+.btn:hover { background: #000; } .btn:active { transform: scale(.97); }
+.btn.lg { height: 44px; padding: 0 22px; font-size: 16px; }
+@media (max-width: 720px) { .nav .links { display: none; } .nav .btn { margin-left: auto; } }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; background: var(--c-bg); }
-    body { min-height: 100vh; background: var(--c-bg); color: var(--c-text); font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.6; }
-    a { color: inherit; text-decoration: none; }
-    button { font: inherit; cursor: pointer; border: 0; }
+/* Hero with the same soft aurora as the homepage */
+.hero { position: relative; overflow: hidden; padding: 84px 0 64px; text-align: center; border-bottom: 1px solid var(--line); }
+.aur { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.aur i { position: absolute; border-radius: 50%; }
+.aur .a { width: 1300px; height: 1000px; left: 50%; margin-left: -1000px; top: -640px; background: radial-gradient(closest-side, rgba(129,140,248,.5), rgba(129,140,248,.37) 20%, rgba(129,140,248,.24) 42%, rgba(129,140,248,.11) 64%, rgba(129,140,248,.035) 82%, transparent); }
+.aur .b { width: 1100px; height: 900px; left: 50%; margin-left: -120px; top: -560px; background: radial-gradient(closest-side, rgba(216,180,254,.5), rgba(216,180,254,.37) 20%, rgba(216,180,254,.24) 42%, rgba(216,180,254,.11) 64%, rgba(216,180,254,.035) 82%, transparent); }
+.aur .c { width: 800px; height: 600px; left: 50%; margin-left: 120px; top: 80px; background: radial-gradient(closest-side, rgba(167,243,208,.34), rgba(167,243,208,.25) 20%, rgba(167,243,208,.16) 42%, rgba(167,243,208,.07) 64%, transparent); }
+.aur::after { content: ""; position: absolute; inset: 0; opacity: .08; mix-blend-mode: overlay; background-size: 160px 160px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.hero .in { position: relative; max-width: 760px; margin: 0 auto; padding: 0 22px; }
+.hero h1 { font-size: clamp(40px, 7vw, 76px); font-weight: 800; letter-spacing: -.05em; line-height: 1; }
+.hero h1 span { display: block; padding-bottom: .06em; }
+.hero p { font-size: clamp(17px, 2.2vw, 21px); color: var(--ink2); margin: 20px auto 0; max-width: 560px; }
+.search { position: relative; max-width: 520px; margin: 32px auto 0; }
+.search input { width: 100%; height: 52px; border-radius: 999px; border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 0 48px 0 50px; font: inherit; font-size: 16px; color: var(--ink); box-shadow: 0 10px 30px rgba(60,60,120,.1); outline: none; -webkit-appearance: none; appearance: none; }
+.search input::-webkit-search-cancel-button { display: none; }
+.search input:focus { border-color: rgba(79,70,229,.5); box-shadow: 0 0 0 4px rgba(79,70,229,.12), 0 10px 30px rgba(60,60,120,.1); }
+.search > svg { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--ink3); z-index: 1; pointer-events: none; }
+.search .clear { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border-radius: 50%; color: var(--ink3); display: none; align-items: center; justify-content: center; }
+.search .clear.on { display: flex; } .search .clear:hover { background: var(--mist); color: var(--ink); }
+.no-hits { display: none; text-align: center; color: var(--ink2); padding: 40px 0 10px; font-size: 16px; }
+.no-hits.on { display: block; }
 
-    /* ── Header (unchanged) ── */
-    .app-header {
-      background: color-mix(in srgb, var(--c-surface) 92%, transparent);
-      border-bottom: 1px solid var(--c-border);
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      height: var(--nav-h, 64px);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
-    .nav-inner {
-      max-width: 1100px; margin: 0 auto;
-      height: 100%; padding: 0 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--c-text); }
-    .nav-logo-mark { width: 34px; height: 34px; background: var(--c-accent); border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: white; letter-spacing: 0; }
-    .nav-logo-text { font-size: 19px; letter-spacing: -0.3px; }
-    .nav-logo-text .logo-task { font-weight: 800; color: var(--c-text); }
-    .nav-logo-text .logo-list { font-family: 'DM Serif Display', Georgia, serif; font-style: italic; font-weight: 400; color: var(--c-accent); }
-    .nav-links { display: flex; align-items: center; gap: 8px; }
-    .nav-link { font-size: 14px; font-weight: 500; color: var(--c-text-dim); text-decoration: none; padding: 6px 12px; border-radius: 8px; transition: color 0.15s, background 0.15s; }
-    .nav-link:hover { color: var(--c-text); background: var(--c-surface2); }
-    .nav-cta { background: var(--c-accent); color: white; font-size: 14px; font-weight: 600; padding: 8px 18px; border-radius: 8px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
-    .nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
-    .pill-btn {
-      border-radius: 8px; padding: 8px 14px;
-      background: var(--c-surface3); color: var(--c-text-dim);
-      border: 1px solid var(--c-border); font-size: 13px; font-weight: 700;
-      transition: 0.15s ease;
-    }
-    .pill-btn:hover { border-color: var(--c-border-hover); }
-    .pill-btn.primary { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
+/* Layout */
+.layout { max-width: 1180px; margin: 0 auto; padding: 48px 22px 96px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 64px; align-items: start; }
+.toc { position: sticky; top: calc(var(--nav) + 24px); max-height: calc(100vh - var(--nav) - 48px); overflow-y: auto; scrollbar-width: none; padding-bottom: 20px; }
+.toc::-webkit-scrollbar { display: none; }
+.toc h6 { font-size: 12px; font-weight: 700; color: var(--ink3); margin: 22px 10px 6px; }
+.toc h6:first-child { margin-top: 0; }
+.toc a { display: block; font-size: 14px; color: var(--ink2); padding: 6px 10px; border-radius: 8px; transition: background .12s, color .12s; }
+.toc a:hover { color: var(--ink); background: var(--mist); }
+.toc a.on { color: var(--indigo); background: #eeedfb; font-weight: 600; }
+.mtoc { display: none; }
+main { max-width: 760px; min-width: 0; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 0; padding-top: 24px; }
+  .toc { display: none; }
+  .mtoc { display: block; margin-bottom: 28px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .mtoc summary { list-style: none; cursor: pointer; padding: 14px 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .mtoc summary::-webkit-details-marker { display: none; }
+  .mtoc summary::after { content: "+"; font-weight: 400; font-size: 20px; color: var(--ink3); }
+  .mtoc[open] summary::after { content: "−"; }
+  .mtoc nav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; padding: 0 10px 12px; }
+  .mtoc a { font-size: 14.5px; color: var(--ink2); padding: 8px 6px; }
+}
 
-    /* ── Hero ── */
-    .hero {
-      background:
-        radial-gradient(circle at 8% -10%, rgba(127,227,173,0.14), transparent 45%),
-        radial-gradient(circle at 100% 120%, rgba(124,58,237,0.16), transparent 45%),
-        #14141c;
-      color: #fff;
-      padding: calc(56px + var(--nav-h, 64px)) 0 56px;
-      position: relative;
-      overflow: hidden;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .hero-inner {
-      max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1;
-      display: flex; align-items: flex-end; justify-content: space-between;
-      gap: 32px; flex-wrap: wrap;
-    }
-    .hero-label {
-      display: inline-flex; align-items: center; gap: 6px;
-      font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
-      text-transform: uppercase; color: #7fe3ad;
-      margin-bottom: 14px;
-    }
-    .hero-text { max-width: 620px; }
-    .hero h1 {
-      font-family: 'DM Serif Display', Georgia, serif;
-      font-style: normal;
-      font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.15; letter-spacing: -0.5px;
-      margin-bottom: 14px;
-    }
-    .hero h1 em { font-style: italic; color: #7fe3ad; }
-    .hero-sub {
-      font-size: 15.5px; color: rgba(255,255,255,0.55);
-      line-height: 1.65;
-    }
-    .hero-sub a { color: #7fe3ad; font-weight: 600; }
-    .hero-cta { flex-shrink: 0; }
-    .hero-cta-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-size: 13.5px; font-weight: 700; padding: 11px 20px;
-      border-radius: 9px; background: #fff; color: #14141c;
-      white-space: nowrap;
-      transition: transform 0.15s ease;
-    }
-    .hero-cta-btn:hover { transform: translateY(-1px); }
+/* Sections */
+.grp-title { font-size: 13px; font-weight: 700; color: var(--ink3); margin: 0 0 -28px; padding-top: 8px; }
+section.doc { padding: 40px 0 44px; border-bottom: 1px solid var(--line); }
+section.doc:last-of-type { border-bottom: 0; }
+section.doc h2 { font-size: clamp(28px, 4vw, 38px); font-weight: 800; letter-spacing: -.04em; line-height: 1.1; }
+section.doc .lead { font-size: 18px; color: var(--ink2); margin-top: 12px; }
+section.doc h3 { font-size: 19px; font-weight: 700; letter-spacing: -.02em; margin: 30px 0 10px; }
+section.doc p { color: #3a3a3c; font-size: 16px; margin-top: 12px; }
+section.doc p b, section.doc li b { color: var(--ink); font-weight: 600; }
+section.doc ul.plain { margin: 12px 0 0 0; padding-left: 20px; color: #3a3a3c; font-size: 16px; display: grid; gap: 6px; }
+.hide { display: none !important; }
 
-    /* ── Layout ── */
-    .main-wrap { max-width: 1100px; margin: 0 auto; padding: 60px 24px 80px; display: grid; grid-template-columns: 220px 1fr; gap: 40px; align-items: start; }
+/* Settings-style grouped rows */
+.rows { margin-top: 20px; background: var(--mist); border-radius: 16px; overflow: hidden; }
+.row { display: flex; gap: 14px; padding: 14px 16px; align-items: flex-start; }
+.row + .row { border-top: 1px solid rgba(0,0,0,.06); }
+.ic { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 800; margin-top: 1px; }
+.row b { display: block; font-size: 15.5px; font-weight: 600; color: var(--ink); }
+.row span.t { font-size: 15px; color: var(--ink2); line-height: 1.5; display: block; margin-top: 2px; }
 
-    /* ── Sidebar ── */
-    .sidebar { position: sticky; top: calc(var(--nav-h) + 24px); }
-    .sidebar-section { margin-bottom: 28px; }
-    .sidebar-label { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-muted); margin-bottom: 6px; padding: 0 8px; }
-    .sidebar-link {
-      display: flex; align-items: center; gap: 8px;
-      padding: 7px 8px; border-radius: 8px;
-      font-size: 13px; font-weight: 500; color: var(--c-text-dim);
-      transition: all 0.12s; cursor: pointer;
-    }
-    .sidebar-link:hover { background: var(--c-surface2); color: var(--c-text); }
-    .sidebar-link.active { background: var(--c-accent-dim); color: var(--c-accent); font-weight: 700; }
-    .sidebar-link .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4; flex-shrink: 0; }
-    .sidebar-link.active .dot { opacity: 1; }
+/* Steps */
+ol.steps { list-style: none; counter-reset: s; margin-top: 18px; display: grid; gap: 2px; }
+ol.steps li { counter-increment: s; display: flex; gap: 14px; padding: 12px 0; font-size: 16px; color: #3a3a3c; }
+ol.steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 50%; background: #eeedfb; color: var(--indigo); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-    /* ── Content ── */
-    .content { min-width: 0; }
-    .section { margin-bottom: 64px; scroll-margin-top: calc(var(--nav-h) + 24px); }
+/* Note boxes */
+.note { margin-top: 20px; border-radius: 14px; padding: 14px 16px; font-size: 15px; line-height: 1.5; background: #eeedfb; color: #3730a3; }
+.note.frog { background: #e8f8ee; color: #166534; }
+.note.warn { background: #fff4e5; color: #9a3412; }
+.note b { color: inherit !important; }
 
-    /* Section header */
-    .section-tag { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--c-accent); margin-bottom: 8px; }
-    .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(26px, 4vw, 36px); line-height: 1.1; letter-spacing: -0.8px; margin-bottom: 12px; }
-    .section-title em { font-style: italic; color: var(--c-accent); }
-    .section-body { font-size: 15px; color: var(--c-text-dim); line-height: 1.75; margin-bottom: 24px; }
+/* Tables */
+.tbl { margin-top: 18px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th { text-align: left; font-size: 13px; font-weight: 700; color: var(--ink3); padding: 11px 14px; background: var(--mist); border-bottom: 1px solid var(--line); }
+td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: #3a3a3c; vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { color: var(--ink); font-weight: 600; }
+@media (min-width: 560px) { td:first-child { white-space: nowrap; } }
 
-    /* Cards grid */
-    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-    .card {
-      background: var(--c-surface); border: 1px solid var(--c-border);
-      border-radius: var(--radius-md); padding: 20px;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .card-icon { font-size: 24px; margin-bottom: 12px; }
-    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
-    .card-body { font-size: 13px; color: var(--c-text-dim); line-height: 1.6; }
+/* FAQ (closed by default) */
+.faq { margin-top: 18px; border-top: 1px solid var(--line); }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 2px; font-size: 17px; font-weight: 600; letter-spacing: -.015em; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary i { width: 28px; height: 28px; border-radius: 50%; background: var(--mist); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-style: normal; color: var(--ink2); font-size: 18px; transition: transform .2s; }
+.faq details[open] summary i { transform: rotate(45deg); }
+.faq details p { margin: -4px 2px 18px; }
 
-    /* Feature row */
-    .feature-row {
-      background: var(--c-surface); border: 1px solid var(--c-border);
-      border-radius: var(--radius-md); overflow: hidden; margin-bottom: 12px;
-    }
-    .feature-row-inner { display: flex; align-items: flex-start; gap: 16px; padding: 18px 20px; }
-    .feature-row-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
-    .feature-row-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-    .feature-row-body { font-size: 13px; color: var(--c-text-dim); line-height: 1.6; }
-
-    /* Steps */
-    .steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 24px; }
-    .step { display: flex; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--c-border); }
-    .step:last-child { border-bottom: none; }
-    .step-num {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--c-accent-dim); color: var(--c-accent);
-      font-size: 12px; font-weight: 800; display: flex;
-      align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
-    }
-    .step-content { flex: 1; }
-    .step-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-    .step-body { font-size: 13px; color: var(--c-text-dim); line-height: 1.6; }
-
-    /* Info banner */
-    .info-banner {
-      background: var(--c-accent-dim); border: 1px solid var(--c-accent);
-      border-radius: var(--radius-sm); padding: 14px 16px;
-      font-size: 13px; color: var(--c-accent); line-height: 1.6;
-      margin-bottom: 24px;
-    }
-    .info-banner strong { color: var(--c-accent); }
-
-    /* Table */
-    .table-wrap { border: 1px solid var(--c-border); border-radius: var(--radius-md); overflow: hidden; margin-bottom: 24px; }
-    table { width: 100%; border-collapse: collapse; background: var(--c-surface2); }
-    th { font-size: 11px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--c-text-muted); padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--c-border); }
-    td { font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--c-border); color: var(--c-text-dim); }
-    td:first-child { font-weight: 700; color: var(--c-text); }
-    tr:last-child td { border-bottom: none; }
-
-    /* Code block */
-    .code-block {
-      background: #11111a; color: #e8e8f0;
-      border-radius: var(--radius-md); padding: 18px 20px;
-      font-size: 13px; line-height: 1.7; margin-bottom: 24px;
-      border: 1px solid rgba(255,255,255,0.06); overflow-x: auto;
-      font-family: 'SF Mono', 'Fira Mono', monospace;
-      white-space: pre-wrap;
-    }
-    .code-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 10px; }
-    .code-block .code-key { color: #818cf8; font-weight: 700; }
-
-    /* Stat row */
-    .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-    .stat-card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); padding: 16px; text-align: center; }
-    .stat-val { font-size: 28px; font-weight: 800; color: var(--c-text); letter-spacing: -1px; line-height: 1; margin-bottom: 6px; }
-    .stat-label { font-size: 11px; font-weight: 600; color: var(--c-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-
-    /* FAQ */
-    .faq { display: flex; flex-direction: column; gap: 10px; }
-    details {
-      background: var(--c-surface); border: 1px solid var(--c-border);
-      border-radius: var(--radius-md); overflow: hidden;
-    }
-    summary {
-      padding: 16px 20px; cursor: pointer;
-      font-size: 14px; font-weight: 700; color: var(--c-text);
-      list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    }
-    summary::after { content: '+'; font-size: 18px; font-weight: 400; color: var(--c-text-muted); flex-shrink: 0; }
-    details[open] summary::after { content: '−'; }
-    details p { padding: 0 20px 16px; font-size: 14px; color: var(--c-text-dim); line-height: 1.7; }
-
-    /* Divider */
-    .divider { height: 1px; background: var(--c-border); margin: 48px 0; }
-
-    /* Footer */
-    .doc-footer { text-align: center; padding: 32px 24px; color: var(--c-text-muted); font-size: 13px; border-top: 1px solid var(--c-border); }
-    .doc-footer a { color: var(--c-accent); }
-
-    /* Responsive */
-    /* Grid column modifiers (used instead of inline grid-template-columns so media queries can override them) */
-    .cards.cols-2 { grid-template-columns: repeat(2, 1fr); }
-    .cards.cols-3 { grid-template-columns: repeat(3, 1fr); }
-    .stat-row.cols-5 { grid-template-columns: repeat(5, 1fr); }
-
-    @media (max-width: 860px) {
-      .main-wrap { grid-template-columns: 1fr; padding: 24px 16px 60px; gap: 24px; }
-      .sidebar { display: none; }
-      .hero { padding: calc(48px + var(--nav-h, 64px)) 0 48px; }
-      .hero-inner { padding: 0 20px; }
-      .stat-row.cols-5 { grid-template-columns: repeat(3, 1fr); }
-    }
-    @media (max-width: 560px) {
-      .cards, .cards.cols-2, .cards.cols-3 { grid-template-columns: repeat(2, 1fr); }
-      .stat-row, .stat-row.cols-5 { grid-template-columns: repeat(2, 1fr); }
-      .hero h1 { font-size: 32px; letter-spacing: -1px; }
-    }
-    @media (max-width: 400px) {
-      .cards, .cards.cols-2, .cards.cols-3, .stat-row, .stat-row.cols-5 { grid-template-columns: 1fr; }
-    }
-  </style>
+/* End */
+.end { position: relative; overflow: hidden; text-align: center; padding: 96px 22px 104px; border-top: 1px solid var(--line); }
+.end .aur { opacity: .7; }
+.end .aur .a, .end .aur .b { top: auto; bottom: -640px; }
+.end .aur .c { top: auto; bottom: -380px; }
+.end h2 { position: relative; font-size: clamp(36px, 6vw, 64px); font-weight: 800; letter-spacing: -.05em; line-height: 1.02; }
+.end h2 span { display: block; padding-bottom: .06em; }
+.end p { position: relative; color: var(--ink2); font-size: 18px; margin-top: 14px; }
+.end .cta { position: relative; margin-top: 28px; display: flex; gap: 24px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.end .cta a.l { color: var(--indigo); font-weight: 600; font-size: 16px; }
+.foot { color: var(--ink3); font-size: 13px; padding: 26px 0 40px; border-top: 1px solid var(--line); }
+.foot .in { max-width: 1180px; margin: 0 auto; padding: 0 22px; display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+.foot nav { display: flex; gap: 18px; flex-wrap: wrap; }
+.foot a:hover { color: var(--ink); text-decoration: underline; }
+</style>
 </head>
 <body>
 
-  <header class="app-header">
-    <div class="nav-inner">
-      <a href="https://tasklist.uk/" class="nav-logo">
-        <div class="nav-logo-mark">tl</div>
-        <span class="nav-logo-text"><span class="logo-task">task</span><span class="logo-list">list</span></span>
-      </a>
-      <div class="nav-links">
-        <a href="https://tasklist.uk/blogs" class="nav-link">Blogs</a>
-        <a href="https://app.tasklist.uk" class="nav-cta">Open App →</a>
-      </div>
-    </div>
-  </header>
+<header class="nav"><div class="in">
+  <a class="word" href="/" aria-label="Tasklist.uk home">Tasklist<span class="dot">.</span><small>Docs</small></a>
+  <nav class="links" aria-label="Main"><a href="/">Home</a><a href="/blogs">Blog</a><a href="/privacy">Privacy</a></nav>
+  <a class="btn" href="https://app.tasklist.uk">Open Tasklist</a>
+</div></header>
 
-  <!-- Hero -->
-  <div class="hero" id="top">
-    <div class="hero-inner">
-      <div class="hero-text">
-        <div class="hero-label">📘 Documentation</div>
-        <h1>Everything you need<br>to master <em>Tasklist.uk</em></h1>
-        <p class="hero-sub">Your personal productivity operating system — tasks, AI, wellbeing and analytics in one place. <a href="https://app.tasklist.uk">Try it instantly with no account</a>, or sign in to unlock AI planning, brands, and sync across devices.</p>
-      </div>
-      <div class="hero-cta">
-        <a href="https://app.tasklist.uk" class="hero-cta-btn">Open the app →</a>
-      </div>
+<section class="hero">
+  <div class="aur" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+  <div class="in">
+    <h1><span>Everything Tasklist</span><span class="grad">does, explained.</span></h1>
+    <p>How the board, timers, brands and the rest fit together, in plain English.</p>
+    <div class="search" role="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.2-4.2"/></svg>
+      <input id="q" type="search" placeholder="Search the docs" aria-label="Search the docs" autocomplete="off">
+      <button class="clear" id="qClear" aria-label="Clear search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
   </div>
+</section>
 
-  <div class="main-wrap">
+<div class="layout">
+  <aside class="toc" aria-label="Contents" id="toc"></aside>
 
-    <!-- Sidebar -->
-    <nav class="sidebar" aria-label="Documentation navigation">
-      <div class="sidebar-section">
-        <div class="sidebar-label">Getting started</div>
-        <a class="sidebar-link active" href="#overview"><span class="dot"></span>Overview</a>
-        <a class="sidebar-link" href="#getting-started"><span class="dot"></span>Getting started</a>
-        <a class="sidebar-link" href="#guest-mode"><span class="dot"></span>Guest mode</a>
+  <main id="docs">
+    <details class="mtoc"><summary>Contents</summary><nav id="mtoc"></nav></details>
+    <p class="no-hits" id="noHits">Nothing matches that. Try a shorter word, like "timer" or "brand".</p>
+
+    <!-- ───────── Getting started ───────── -->
+    <p class="grp-title" data-group>Getting started</p>
+
+    <section class="doc" id="overview" data-title="What is Tasklist?">
+      <h2>What is Tasklist?</h2>
+      <p class="lead">A calm place for your day: what to do today, how long it took, and which brand it was for.</p>
+      <p>Tasklist is built around one idea: <b>do the most important thing first</b>. Each day you pick a single task as your frog, start a timer when you begin, and the time lands on the right brand automatically. Around that sit a calendar, notes, bookmarks, brand kits, a short wellbeing check-in and a weekly view of where your hours went.</p>
+      <div class="rows">
+        <div class="row"><span class="ic" style="background:var(--indigo)">☀</span><div><b>Free</b><span class="t">Everything in these docs is free to use.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--green)">→</span><div><b>No sign-up needed to start</b><span class="t">Try it as a guest, then sign in with Google when you want your tasks on every device.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--teal)">▭</span><div><b>Any device</b><span class="t">Desktop, tablet and phone, in light or dark.</span></div></div>
       </div>
-      <div class="sidebar-section">
-        <div class="sidebar-label">Features</div>
-        <a class="sidebar-link" href="#tasks"><span class="dot"></span>Tasks</a>
-        <a class="sidebar-link" href="#frog"><span class="dot"></span>Frog task</a>
-        <a class="sidebar-link" href="#daily"><span class="dot"></span>Daily</a>
-        <a class="sidebar-link" href="#ai"><span class="dot"></span>AI breakdown</a>
-        <a class="sidebar-link" href="#projects"><span class="dot"></span>Projects</a>
-        <a class="sidebar-link" href="#workspaces"><span class="dot"></span>Workspaces</a>
-        <a class="sidebar-link" href="#collab"><span class="dot"></span>Collaboration Board</a>
-        <a class="sidebar-link" href="#bookmarks"><span class="dot"></span>Bookmarks</a>
-        <a class="sidebar-link" href="#notes"><span class="dot"></span>Notes</a>
-        <a class="sidebar-link" href="#brands"><span class="dot"></span>Brands</a>
-        <a class="sidebar-link" href="#calendar"><span class="dot"></span>Calendar</a>
-        <a class="sidebar-link" href="#wellbeing"><span class="dot"></span>Wellbeing</a>
-        <a class="sidebar-link" href="#analytics"><span class="dot"></span>Analytics</a>
-        <a class="sidebar-link" href="#rewards"><span class="dot"></span>Levels & Rewards</a>
-        <a class="sidebar-link" href="#share"><span class="dot"></span>Share board</a>
-        <a class="sidebar-link" href="#bin"><span class="dot"></span>Bin</a>
-        <a class="sidebar-link" href="#data"><span class="dot"></span>Data & sync</a>
-        <a class="sidebar-link" href="#faq"><span class="dot"></span>FAQ</a>
+    </section>
+
+    <section class="doc" id="getting-started" data-title="Signing in or trying it as a guest">
+      <h2>Signing in or trying it as a guest</h2>
+      <p class="lead">Two ways in, both from the sign-in page at app.tasklist.uk.</p>
+      <h3>Continue with Google</h3>
+      <p>There's no password to remember. Once you're in, your tasks, brands, notes and settings sync across every device you sign in on.</p>
+      <h3>Continue without an account</h3>
+      <p>You go straight into a working board. Everything is saved <b>only on that device</b>, so the first time you tap it Tasklist shows a short note explaining this. Tap again to carry on.</p>
+      <div class="rows">
+        <div class="row"><span class="ic" style="background:var(--green)">✓</span><div><b>Works as a guest</b><span class="t">The board, today's frog and timers, calendar, notes, bookmarks, wellbeing, your week, focus mode, search and the bin.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--gray)">●</span><div><b>Needs an account</b><span class="t">Repeating tasks, brand kits, share links, levels and rewards, and more than one workspace. Each one shows a clear sign-in prompt instead of failing quietly.</span></div></div>
       </div>
-    </nav>
+      <div class="note warn"><b>Worth knowing:</b> signing in starts a fresh account. Your guest tasks don't move across, so if you've built up something worth keeping, sign in sooner rather than later.</div>
+    </section>
 
-    <!-- Content -->
-    <main class="content">
+    <section class="doc" id="first-steps" data-title="Your first five minutes">
+      <h2>Your first five minutes</h2>
+      <ol class="steps">
+        <li><span><b>Add a few tasks.</b> Type into "New task for today" at the bottom of Today, or press the + button.</span></li>
+        <li><span><b>Add your brands.</b> In Settings, open Brands and add the clients or areas you work on. Give each one a colour.</span></li>
+        <li><span><b>Pick your frog.</b> Drag the task that matters most onto the frog box, or tap Choose.</span></li>
+        <li><span><b>Start the timer</b> when you begin and stop it when you're done. The time is logged against the task and its brand.</span></li>
+        <li><span><b>Check your week</b> on Friday to see where the hours went, and copy the report if you need it.</span></li>
+      </ol>
+    </section>
 
-      <!-- Overview -->
-      <section class="section" id="overview">
-        <div class="section-tag">Overview</div>
-        <h2 class="section-title">What is <em>Tasklist.uk?</em></h2>
-        <p class="section-body">Tasklist.uk is a modern task management and wellbeing platform. It combines the Eat the Frog productivity method with AI planning, daily wellbeing tracking and detailed analytics — all synced to your account via Google Sign-In.</p>
-        <div class="stat-row">
-          <div class="stat-card"><div class="stat-val">🐸</div><div class="stat-label">Core method</div></div>
-          <div class="stat-card"><div class="stat-val">3</div><div class="stat-label">Task statuses</div></div>
-          <div class="stat-card"><div class="stat-val">5</div><div class="stat-label">Wellbeing metrics</div></div>
-          <div class="stat-card"><div class="stat-val">∞</div><div class="stat-label">Tasks synced</div></div>
-        </div>
-        <div class="cards">
-          <div class="card"><div class="card-icon">📋</div><div class="card-title">Task board</div><div class="card-body">Kanban-style board with drag and drop across To Do, In Progress and Done columns.</div></div>
-          <div class="card"><div class="card-icon">✨</div><div class="card-title">AI planning</div><div class="card-body">Instant task breakdowns, daily plans and end-of-day journalling powered by Groq.</div></div>
-          <div class="card"><div class="card-icon">💆</div><div class="card-title">Wellbeing</div><div class="card-body">Daily check-ins with mood, energy, stress, sleep and happiness tracked over time.</div></div>
-          <div class="card"><div class="card-icon">📊</div><div class="card-title">Analytics</div><div class="card-body">Completion rates, productivity patterns, happiness ratings and weekly summaries.</div></div>
-        </div>
-      </section>
+    <!-- ───────── The board ───────── -->
+    <p class="grp-title" data-group>The board</p>
 
-      <div class="divider"></div>
-
-      <!-- Getting started -->
-      <section class="section" id="getting-started">
-        <div class="section-tag">Getting started</div>
-        <h2 class="section-title">Sign in and start <em>planning</em></h2>
-        <p class="section-body">Tasklist.uk uses Google Sign-In — no password to remember. Once authenticated, your tasks, projects, wellbeing data and settings are restored automatically.</p>
-        <div class="steps">
-          <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Open Tasklist.uk</div><div class="step-body">Visit app.tasklist.uk and wait for the login screen.</div></div></div>
-          <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Sign in with Google</div><div class="step-body">Click Continue with Google — no account setup required.</div></div></div>
-          <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Your workspace loads</div><div class="step-body">Tasks, projects, wellbeing and settings are restored to where you left off.</div></div></div>
-          <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Create your first task</div><div class="step-body">Add a title, priority, due date and subtasks. Assign it to a project if needed.</div></div></div>
-          <div class="step"><div class="step-num">5</div><div class="step-content"><div class="step-title">Pick your frog</div><div class="step-body">Mark your most important task as today's frog. It'll be pinned at the top of your board.</div></div></div>
-        </div>
-        <div class="info-banner"><strong>Tip:</strong> Start every session by choosing one frog task. A single clear priority makes the rest of your day easier to navigate.</div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Guest Mode -->
-      <section class="section" id="guest-mode">
-        <div class="section-tag">Guest mode</div>
-        <h2 class="section-title">Try it <em>instantly</em>, no account needed</h2>
-        <p class="section-body">Not ready to sign in? Choose "Continue without an account" on the login screen and you're straight into a fully working board. Everything runs locally on that device — a short confirmation step explains this upfront, since clearing your browser or switching devices means losing that data.</p>
-        <div class="cards">
-          <div class="card"><div class="card-icon">✅</div><div class="card-title">Fully working</div><div class="card-body">Board, Calendar, Notes, Bookmarks, Wellbeing check-ins, Analytics, Daily, Focus Mode, Search and Import/Export all work exactly the same as signed in.</div></div>
-          <div class="card"><div class="card-icon">🗑️</div><div class="card-title">Real local Bin</div><div class="card-body">Deleting something as a guest is genuinely recoverable for 24 hours, the same as a signed-in account — just running entirely on your device.</div></div>
-          <div class="card"><div class="card-icon">🔒</div><div class="card-title">Honest locks, not silent failures</div><div class="card-body">AI features, recurring tasks, Brands, sharing, Teams, and Levels & Rewards need an account and inherently can't run locally — each shows a clear sign-in prompt rather than quietly failing.</div></div>
-          <div class="card"><div class="card-icon">📁</div><div class="card-title">One workspace</div><div class="card-body">Guest accounts are limited to a single local workspace. Signing in unlocks creating more.</div></div>
-        </div>
-        <div class="info-banner"><strong>Worth knowing:</strong> signing in later starts a fresh account — it doesn't carry your guest data forward. If you've built up something worth keeping, that's the moment to think about before signing in.</div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Tasks -->
-      <section class="section" id="tasks">
-        <div class="section-tag">Task management</div>
-        <h2 class="section-title">How <em>tasks</em> work</h2>
-        <p class="section-body">Tasks are the core unit in Tasklist.uk. Each task holds the details, context, AI plans and feedback you need to get things done.</p>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Field</th><th>Purpose</th><th>Example</th></tr></thead>
-            <tbody>
-              <tr><td>Title</td><td>The name of the task</td><td>Design new landing page</td></tr>
-              <tr><td>Description</td><td>Extra context or notes</td><td>Revamp homepage with updated branding</td></tr>
-              <tr><td>Priority</td><td>High, Medium or Low</td><td>High</td></tr>
-              <tr><td>Status</td><td>Where the task sits in the workflow</td><td>To Do, In Progress, Done</td></tr>
-              <tr><td>Due date</td><td>Deadline — overdue tasks are flagged. Shown in UK format (DD-MM-YYYY)</td><td>20-06-2026</td></tr>
-              <tr><td>Repeat</td><td>Optional recurring schedule — daily/weekly/monthly, with an end condition (signed-in accounts only)</td><td>Every 2 weeks on Mon, Wed</td></tr>
-              <tr><td>Subtasks</td><td>Break work into smaller steps</td><td>Wireframe, copy, publish</td></tr>
-              <tr><td>Happiness rating</td><td>How satisfied you were after completing it</td><td>4 stars</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="cards">
-          <div class="card"><div class="card-icon">🖱️</div><div class="card-title">Drag and drop</div><div class="card-body">Move tasks between columns on desktop or use the long-press menu on mobile. The Done column always shows your most recently completed task first.</div></div>
-          <div class="card"><div class="card-icon">📋</div><div class="card-title">List view</div><div class="card-body">Switch between kanban board and compact list view using the toggle in the filter bar.</div></div>
-          <div class="card"><div class="card-icon">🔍</div><div class="card-title">Quick search</div><div class="card-body">Press Ctrl+K to open the search bar and jump to any task instantly.</div></div>
-          <div class="card"><div class="card-icon">↩️</div><div class="card-title">Undo / redo</div><div class="card-body">Ctrl+Z and Ctrl+Y give you full undo history for task changes, synced back to your account.</div></div>
-          <div class="card"><div class="card-icon">🔁</div><div class="card-title">Repeat schedules</div><div class="card-body">Set a task to repeat daily, weekly or monthly, with a day-of-week picker for weekly and a choice of never / on a date / after N times to end it. Signed-in accounts only.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Frog -->
-      <section class="section" id="frog">
-        <div class="section-tag">Eat the frog</div>
-        <h2 class="section-title">Your daily <em>priority</em> system</h2>
-        <p class="section-body">The Frog Task is your single most important task of the day. Mark it as your frog and it gets pinned at the top of the board with green styling, a frog icon and priority labelling — so it's impossible to ignore.</p>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">🎯</div>
-            <div><div class="feature-row-title">One clear focus</div><div class="feature-row-body">Marking a task as the frog removes uncertainty about what to do first. You start every session knowing exactly where to begin.</div></div>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">✅</div>
-            <div><div class="feature-row-title">Beat procrastination</div><div class="feature-row-body">The method encourages you to tackle your hardest or most valuable work before smaller distractions. Everything else gets easier once the frog is done.</div></div>
-          </div>
-        </div>
-        <div class="info-banner" style="background:var(--c-frog-dim);border-color:var(--c-frog-border);color:var(--c-frog)"><strong style="color:var(--c-frog)">"If it's your job to eat a frog, it's best to do it first thing in the morning."</strong> — Mark Twain</div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Daily -->
-      <section class="section" id="daily">
-        <div class="section-tag">Daily</div>
-        <h2 class="section-title">What today <em>actually</em> looks like</h2>
-        <p class="section-body">A focused, single-page view — deliberately shows less at once rather than trying to be a second copy of the Board. Your frog task sits front and centre in the exact same banner used on the Board itself, not a re-styled lookalike.</p>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">🐸</div><div class="card-title">Your frog, front and centre</div><div class="card-body">Same banner, same pulsing glow, same Focus → shortcut as the Board's own frog banner.</div></div>
-          <div class="card"><div class="card-icon">✅</div><div class="card-title">Rest of today</div><div class="card-body">Everything else due today or overdue, with a one-tap circle to mark done right from the list.</div></div>
-          <div class="card"><div class="card-icon">📅</div><div class="card-title">This week, tucked away</div><div class="card-body">Collapsed behind a "show more" toggle by default, so it doesn't compete for attention with what actually needs doing right now.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- AI -->
-      <section class="section" id="ai">
-        <div class="section-tag">AI breakdown</div>
-        <h2 class="section-title">Turn any task into an <em>action plan</em></h2>
-        <p class="section-body">Click Break it down on any task card and the AI returns a structured plan in seconds — a plain-English summary, numbered steps you can tick off, and a warning about the most likely thing to go wrong.</p>
-        <div class="code-block"><div class="code-label">AI response format</div><span class="code-key">SUMMARY</span>
-A short explanation of what the task involves and why it matters.
-
-<span class="code-key">STEPS</span>
-1. First clear action
-2. Second clear action
-3. Third clear action
-
-<span class="code-key">WATCH OUT</span>
-One likely blocker or risk to avoid.</div>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">✨</div><div class="card-title">Task breakdown</div><div class="card-body">Send task details to Groq — get a summary, 4–8 steps and one warning back in seconds.</div></div>
-          <div class="card"><div class="card-icon">📆</div><div class="card-title">Due-date suggestion</div><div class="card-body">Not sure when something's due? The AI suggests a sensible date based on the task's title, description and priority.</div></div>
-          <div class="card"><div class="card-icon">📝</div><div class="card-title">End-of-day recap</div><div class="card-body">A no-writing-required summary of what you completed today, plus a prompt to pick tomorrow's frog — appears automatically at your work end time.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Projects -->
-      <section class="section" id="projects">
-        <div class="section-tag">Projects</div>
-        <h2 class="section-title">Organise tasks by <em>outcome</em></h2>
-        <p class="section-body">Projects group related tasks together, making Tasklist.uk suitable for any workstream — website launches, campaigns, product builds, fitness goals or personal admin.</p>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">📁</div><div class="card-title">Project assignment</div><div class="card-body">Link any task to a project to make filtering and understanding your workload easier.</div></div>
-          <div class="card"><div class="card-icon">🎨</div><div class="card-title">Colour labels</div><div class="card-body">Each project gets a colour. Labels appear on task cards so context is visible at a glance.</div></div>
-          <div class="card"><div class="card-icon">🔽</div><div class="card-title">Filter by project</div><div class="card-body">Click a project pill in the filter bar to show only tasks belonging to that project.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Workspaces -->
-      <section class="section" id="workspaces">
-        <div class="section-tag">Workspaces</div>
-        <h2 class="section-title">Separate work from <em>personal</em></h2>
-        <p class="section-body">Workspaces give you completely isolated environments within one account. Tasks and projects are scoped per workspace and switching is instant from the workspace pill on the Board tab — Notes and Bookmarks are shared across every workspace, with an optional tag available purely for filtering.</p>
-        <div class="cards">
-          <div class="card"><div class="card-icon">🏠</div><div class="card-title">Personal</div><div class="card-body">Created automatically on first login. For personal goals, habits and life admin.</div></div>
-          <div class="card"><div class="card-icon">💼</div><div class="card-title">Work</div><div class="card-body">A dedicated space for professional tasks and projects, isolated from personal data.</div></div>
-          <div class="card"><div class="card-icon">✨</div><div class="card-title">Custom spaces</div><div class="card-body">Create as many workspaces as you need with a custom name, emoji and colour.</div></div>
-          <div class="card"><div class="card-icon">🔄</div><div class="card-title">Instant switching</div><div class="card-body">Tap the workspace pill in the greeting banner at the top of the Board tab. Data reloads for the selected space immediately.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Collaboration Board -->
-      <section class="section" id="collab">
-        <div class="section-tag">Collaboration Board</div>
-        <h2 class="section-title">Plan and assign work as a <em>team</em></h2>
-        <p class="section-body">Every team gets its own shared Collaboration Board — a Kanban board separate from your personal workspace where any member can create tasks and assign them to teammates. Open it from the Collaborate tab.</p>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">🗂️</div><div class="card-title">Shared To Do / In Progress / Done</div><div class="card-body">One board per team with the same three-column workflow as your personal board, visible to every member.</div></div>
-          <div class="card"><div class="card-icon">🙋</div><div class="card-title">Assign to anyone</div><div class="card-body">When creating or editing a task, pick any teammate from the Assign To dropdown — or leave it unassigned for anyone to pick up.</div></div>
-          <div class="card"><div class="card-icon">🔔</div><div class="card-title">Assignment notifications</div><div class="card-body">Assigning or reassigning a task to someone sends them a notification, which appears live in the bell menu within 30 seconds.</div></div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">🔀</div>
-            <div><div class="feature-row-title">Multiple teams</div><div class="feature-row-body">If you belong to more than one team, a team switcher at the top of the Collaboration Board lets you jump between each team's board.</div></div>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">📊</div>
-            <div><div class="feature-row-title">Team Analytics (admins only)</div><div class="feature-row-body">Team admins get an Analytics dashboard for each team: headline stats (total, completed, in progress, overdue, completion rate and average time-to-done), a bar chart of tasks completed per member, an eight-week throughput trend, a status split, and a per-member breakdown table. Average completion time is measured from task creation to completion, so tasks completed before this was introduced show "—".</div></div>
-          </div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Bookmarks -->
-      <section class="section" id="bookmarks">
-        <div class="section-tag">Bookmarks</div>
-        <h2 class="section-title">Save and organise <em>links</em></h2>
-        <p class="section-body">Paste any URL into the bookmarks tab and Tasklist.uk automatically fetches the page title, description and preview image. Bookmarks appear in every workspace — an optional workspace tag is available purely for filtering and sorting.</p>
-        <div class="cards">
-          <div class="card"><div class="card-icon">⚡</div><div class="card-title">Smart fetch</div><div class="card-body">Paste a URL and the app fetches the title, description and image automatically.</div></div>
-          <div class="card"><div class="card-icon">🏷️</div><div class="card-title">Star and read</div><div class="card-body">Star important bookmarks and mark items as read to keep your collection organised.</div></div>
-          <div class="card"><div class="card-icon">📂</div><div class="card-title">Collections</div><div class="card-body">Group bookmarks into collections — Tools, Reading, Reference and more.</div></div>
-          <div class="card"><div class="card-icon">✏️</div><div class="card-title">Edit anytime</div><div class="card-body">Update title, description, collection and tags on any saved bookmark.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Notes -->
-      <section class="section" id="notes">
-        <div class="section-tag">Notes</div>
-        <h2 class="section-title">Write down <em>anything worth keeping</em></h2>
-        <p class="section-body">A full-page rich-text editor for meeting notes, ideas and daily write-ups. Like Bookmarks, Notes are shared across every workspace, with an optional tag for filtering.</p>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">✍️</div><div class="card-title">Rich formatting</div><div class="card-body">Bold, italic, underline, headings, bullet and numbered lists, links, images and tables.</div></div>
-          <div class="card"><div class="card-icon">🖼️</div><div class="card-title">Paste images & tables</div><div class="card-body">Paste an image directly into a note and resize it, or build a table right in the editor.</div></div>
-          <div class="card"><div class="card-icon">📌</div><div class="card-title">Pin & search</div><div class="card-body">Pin important notes to the top, and search across every note's title and content.</div></div>
-          <div class="card"><div class="card-icon">🗓️</div><div class="card-title">Custom date</div><div class="card-body">Each note carries a date you can set yourself — handy for backdating a meeting write-up.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Brands -->
-      <section class="section" id="brands">
-        <div class="section-tag">Brands</div>
-        <h2 class="section-title">Keep every brand's <em>identity</em> in one place</h2>
-        <p class="section-body">A lightweight brand-kit tool built right into your task manager — fonts, colours, logo and reference files for every brand you work with. Signed-in accounts only, since it stores real uploaded files.</p>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">🔤</div><div class="card-title">Any font</div><div class="card-body">Free-text, not a locked dropdown — real brand guidelines often use paid or custom fonts. Free Google Fonts preview live; anything else still saves correctly.</div></div>
-          <div class="card"><div class="card-icon">🎨</div><div class="card-title">Colour palette</div><div class="card-body">Add as many swatches as you need, each with a hex value and a label — Primary, Secondary, Accent.</div></div>
-          <div class="card"><div class="card-icon">🖼️</div><div class="card-title">Logo & files</div><div class="card-body">One dedicated logo slot, plus a shelf for up to 8 other files — brand guidelines, alternate logo variants. 2MB per file.</div></div>
-        </div>
-        <div class="info-banner">Every saved brand gets its own quick-access entry in the sidebar, and deleting one moves it to the Bin like everything else — logo and files come back too if you restore it.</div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Calendar -->
-      <section class="section" id="calendar">
-        <div class="section-tag">Calendar</div>
-        <h2 class="section-title">See your tasks in <em>time</em></h2>
-        <p class="section-body">The calendar view maps tasks with due dates onto a monthly grid. Spot upcoming deadlines, see busy periods and plan your workload across the month at a glance.</p>
-        <div class="cards cols-2">
-          <div class="card"><div class="card-icon">📅</div><div class="card-title">Monthly view</div><div class="card-body">All tasks with due dates appear on their deadline day across a full calendar grid.</div></div>
-          <div class="card"><div class="card-icon">🚨</div><div class="card-title">Overdue alerts</div><div class="card-body">Tasks past their due date are visually flagged in red so nothing slips through unnoticed.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Wellbeing -->
-      <section class="section" id="wellbeing">
-        <div class="section-tag">Wellbeing</div>
-        <h2 class="section-title">Daily check-ins and personal <em>trends</em></h2>
-        <p class="section-body">Tasklist.uk tracks wellbeing alongside work. Daily check-ins take under a minute and reveal how productivity connects with your mood, energy, stress and sleep over time.</p>
-        <div class="stat-row cols-5">
-          <div class="stat-card"><div class="stat-val">😊</div><div class="stat-label">Mood</div></div>
-          <div class="stat-card"><div class="stat-val">⚡</div><div class="stat-label">Energy</div></div>
-          <div class="stat-card"><div class="stat-val">😤</div><div class="stat-label">Stress</div></div>
-          <div class="stat-card"><div class="stat-val">😴</div><div class="stat-label">Sleep</div></div>
-          <div class="stat-card"><div class="stat-val">😄</div><div class="stat-label">Happiness</div></div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">💆</div>
-            <div><div class="feature-row-title">Daily check-in</div><div class="feature-row-body">Rate each wellbeing metric from 1 to 5 and add an optional note. Appears automatically each morning.</div></div>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">📈</div>
-            <div><div class="feature-row-title">14-day trend charts</div><div class="feature-row-body">Rolling charts for mood, energy and happiness help you see patterns and correlations over time.</div></div>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">⭐</div>
-            <div><div class="feature-row-title">Task happiness ratings</div><div class="feature-row-body">Rate how satisfying a task was when you complete it. Creates a link between output and wellbeing.</div></div>
-          </div>
-        </div>
-        <div class="feature-row">
-          <div class="feature-row-inner">
-            <div class="feature-row-icon">📊</div>
-            <div><div class="feature-row-title">Pattern awareness</div><div class="feature-row-body">Surface correlations between wellbeing scores and task completion rates across days and weeks.</div></div>
-          </div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Analytics -->
-      <section class="section" id="analytics">
-        <div class="section-tag">Analytics</div>
-        <h2 class="section-title">Understand your <em>performance</em></h2>
-        <p class="section-body">The analytics view turns your task and wellbeing data into useful indicators — completion rates, productivity by day of week, on-time rates and satisfaction trends.</p>
-        <div class="stat-row">
-          <div class="stat-card"><div class="stat-val">87%</div><div class="stat-label">Completion rate</div></div>
-          <div class="stat-card"><div class="stat-val">248</div><div class="stat-label">Tasks done</div></div>
-          <div class="stat-card"><div class="stat-val">4.2★</div><div class="stat-label">Avg happiness</div></div>
-          <div class="stat-card"><div class="stat-val">14</div><div class="stat-label">Check-in streak</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Levels & Rewards -->
-      <section class="section" id="rewards">
-        <div class="section-tag">Levels & Rewards</div>
-        <h2 class="section-title">Progress that <em>feels</em> like progress</h2>
-        <p class="section-body">A light gamification layer that rewards consistent progress. Completing tasks earns XP, which raises your level — up to 50 — with a daily soft cap to keep it healthy.</p>
-        <div class="cards cols-3">
-          <div class="card"><div class="card-icon">⭐</div><div class="card-title">XP & levels</div><div class="card-body">Earn XP for every completed task. Frog tasks, subtasks and streaks all boost the amount earned.</div></div>
-          <div class="card"><div class="card-icon">🔥</div><div class="card-title">Streaks</div><div class="card-body">Completing work on consecutive days builds a streak, which increases your XP bonus.</div></div>
-          <div class="card"><div class="card-icon">🎨</div><div class="card-title">Accent Themes</div><div class="card-body">Unlock colour themes as you level up — Sunset at 7, Ocean at 18, Royal at 30, Inferno at 45 — and equip whichever you like.</div></div>
-          <div class="card"><div class="card-icon">👑</div><div class="card-title">Prestige</div><div class="card-body">Reach level 50 and you can prestige: your level resets to 1, but total XP, streak and unlocked rewards are kept, and your prestige count goes up.</div></div>
-          <div class="card"><div class="card-icon">🏆</div><div class="card-title">Scoreboard</div><div class="card-body">A leaderboard ranks users by prestige, then level, then XP — showing name, avatar and level. Email addresses are never shown.</div></div>
-          <div class="card"><div class="card-icon">📈</div><div class="card-title">XP detail page</div><div class="card-body">A dedicated page shows your level, streaks, a 14-day XP chart, tier milestones and recent XP events.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Share board -->
-      <section class="section" id="share">
-        <div class="section-tag">Share board</div>
-        <h2 class="section-title">Share your board <em>publicly</em></h2>
-        <p class="section-body">Generate a read-only link to your task board from Settings. Choose which workspace to share or share everything at once — viewers see workspace tabs if multiple are shared.</p>
-        <div class="cards">
-          <div class="card"><div class="card-icon">🌐</div><div class="card-title">Public link</div><div class="card-body">A shareable URL showing a clean read-only view. No login required for viewers.</div></div>
-          <div class="card"><div class="card-icon">🗂️</div><div class="card-title">Workspace filter</div><div class="card-body">Share a specific workspace or all at once — viewers get tabs to switch between them.</div></div>
-          <div class="card"><div class="card-icon">👀</div><div class="card-title">View only</div><div class="card-body">Viewers cannot edit, delete or create tasks. The board is read-only.</div></div>
-          <div class="card"><div class="card-icon">🔒</div><div class="card-title">Revokable</div><div class="card-body">Revoke the share link at any time from Settings. The old URL stops working immediately.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Bin -->
-      <section class="section" id="bin">
-        <div class="section-tag">Bin</div>
-        <h2 class="section-title">Deleted doesn't mean <em>gone</em></h2>
-        <p class="section-body">Tasks, notes, bookmarks and brands you delete move to the Bin rather than disappearing immediately. Each item shows a countdown to when it'll be gone for good, with a one-tap Restore button.</p>
-        <div class="cards">
-          <div class="card"><div class="card-icon">⏱️</div><div class="card-title">24-hour window</div><div class="card-body">Deleted items are recoverable for 24 hours, then permanently purged automatically.</div></div>
-          <div class="card"><div class="card-icon">🧹</div><div class="card-title">Empty it early</div><div class="card-body">Don't want to wait? Empty the bin immediately from the Bin page.</div></div>
-          <div class="card"><div class="card-icon">👤</div><div class="card-title">Works for guests too</div><div class="card-body">Guest accounts get the same 24-hour recoverable Bin, running entirely on your device instead of the server.</div></div>
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- Data -->
-      <section class="section" id="data">
-        <div class="section-tag">Data & sync</div>
-        <h2 class="section-title">How your data is <em>stored</em></h2>
-        <p class="section-body">Tasklist.uk uses persistent storage for each section of the app. When signed in, all data is securely associated with your Google account and synced across devices. In guest mode, the same sections are stored locally in your browser instead — see Guest mode above.</p>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Storage key</th><th>Used for</th></tr></thead>
-            <tbody>
-              <tr><td>vtm_tasks_v1</td><td>Task list, statuses, subtasks, AI breakdowns and completion data</td></tr>
-              <tr><td>vtm_wellbeing_v1</td><td>Daily wellbeing check-ins, ratings and notes</td></tr>
-              <tr><td>vtm_user_v1</td><td>User session and profile information</td></tr>
-              <tr><td>vtm_projects_v1</td><td>Project records and colour labels</td></tr>
-              <tr><td>vtm_workhours_v1</td><td>Work-hour preferences and scheduling data</td></tr>
-              <tr><td>vtm_theme_v1</td><td>Light or dark theme preference</td></tr>
-              <tr><td>vtm_workspace_id</td><td>Last active workspace</td></tr>
-              <tr><td>vtm_board_view</td><td>Kanban or list view preference</td></tr>
-              <tr><td>tasklist_guest_mode</td><td>Marks that you're using a guest account rather than signing in</td></tr>
-              <tr><td>tasklist_guest_trash</td><td>Guest-mode Bin — deleted items and when they'll be permanently removed</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="info-banner">
-          <strong>Privacy:</strong> Your tasks, projects and wellbeing data are securely associated with your account. Google Sign-In is used for authentication only. We do not sell your data or share it with third parties for advertising. Full details in our <a href="https://tasklist.uk/privacy" style="color:var(--c-accent);font-weight:700">Privacy Policy</a>.
-        </div>
-      </section>
-
-      <div class="divider"></div>
-
-      <!-- FAQ -->
-      <section class="section" id="faq">
-        <div class="section-tag">FAQ</div>
-        <h2 class="section-title">Frequently asked <em>questions</em></h2>
-        <div class="faq">
-          <details open>
-            <summary>What makes Tasklist.uk different from a normal to-do list?</summary>
-            <p>Tasklist.uk combines task management with AI planning, wellbeing tracking and analytics. It helps you understand both what you need to do and how you perform over time — not just a list of things to tick off.</p>
-          </details>
-          <details>
-            <summary>How does the AI breakdown feature work?</summary>
-            <p>The app sends your task title, description, priority, due date and subtasks to the Groq AI. It returns a plain-English summary, 4–8 numbered steps you can check off and one warning about the most likely blocker.</p>
-          </details>
-          <details>
-            <summary>What is a frog task?</summary>
-            <p>Your frog task is the single most important thing you need to do today. It's visually highlighted at the top of your board and should be tackled before anything else — based on Brian Tracy's Eat the Frog productivity method.</p>
-          </details>
-          <details>
-            <summary>What wellbeing data is tracked?</summary>
-            <p>You can track mood, happiness, energy, stress and sleep using a 1–5 rating system in the daily check-in. Optional notes can be added. Trends are charted over 14 days.</p>
-          </details>
-          <details>
-            <summary>What are workspaces?</summary>
-            <p>Workspaces let you separate different areas of your life — Personal and Work are created by default. Tasks, projects and bookmarks are fully isolated per workspace. Switch between them instantly from the workspace pill on the Board tab.</p>
-          </details>
-          <details>
-            <summary>How do I assign a task to a teammate?</summary>
-            <p>Join or create a team, then open the Collaborate tab to access your team's Collaboration Board. Create a task there and pick a teammate from the Assign To dropdown — they'll get a notification and the task appears on the shared board for everyone to see.</p>
-          </details>
-          <details>
-            <summary>Can I share my board with others?</summary>
-            <p>Yes — generate a read-only link from Settings. Choose to share a specific workspace or all workspaces at once. Viewers see a clean board without being able to edit anything. Revoke the link at any time.</p>
-          </details>
-          <details>
-            <summary>Is Tasklist.uk free?</summary>
-            <p>Yes. Tasklist.uk is completely free to use with no subscription required. Sign in with Google and get started immediately.</p>
-          </details>
-          <details>
-            <summary>Is it mobile friendly?</summary>
-            <p>Yes. The interface is fully responsive with a bottom navigation bar on mobile, safe-area spacing for iOS, and a long-press menu to move tasks between columns without drag and drop. The bottom nav covers Board, Calendar, Collaborate (when you're on a team) and Teams, with a More menu for Wellbeing, Stats, Saved and Settings.</p>
-          </details>
-          <details>
-            <summary>Do I need an account to use Tasklist.uk?</summary>
-            <p>No. Choose "Continue without an account" on the login screen for a fully working local-only experience — see Guest mode above for exactly what works and what needs a sign-in.</p>
-          </details>
-          <details>
-            <summary>Can I store fonts, colours and logos for my brands?</summary>
-            <p>Yes — the Brands tab keeps a fonts, colour palette, logo and reference files for each brand you work with, all in one place. Requires a signed-in account.</p>
-          </details>
-        </div>
-      </section>
-
-      <div class="doc-footer">
-        <strong>Tasklist.uk Documentation</strong> — Built for people who want to work smarter, feel better and stay organised.<br>
-        <a href="https://app.tasklist.uk">Open the app →</a> · <a href="https://tasklist.uk/privacy">Privacy Policy</a>
+    <section class="doc" id="board" data-title="Today and your lists">
+      <h2>Today and your lists</h2>
+      <p class="lead">The board has three parts: your lists on the left, the tasks in the middle, and the selected task's details on the right.</p>
+      <div class="rows">
+        <div class="row"><span class="ic" style="background:var(--indigo)">☀</span><div><b>Today</b><span class="t">Your frog at the top, then anything left over from earlier days, then what's due today. Tasks you've started but that aren't due today show underneath, so they don't get lost.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--red)">▦</span><div><b>Upcoming</b><span class="t">Everything with a date after today, grouped by day.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--teal)">○</span><div><b>No date</b><span class="t">Ideas and someday tasks that don't need a deadline yet.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--amber)">!</span><div><b>Overdue</b><span class="t">Every unfinished task with a date in the past, oldest first.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--green)">✓</span><div><b>Recently completed</b><span class="t">What you finished in the last 7 days.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--purple)">●</span><div><b>Brands</b><span class="t">One list per brand, showing every open task for that client or area.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--gray)">▤</span><div><b>Completed</b><span class="t">Your full archive at the bottom of the lists, with search, 40 tasks per page.</span></div></div>
       </div>
+      <h3>Nothing slips</h3>
+      <p>If a task was due yesterday and you didn't finish it, it doesn't vanish. It stays on Today under <b>From earlier days</b> with a clear "From yesterday" or "2 days late". Use <b>Move all to today</b> or <b>Tomorrow</b> to reschedule the lot in one go.</p>
+      <h3>Working with tasks</h3>
+      <ul class="plain">
+        <li><b>Click</b> a task to see its details on the right. <b>Double-click</b> it to open the full task.</li>
+        <li><b>Right-click</b> a task, or use its ⋯ button, for quick actions: reschedule, start a timer, make it the frog, move it to the bin.</li>
+        <li>Tick the circle to complete it. Untick it from Recently completed if you change your mind.</li>
+      </ul>
+    </section>
 
-    </main>
-  </div>
+    <section class="doc" id="details" data-title="Task details">
+      <h2>Task details</h2>
+      <p class="lead">Every task has the same simple set of fields, laid out like iPhone Settings. Tap a value to change it from a small dropdown.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Field</th><th>What it's for</th></tr></thead>
+        <tbody>
+          <tr><td>Name and notes</td><td>The task, plus any extra detail you want to keep with it.</td></tr>
+          <tr><td>Status</td><td>To do, In progress or Done.</td></tr>
+          <tr><td>Today's frog</td><td>Makes this the one task you do first today.</td></tr>
+          <tr><td>Date</td><td>Today, Tomorrow, Next week, No date, or any day from the calendar. Dates show in UK format.</td></tr>
+          <tr><td>Priority</td><td>High, Medium or Low.</td></tr>
+          <tr><td>Brand</td><td>Which client or area the task (and its time) belongs to.</td></tr>
+          <tr><td>Estimate</td><td>How long you think it will take, from 15 minutes upwards or a custom number of minutes.</td></tr>
+          <tr><td>Repeat</td><td>See Repeating tasks below.</td></tr>
+          <tr><td>Time</td><td>The time logged so far against the estimate, with every entry listed.</td></tr>
+          <tr><td>Steps</td><td>A checklist for bigger jobs. Press Enter to add the next step.</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Suggest a date</h3>
+      <p>Not sure when to fit something in? Open the Date dropdown and choose <b>Suggest a date</b>. Tasklist looks at the task's priority and estimate, and at how much is already due on each working day, then suggests a quiet day with a reason, like "Monday has room: 1 other task (1h 30m) already due." It skips weekends and works offline. Tap <b>Use this date</b> to accept it.</p>
+    </section>
 
-  <script>
-    const root = document.documentElement;
-    const saved = localStorage.getItem('tasklist_docs_theme');
-    if (saved === 'dark') root.setAttribute('data-theme', 'dark');
+    <section class="doc" id="frog" data-title="Today's frog and the timer">
+      <h2>Today's frog and the timer</h2>
+      <p class="lead">Your frog is the one task you do before anything else.</p>
+      <p>There's only ever one frog. To choose it, <b>drag a task onto the frog box</b> at the top of Today, tap <b>Choose</b>, or switch on <b>Today's frog</b> in the task's details. Picking a new frog replaces the old one.</p>
+      <h3>Timing your work</h3>
+      <p>Press <b>Start</b> on any task. A small pill appears at the top of the screen (above the bottom bar on a phone) showing the task and the time running, wherever you are in the app. Press <b>Stop</b> when you're done and the time is logged against the task and its brand.</p>
+      <p>Forgot to start the timer? Use <b>Add time</b> in the task's details to log 15 minutes, an hour or any amount, on any day.</p>
+      <h3>Focus mode</h3>
+      <p>For deep work, open Focus mode for a full-screen timer with breaks built in. It logs time the same way.</p>
+      <div class="note frog">"Eat a live frog first thing in the morning and nothing worse will happen to you the rest of the day." The method comes from Brian Tracy's book <b>Eat That Frog!</b></div>
+    </section>
 
-    // Sidebar active state
-    (function() {
-      var ids = ['overview','getting-started','guest-mode','tasks','frog','daily','ai','projects','workspaces','collab','bookmarks','notes','brands','calendar','wellbeing','analytics','rewards','share','bin','data','faq'];
-      var links = {};
-      ids.forEach(function(id) {
-        var el = document.querySelector('.sidebar-link[href="#' + id + '"]');
-        if (el) links[id] = el;
-      });
+    <section class="doc" id="repeat" data-title="Repeating tasks">
+      <h2>Repeating tasks</h2>
+      <p class="lead">Set it once and Tasklist creates the next one for you.</p>
+      <p>In the task's details, open <b>Repeat</b> and choose daily, weekly or monthly. For weekly you can pick the days, like every other week on Monday and Wednesday. You can also choose when it ends: never, on a date, or after a number of times.</p>
+      <p>On a repeating task you can <b>apply edits to upcoming</b>, which copies the name, notes, priority, brand and estimate to every repeat still to come, or <b>stop repeating</b>. Stopping moves the upcoming repeats to the bin and keeps the current one.</p>
+      <p>Repeating tasks need an account.</p>
+    </section>
 
-      function update() {
-        var atBottom = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 40;
-        var scrollY = window.scrollY + 120;
-        var current = ids[0];
-        ids.forEach(function(id) {
-          var el = document.getElementById(id);
-          if (el && el.offsetTop <= scrollY) current = id;
-        });
-        if (atBottom) current = ids[ids.length - 1];
-        ids.forEach(function(id) {
-          if (links[id]) links[id].classList.remove('active');
-        });
-        if (links[current]) links[current].classList.add('active');
-      }
+    <section class="doc" id="bin" data-title="Undo and the bin">
+      <h2>Undo and the bin</h2>
+      <p class="lead">Deleting something is never a disaster.</p>
+      <ul class="plain">
+        <li>When you move a task to the bin, an <b>Undo</b> button appears for a few seconds.</li>
+        <li>Tasks, notes, bookmarks and brand kits stay in the <b>Bin</b> for 24 hours, each with a countdown and a Restore button. After that they're removed for good.</li>
+        <li>You can empty the bin early. Because that can't be undone, Tasklist asks you to confirm first.</li>
+        <li><kbd>Ctrl</kbd> <kbd>Z</kbd> undoes your last change to a task, and <kbd>Ctrl</kbd> <kbd>Y</kbd> redoes it (<kbd>⌘</kbd> on a Mac).</li>
+        <li>Guests get the same bin, kept on their device.</li>
+      </ul>
+    </section>
 
-      window.addEventListener('scroll', update, { passive: true });
-      update();
-    })();
-  </script>
+    <!-- ───────── Planning ───────── -->
+    <p class="grp-title" data-group>Planning</p>
+
+    <section class="doc" id="calendar" data-title="Calendar">
+      <h2>Calendar</h2>
+      <p class="lead">Your month at a glance.</p>
+      <p>Every task with a date appears on its day. <b>Drag a task to another day</b> to reschedule it. Tap a day to see its tasks and the time you logged that day by brand, and use <b>+ Add</b> to create a task straight onto that date. Overdue tasks are flagged so nothing slips by.</p>
+    </section>
+
+    <section class="doc" id="brands" data-title="Brands">
+      <h2>Brands</h2>
+      <p class="lead">Brands are the clients or areas you work on, like Northwind, Bluebird Studio or Internal.</p>
+      <p>Add and colour them in <b>Settings › Brands</b>. Give a task a brand and its time adds up under that brand in your week, the share page and the CSV export. Each brand also gets its own list on the board.</p>
+      <p>If you bill different clients for your time, this is the part that saves you the most: at the end of the week the hours are already split, ready to copy.</p>
+    </section>
+
+    <section class="doc" id="workspaces" data-title="Workspaces">
+      <h2>Workspaces</h2>
+      <p class="lead">Keep separate parts of your life apart.</p>
+      <p>Each workspace has its own tasks and brands, so Personal never mixes with Work. Switch from the top of the sidebar, or from <b>More › Workspace</b> on a phone. You can create as many as you like, each with its own name, emoji and colour. Notes and bookmarks are shared across every workspace.</p>
+      <p>Guests have one workspace. Signing in lets you add more.</p>
+    </section>
+
+    <!-- ───────── Things to keep ───────── -->
+    <p class="grp-title" data-group>Things to keep</p>
+
+    <section class="doc" id="notes" data-title="Notes">
+      <h2>Notes</h2>
+      <p class="lead">Meeting notes, ideas and write-ups, in a simple dated list.</p>
+      <p>Notes are listed newest first and grouped by month, with each note's date on the left. Pin the ones you need often to keep them at the top, and search across every title and note.</p>
+      <p>The editor handles headings, bold, italic, lists, links, tables and pasted images. Each note has a date you can change, which is handy for writing up a meeting afterwards.</p>
+    </section>
+
+    <section class="doc" id="bookmarks" data-title="Bookmarks">
+      <h2>Bookmarks</h2>
+      <p class="lead">Useful links, next to the work.</p>
+      <p>Paste a link and Tasklist fetches the page title, description and preview image for you. Star the important ones, mark things as read, and group them into collections such as Tools, Reading or Reference. You can edit any bookmark later.</p>
+    </section>
+
+    <section class="doc" id="brand-kits" data-title="Brand kits">
+      <h2>Brand kits</h2>
+      <p class="lead">Every brand's logo, colours, fonts and files in one place.</p>
+      <p>Brand kits open as a gallery. Each card shows the logo on the brand's main colour, its colours as a strip, and an "Aa" in its heading font. Open one to see the full kit:</p>
+      <div class="rows">
+        <div class="row"><span class="ic" style="background:var(--indigo)">◆</span><div><b>Logo</b><span class="t">Shown on white, on the brand colour, on dark and on a transparent background, so you can check it works everywhere. Download it in a tap.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--pink)">●</span><div><b>Colours</b><span class="t">Tap a colour to copy its hex code. Each one shows its RGB value and whether it's easy to read on white or black.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--purple)">Aa</span><div><b>Typography</b><span class="t">A sample of the heading and body fonts at a few sizes. Any font name works; free Google Fonts preview live.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--teal)">▤</span><div><b>Files</b><span class="t">Up to 8 PDFs or images per brand, such as guidelines or templates, up to 2 MB each. Download them one at a time or all at once.</span></div></div>
+        <div class="row"><span class="ic" style="background:var(--green)">✓</span><div><b>Guidelines</b><span class="t">Tone of voice, dos and don'ts, and useful links.</span></div></div>
+      </div>
+      <p>Give a kit the same name as one of your task brands and its page also shows that brand's open tasks and hours this week, with a link to see them on the board.</p>
+      <div class="note"><b>For now:</b> guidelines, the description and the website are saved on the device you add them on. The logo, colours, fonts and files sync everywhere. Brand kits need an account.</div>
+    </section>
+
+    <!-- ───────── You ───────── -->
+    <p class="grp-title" data-group>You</p>
+
+    <section class="doc" id="wellbeing" data-title="Wellbeing">
+      <h2>Wellbeing</h2>
+      <p class="lead">A ten-second check-in on how you're doing.</p>
+      <p>Open <b>Wellbeing</b> whenever you like and rate your <b>mood, energy, stress and sleep</b>, with an optional note. There's no pop-up nagging you; it's there when you want it.</p>
+      <p>Your week shows in colour, and once there's enough to go on, Tasklist offers one useful insight, such as how your mood compares on days you finished your frog before lunch.</p>
+    </section>
+
+    <section class="doc" id="your-week" data-title="Your week">
+      <h2>Your week</h2>
+      <p class="lead">Where your time went, brand by brand.</p>
+      <ul class="plain">
+        <li><b>Hours logged</b> this week, compared with last week.</li>
+        <li><b>Tasks completed</b>.</li>
+        <li><b>Hours by brand</b>, as a simple bar for each.</li>
+        <li><b>Copy report</b> puts a tidy weekly summary on your clipboard, ready to paste into an email or invoice.</li>
+        <li><b>Export CSV</b> downloads any week's timesheet: date, brand, task, minutes and hours.</li>
+      </ul>
+      <p>Your working hours (set in Settings) shape the week view.</p>
+    </section>
+
+    <section class="doc" id="levels" data-title="Levels and rewards">
+      <h2>Levels and rewards</h2>
+      <p class="lead">A light, optional bit of fun for keeping going.</p>
+      <ul class="plain">
+        <li>Finishing tasks earns <b>XP</b>. Your frog, steps and streaks earn a little more. There's a daily cap to keep it healthy.</li>
+        <li>XP raises your <b>level</b>, up to 50. Working on consecutive days builds a <b>streak</b>.</li>
+        <li>Levelling up unlocks <b>accent themes</b>: Sunset at 7, Ocean at 18, Royal at 30 and Inferno at 45.</li>
+        <li>At level 50 you can <b>prestige</b>: your level goes back to 1, but your total XP, streak and rewards are kept.</li>
+        <li>The <b>scoreboard</b> ranks people by prestige, level and XP, showing names and avatars only. Email addresses are never shown.</li>
+      </ul>
+      <p>Levels and rewards need an account.</p>
+    </section>
+
+    <!-- ───────── Sharing ───────── -->
+    <p class="grp-title" data-group>Sharing</p>
+
+    <section class="doc" id="share" data-title="Share links">
+      <h2>Share links</h2>
+      <p class="lead">One read-only link for your manager or client.</p>
+      <p>Create a link in <b>Settings › Share links</b>, for one workspace or all of them. Anyone with the link sees a clean page with <b>Today</b>, <b>Upcoming this week</b> and <b>Overdue</b>, plus tasks done and hours by brand for this week, last week or the month. It updates as you work, so there's no report to write.</p>
+      <p>Viewers can't change anything. Revoke the link in Settings and it stops working straight away. Share links need an account.</p>
+    </section>
+
+    <section class="doc" id="teams" data-title="Teams (coming soon)">
+      <h2>Teams</h2>
+      <p class="lead">Coming soon: Tasklist for the people you work with.</p>
+      <p>Shared brands so client hours add up in one place, handing tasks to a teammate and following them through to done, and a shared week of who worked on what, ready for billing. It isn't available yet.</p>
+    </section>
+
+    <!-- ───────── Reference ───────── -->
+    <p class="grp-title" data-group>Reference</p>
+
+    <section class="doc" id="shortcuts" data-title="Keyboard shortcuts">
+      <h2>Keyboard shortcuts</h2>
+      <p class="lead">On a Mac, use <kbd>⌘</kbd> wherever you see <kbd>Ctrl</kbd>.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Keys</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td><kbd>Ctrl</kbd> <kbd>K</kbd></td><td>Search every task</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Z</kbd></td><td>Undo your last change</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Y</kbd></td><td>Redo</td></tr>
+          <tr><td><kbd>Ctrl</kbd> <kbd>Enter</kbd></td><td>Open the selected task in full</td></tr>
+          <tr><td><kbd>Enter</kbd></td><td>Add the next step when you're typing a step</td></tr>
+          <tr><td><kbd>Esc</kbd></td><td>Close a dropdown, then the open panel</td></tr>
+          <tr><td>Double-click</td><td>Open a task in full</td></tr>
+          <tr><td>Right-click</td><td>Quick actions for a task</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="doc" id="phone" data-title="On your phone">
+      <h2>On your phone</h2>
+      <p class="lead">Everything works on a phone, laid out for your thumb.</p>
+      <ul class="plain">
+        <li>The bottom bar has <b>Board</b>, <b>Calendar</b>, <b>Analytics</b> and <b>More</b>. More holds Wellbeing, Notes, Bookmarks, Brands, Levels and rewards, your workspace and Settings.</li>
+        <li>Your lists become a row of pills you can swipe through. A task's details slide up from the bottom.</li>
+        <li>The + button adds a task from anywhere, and the timer pill sits just above the bottom bar.</li>
+        <li>Add Tasklist to your home screen from your browser's share menu and it opens like an app.</li>
+      </ul>
+    </section>
+
+    <section class="doc" id="privacy" data-title="Your data and privacy">
+      <h2>Your data and privacy</h2>
+      <p class="lead">Your data is yours. It's never sold or shared for advertising.</p>
+      <p>When you sign in, your tasks, brands, notes, bookmarks and wellbeing check-ins are stored securely against your account. Google Sign-In is used only to sign you in. As a guest, the same things are kept in your browser on that device instead.</p>
+      <p>A few small preferences are always kept in your browser, like light or dark mode, whether the sidebar is collapsed, and which list you last had open on the board.</p>
+      <p>Read the full <a href="/privacy" style="color:var(--indigo);font-weight:600">privacy policy</a>.</p>
+    </section>
+
+    <section class="doc" id="changes" data-title="Recent changes">
+      <h2>Recent changes</h2>
+      <p class="lead">Tasklist has been simplified recently. If you've used it before, here's what moved or went.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Was</th><th>Now</th></tr></thead>
+        <tbody>
+          <tr><td>To do, In progress, Done columns</td><td>Today, Upcoming, No date and Overdue lists, with status in each task's details</td></tr>
+          <tr><td>AI breakdown</td><td>Removed for now. Use Steps to break a task down.</td></tr>
+          <tr><td>Daily page</td><td>Removed. Today on the board does the same job.</td></tr>
+          <tr><td>End of day recap</td><td>Removed. Your week shows what you got done.</td></tr>
+          <tr><td>Happiness rating</td><td>Removed. Wellbeing covers mood, energy, stress and sleep.</td></tr>
+          <tr><td>Daily check-in pop-up</td><td>Removed. Check in from Wellbeing whenever you like.</td></tr>
+          <tr><td>Projects</td><td>Now called Brands everywhere</td></tr>
+          <tr><td>Collaboration board</td><td>Replaced by Teams, coming soon</td></tr>
+        </tbody>
+      </table></div>
+      <p>Every update is listed in <b>What's new</b> inside the app.</p>
+    </section>
+
+    <section class="doc" id="faq" data-title="Questions">
+      <h2>Questions</h2>
+      <div class="faq">
+        <details><summary>Is Tasklist free?<i>+</i></summary><p>Yes. Everything in these docs is free, with no subscription.</p></details>
+        <details><summary>Do I need an account?<i>+</i></summary><p>No. Choose "Continue without an account" on the sign-in page. Your tasks stay on that device. Sign in with Google when you want them synced everywhere, and to use repeating tasks, brand kits, share links and levels.</p></details>
+        <details><summary>Will my guest tasks move across when I sign in?<i>+</i></summary><p>Not at the moment. Signing in starts a fresh account, so it's best to sign in early if you plan to keep using Tasklist.</p></details>
+        <details><summary>What happens to unfinished tasks at the end of the day?<i>+</i></summary><p>They stay on Today under "From earlier days", clearly marked as late, until you finish them or move them. Nothing disappears.</p></details>
+        <details><summary>How do I get a timesheet for a client?<i>+</i></summary><p>Give your tasks a brand and time them as you work. In Your week, Copy report gives you a summary by brand, and Export CSV downloads the full timesheet.</p></details>
+        <details><summary>What's the difference between Brands and Brand kits?<i>+</i></summary><p>Brands are the labels on your tasks, used to split your time. Brand kits hold a brand's logo, colours, fonts and files. Give a kit the same name as a brand and the two are linked.</p></details>
+        <details><summary>Can I get back something I deleted?<i>+</i></summary><p>Yes, for 24 hours. Open the Bin and tap Restore. Right after deleting a task you can also tap Undo.</p></details>
+        <details><summary>Does it work offline?<i>+</i></summary><p>As a guest, yes, since everything lives on your device. When signed in you'll need a connection to sync changes.</p></details>
+        <details><summary>Where can I suggest a feature?<i>+</i></summary><p>Open What's new in the app to see every update and vote on the changes you'd like.</p></details>
+      </div>
+    </section>
+  </main>
+</div>
+
+<section class="end">
+  <div class="aur" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
+  <h2><span>Your day.</span><span class="grad">Sorted.</span></h2>
+  <p>Start as a guest, or sign in with Google to sync across your devices.</p>
+  <div class="cta"><a class="btn lg" href="https://app.tasklist.uk">Open Tasklist</a><a class="l" href="/">Back to the homepage ›</a></div>
+</section>
+<footer class="foot"><div class="in"><span>© 2026 Tasklist.uk</span><nav><a href="/">Home</a><a href="/blogs">Blog</a><a href="https://app.tasklist.uk">Open the app</a><a href="/privacy">Privacy</a></nav></div></footer>
+
+<script>
+// Build the contents (desktop sidebar + phone accordion) from the sections and their group labels.
+(() => {
+  const toc = document.getElementById("toc"), mtoc = document.getElementById("mtoc");
+  let html = "", mhtml = "";
+  document.querySelectorAll("#docs > [data-group], #docs > section.doc").forEach(el => {
+    if (el.hasAttribute("data-group")) html += `<h6>${el.textContent}</h6>`;
+    else { const a = `<a href="#${el.id}" data-for="${el.id}">${el.dataset.title.replace(" (coming soon)", "")}</a>`; html += a; mhtml += a; }
+  });
+  toc.innerHTML = html; mtoc.innerHTML = mhtml;
+  mtoc.addEventListener("click", e => { if (e.target.closest("a")) mtoc.closest("details").open = false; });
+
+  // Highlight the section you're reading.
+  const links = [...toc.querySelectorAll("a")];
+  const io = new IntersectionObserver(es => es.forEach(en => {
+    if (!en.isIntersecting) return;
+    links.forEach(l => l.classList.toggle("on", l.dataset.for === en.target.id));
+  }), { rootMargin: "-30% 0px -65% 0px" });
+  document.querySelectorAll("section.doc").forEach(s => io.observe(s));
+
+  // Search: hide sections (and their group labels) that don't mention every word typed.
+  const q = document.getElementById("q"), clear = document.getElementById("qClear"), none = document.getElementById("noHits");
+  const secs = [...document.querySelectorAll("section.doc")];
+  const run = () => {
+    const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    clear.classList.toggle("on", words.length > 0);
+    let shown = 0;
+    secs.forEach(s => { const hit = !words.length || words.every(w => s.textContent.toLowerCase().includes(w)); s.classList.toggle("hide", !hit); if (hit) shown++; });
+    document.querySelectorAll("#docs > [data-group]").forEach(g => {
+      let n = g.nextElementSibling, any = false;
+      while (n && !n.hasAttribute("data-group")) { if (n.matches("section.doc") && !n.classList.contains("hide")) any = true; n = n.nextElementSibling; }
+      g.classList.toggle("hide", !any);
+    });
+    links.forEach(l => l.classList.toggle("hide", document.getElementById(l.dataset.for).classList.contains("hide")));
+    toc.querySelectorAll("h6").forEach(h => { let n = h.nextElementSibling, any = false; while (n && n.tagName === "A") { if (!n.classList.contains("hide")) any = true; n = n.nextElementSibling; } h.classList.toggle("hide", !any); });
+    none.classList.toggle("on", shown === 0);
+  };
+  q.addEventListener("input", run);
+  q.addEventListener("keydown", e => { if (e.key === "Enter") { const first = secs.find(s => !s.classList.contains("hide")); if (first) first.scrollIntoView(); } });
+  clear.addEventListener("click", () => { q.value = ""; run(); q.focus(); });
+  document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); q.focus(); q.select(); } });
+})();
+</script>
 </body>
 </html>
