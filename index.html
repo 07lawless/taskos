@@ -386,15 +386,16 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .W .grad2 { background: linear-gradient(180deg, #1d1d1f 30%, #6e6e73); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .aur { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
 .aur i { position: absolute; border-radius: 50%; will-change: transform; }
-.aur .a { width: 1100px; height: 1100px; left: -380px; top: -520px; background: radial-gradient(closest-side, rgba(165,180,252,0.8) 0%, rgba(165,180,252,0.576) 22%, rgba(165,180,252,0.336) 45%, rgba(165,180,252,0.128) 68%, rgba(165,180,252,.02) 86%, rgba(165,180,252,0) 100%); animation: aur-a 24s ease-in-out infinite alternate; }
-.aur .b { width: 900px; height: 900px; right: -340px; top: -260px; background: radial-gradient(closest-side, rgba(134,239,172,0.75) 0%, rgba(134,239,172,0.540) 22%, rgba(134,239,172,0.315) 45%, rgba(134,239,172,0.120) 68%, rgba(134,239,172,.02) 86%, rgba(134,239,172,0) 100%); animation: aur-b 28s ease-in-out infinite alternate; }
-.aur .c { width: 1000px; height: 1000px; left: 50%; margin-left: -500px; top: 360px; background: radial-gradient(closest-side, rgba(216,180,254,0.65) 0%, rgba(216,180,254,0.468) 22%, rgba(216,180,254,0.273) 45%, rgba(216,180,254,0.104) 68%, rgba(216,180,254,.02) 86%, rgba(216,180,254,0) 100%); animation: aur-c 32s ease-in-out infinite alternate; }
+.aur .a { width: 1400px; height: 1100px; left: 50%; margin-left: -1050px; top: -640px; background: radial-gradient(closest-side, rgba(129,140,248,0.55) 0%, rgba(129,140,248,0.413) 20%, rgba(129,140,248,0.264) 42%, rgba(129,140,248,0.121) 64%, rgba(129,140,248,0.039) 82%, rgba(129,140,248,0) 100%); animation: aur-a 26s ease-in-out infinite alternate; }
+.aur .b { width: 1200px; height: 1000px; left: 50%; margin-left: -150px; top: -560px; background: radial-gradient(closest-side, rgba(216,180,254,0.55) 0%, rgba(216,180,254,0.413) 20%, rgba(216,180,254,0.264) 42%, rgba(216,180,254,0.121) 64%, rgba(216,180,254,0.039) 82%, rgba(216,180,254,0) 100%); animation: aur-b 30s ease-in-out infinite alternate; }
+.aur .c { width: 900px; height: 700px; left: 50%; margin-left: 80px; top: 120px; background: radial-gradient(closest-side, rgba(167,243,208,0.38) 0%, rgba(167,243,208,0.285) 20%, rgba(167,243,208,0.182) 42%, rgba(167,243,208,0.084) 64%, rgba(167,243,208,0.027) 82%, rgba(167,243,208,0) 100%); animation: aur-c 34s ease-in-out infinite alternate; }
 .aur.soft { opacity: .7; }
-.aur.soft .c { top: auto; bottom: -640px; }
+.aur.soft .a, .aur.soft .b { top: auto; bottom: -620px; }
+.aur.soft .c { top: auto; bottom: -420px; }
 .aur::after { content: ""; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 160px 160px; opacity: .08; mix-blend-mode: overlay; }
-@keyframes aur-a { to { transform: translate3d(120px, 80px, 0) scale(1.08); } }
-@keyframes aur-b { to { transform: translate3d(-110px, 110px, 0) scale(.94); } }
-@keyframes aur-c { to { transform: translate3d(90px, -60px, 0) scale(1.06); } }
+@keyframes aur-a { to { transform: translate3d(90px, 40px, 0) scale(1.06); } }
+@keyframes aur-b { to { transform: translate3d(-90px, 50px, 0) scale(.95); } }
+@keyframes aur-c { to { transform: translate3d(-70px, -30px, 0) scale(1.05); } }
 .W .D-hero::before { display: none; }
 .W .D-hero > .wrap, .W .D-hero .B-devices, .W .D-hero .D-facts { position: relative; z-index: 1; }
 .W .D-hero .pillw { z-index: 3; }
@@ -437,7 +438,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .W .cal span.dot::after { background: #4f46e5; }
 .W .cal span.today { background: #4f46e5; color: #fff; }
 .W .mood span[data-none] { background: #e5e5ea !important; color: #8e8e93 !important; }
-.W .D-teams { background: radial-gradient(ellipse at 50% 115%, rgba(196,181,253,.45), transparent 60%), #fff; border-top: 1px solid #e5e5ea; }
+.W .D-teams { background: #fff; border-top: 1px solid #e5e5ea; }
 .W .D-teams .badge { color: #6d28d9; background: rgba(124,58,237,.1); }
 .W .avs span { border-color: #fff; }
 .W .D-teams .teamgrid div { background: rgba(255,255,255,.8); box-shadow: 0 0 0 1px rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.05); color: #1d1d1f; }
